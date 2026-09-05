@@ -19,7 +19,8 @@ methodology   the definitional differences between the two sets, always
 
 ## Canvas placement
 - **The two sides share an axis.** Two canvases on different scales turn a comparison into an
-  illusion. Pass an explicit `cfg.max` computed from both datasets.
+  illusion. Pass an explicit `cfg.max` computed from both datasets — `hbars` and `divHbars` both
+  take it, and without it each chart silently scales itself.
 - Fix left and right to `s1` / `s2` and never change what those mean anywhere in the report.
 - The difference chart uses `pos`/`neg`. **Do not mix identity colours and direction colours in
   one chart.**

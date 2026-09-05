@@ -1013,7 +1013,8 @@ VIZ.hbars=function(cvs,cfg){
     if(!rows.length) return;
     var labelW=Math.min(cfg.labelW||210, Math.max(96,W*(cfg.labelRatio||0.3)));
     var PW=W-labelW-(cfg.valueW||64), rowH=(H-pad.t-pad.b)/rows.length;
-    var mx=Math.max.apply(null,rows.map(function(r){return Math.abs(V(r));}))||1;
+    /* cfg.max pins the scale for side-by-side comparison (see macro 09) */
+    var mx=finiteNumber(cfg.max) || Math.max.apply(null,rows.map(function(r){return Math.abs(V(r));})) || 1;
     ctx.font='600 11.5px system-ui, sans-serif';
     rows.forEach(function(r,i){
       var cy=pad.t+rowH*i+rowH/2, bh=Math.min(cfg.barH||18,rowH-5);
@@ -1043,7 +1044,10 @@ VIZ.divHbars=function(cvs,cfg){
     ctx.font='600 12px system-ui, sans-serif';
     var labelW=Math.min(cfg.labelW||96, Math.max(56, W*(cfg.labelRatio||.28))),
         rowH=(H-pad.t-pad.b)/rows.length;
-    var mx=(Math.max.apply(null,rows.map(function(r){return Math.abs(V(r));}))||1)*1.15;
+    /* cfg.max pins the scale so two charts can be compared side by side
+       (macro 09 requires it). Without it each chart scales itself and the
+       comparison becomes an illusion. */
+    var mx=(finiteNumber(cfg.max) || Math.max.apply(null,rows.map(function(r){return Math.abs(V(r));})) || 1)*1.15;
     var cx0=labelW+(W-labelW)*.46;
     /* Reserve room so a negative value label cannot land on the row name. If this
        goes negative on a narrow canvas the bars draw backwards, hence the floor. */
