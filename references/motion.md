@@ -23,6 +23,32 @@ Everything else — looping, hover zoom, colour pulses, staggered entrances — 
 4. **Play once.** `R.onView` does not replay on re-entry. If a replay is genuinely useful, give
    the reader a button.
 
+## Easing
+
+The named-curve catalogue is the portable half of GSAP, Motion and anime.js — you do not need
+their runtimes to use their curves. The shell ships nine, split by whether they are legal on a
+mark whose size *is* the value.
+
+| Value-safe — monotonic, never exceeds 1 | Overshoot — passes 1 before settling |
+|---|---|
+| `linear` `outCubic` (default) `inOutCubic` `outQuint` `outExpo` `outCirc` `inOutQuint` | `outBack` `spring` |
+
+**The split is enforced.** A chart's progress `t` scales the data, so an overshoot curve draws a
+bar past its own axis for a few frames — that is slop-test gate 3, a mark outside the plot.
+`anim()` refuses an overshoot easing on a chart, warns in the console and falls back to `outCubic`.
+
+They are legal wherever nothing is scaled to an axis:
+
+```js
+chart.play(700, 'outExpo');                        // fine
+chart.play(700, 'spring');                         // refused + warned
+R.countUp(el, 1024, 900, R.compact, 'spring');     // fine — a number is not a mark
+R.motion(node, {opacity:1}, {duration:300, easing:'outBack'});   // fine
+```
+
+Reach past the default only for a reason you can name. Nine curves is a vocabulary, not a menu to
+graze; a report that uses six of them is decorated, not designed.
+
 ## Durations
 
 | Target | Time | Easing |
@@ -37,11 +63,13 @@ Everything else — looping, hover zoom, colour pulses, staggered entrances — 
 
 ```js
 R.reveal();                          // switch .reveal elements on once, as they enter view
-R.countUp(el, 1024, 900, R.compact); // a number. Jumps to the final value under reduced motion
+R.countUp(el, 1024, 900, R.compact, 'outCubic');  // a number. Final value under reduced motion
 R.onView(node, function(){ … });     // once, when it enters the viewport
 R.scrolly(container, function(i){ … });  // .step activates -> repaint the pinned canvas
 R.shrinkMasthead(el, 140);           // M6 sticky shrink
-chart.play(700);                     // any VIZ handle
+chart.play(700, 'outExpo');          // any VIZ handle; value-safe easings only
+R.motion(node, frames, opts);        // Web Animations, opacity + small translate only
+R.easings                            // the nine curves, if you need one directly
 R.reduced();                         // true -> do not build the animation at all
 ```
 

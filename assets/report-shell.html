@@ -622,18 +622,44 @@ function bindHover(c){
 }
 /* animation — the final state is ALWAYS drawn, even if rAF stops (background
    tab, headless capture). That safety timer is not optional. */
+/* Easing vocabulary. The named-curve idea is the portable half of GSAP,
+   anime.js and Motion — you do not need their runtimes to use their curves.
+
+   VALUE-SAFE curves are monotonic and never exceed 1, so they are legal on a
+   value-scaled mark (a bar length, an area height).
+   OVERSHOOT curves pass 1 before settling. On a bar that literally draws the
+   value past its own axis for a few frames — slop-test gate 3. They are
+   therefore allowed on opacity and position only, and anim() refuses them. */
 var easings={
   linear:function(t){ return t; },
-  outCubic:function(t){ return 1-Math.pow(1-t,3); },
+  outCubic:function(t){ return 1-Math.pow(1-t,3); },                       /* default */
   inOutCubic:function(t){ return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2; },
-  outQuint:function(t){ return 1-Math.pow(1-t,5); }
+  outQuint:function(t){ return 1-Math.pow(1-t,5); },
+  outExpo:function(t){ return t>=1?1:1-Math.pow(2,-10*t); },
+  outCirc:function(t){ return Math.sqrt(1-Math.pow(t-1,2)); },
+  inOutQuint:function(t){ return t<.5?16*t*t*t*t*t:1-Math.pow(-2*t+2,5)/2; },
+  /* ── overshoot: never on a value-scaled mark ───────────────────────────── */
+  outBack:function(t){ var c1=1.70158,c3=c1+1;
+    return 1+c3*Math.pow(t-1,3)+c1*Math.pow(t-1,2); },
+  spring:function(t){ if(t<=0)return 0; if(t>=1)return 1;
+    return 1-Math.pow(2,-9*t)*Math.cos(t*Math.PI*3.2); }
 };
+/* Curves that pass 1 on the way. Kept as data so anim() can refuse them. */
+var overshootEasings={outBack:1, spring:1};
 function anim(c,dur,done,easingName){
   var fired=false, token={};
   function finish(){ if(fired || c.__token!==token)return; fired=true; c.t=1; paint(c); if(done) done(); }
   c.__token=token;
   if(RM.matches){ finish(); return; }
   dur=Math.min(900,Math.max(0,Number(dur)||800));
+  if(overshootEasings[easingName]){
+    /* A chart's t scales the DATA. An overshoot curve would draw the mark past
+       its axis. Refuse it here rather than let a wrong value flash on screen. */
+    console.warn('[canvas-report] easing "'+easingName+'" overshoots 1 and cannot '+
+                 'drive a value-scaled mark. Falling back to outCubic. '+
+                 'Use it with R.motion() or R.countUp() instead.');
+    easingName='outCubic';
+  }
   var ease=easings[easingName]||easings.outCubic;
   var t0=null; c.t=0;
   (function step(ts){
@@ -671,7 +697,12 @@ function motion(node,keyframes,options){
   if(RM.matches || !node.animate){ finalState(); return null; }
   var dur=Math.min(900,Math.max(0,Number(options.duration)||300));
   var easing=typeof options.easing==='string' && easings[options.easing] ? options.easing : 'outCubic';
-  var cssEase={linear:'linear',outCubic:'cubic-bezier(.22,.61,.36,1)',inOutCubic:'cubic-bezier(.65,0,.35,1)',outQuint:'cubic-bezier(.23,1,.32,1)'}[easing];
+  var cssEase={linear:'linear', outCubic:'cubic-bezier(.22,.61,.36,1)',
+    inOutCubic:'cubic-bezier(.65,0,.35,1)', outQuint:'cubic-bezier(.23,1,.32,1)',
+    outExpo:'cubic-bezier(.16,1,.3,1)', outCirc:'cubic-bezier(0,.55,.45,1)',
+    inOutQuint:'cubic-bezier(.83,0,.17,1)',
+    outBack:'cubic-bezier(.34,1.56,.64,1)',        /* overshoot is fine on opacity/translate */
+    spring:'cubic-bezier(.34,1.56,.64,1)'}[easing];
   var a=node.animate(safe,{duration:dur,easing:cssEase,fill:'forwards',iterations:1});
   node.__reportMotion=a;
   function finish(){ if(node.__reportMotion===a){ finalState(); node.__reportMotion=null; } }
@@ -688,14 +719,17 @@ function onView(node, fn){
 /* ── structure and motion helpers (used by the macrostructures) ───────────── */
 /* count-up. Under reduced-motion it jumps straight to the final value, and it
    always ends on the final value. */
-function countUp(node,to,dur,fmt){
+function countUp(node,to,dur,fmt,easingName){
   fmt=fmt||nf; to=Number(to);
   if(!isFinite(to)){ node.textContent='—'; return; }
   if(RM.matches||!dur){ node.textContent=fmt(to); return; }
+  /* A number is not a mark on an axis, so an overshoot curve is legal here —
+     it reads as the figure settling. It still lands exactly on `to`. */
+  var ease=easings[easingName]||easings.outCubic;
   var t0=null, done=false;
   function finish(){ if(done)return; done=true; node.textContent=fmt(to); }
   function step(ts){ if(t0==null)t0=ts; var k=Math.min(1,(ts-t0)/dur);
-    node.textContent=fmt(to*(1-Math.pow(1-k,3)));
+    node.textContent=fmt(to*ease(k));
     if(k<1 && !done) requestAnimationFrame(step); else finish(); }
   requestAnimationFrame(step); setTimeout(finish,dur+260);
 }
@@ -738,7 +772,8 @@ function ticks(min,max,n){
   var span=max-min, raw=span/n, mag=Math.pow(10,Math.floor(Math.log10(raw))), norm=raw/mag;
   var step=(norm<1.5?1:norm<3?2:norm<7?5:10)*mag;
   var s=Math.ceil(min/step)*step, out=[];
-  for(var v=s; v<=max+step*1e-3; v+=step) out.push(Math.round(v*1e6)/1e6);
+  /* `+0` collapses negative zero: without it a tick lands on -0 and prints "-0" */
+  for(var v=s; v<=max+step*1e-3; v+=step) out.push((Math.round(v*1e6)/1e6)+0 || 0);
   return out;
 }
 function gridY(ctx,W,pad,rows,fmt){
@@ -1307,6 +1342,138 @@ VIZ.spark=function(cvs,cfg){
     var lx=W-5, ly=H-3-(H-6)*(v[v.length-1]-mn)/sp;
     ctx.fillStyle=T.surface; ctx.beginPath(); ctx.arc(lx,ly,5,0,7); ctx.fill();
     ctx.fillStyle=c2; ctx.beginPath(); ctx.arc(lx,ly,3.5,0,7); ctx.fill();
+  });
+};
+
+/* box plot: compare the SHAPE of a distribution across groups. A histogram
+   (divColumns) shows one distribution well; this shows twenty, comparably.
+   Horizontal, so long category labels behave like hbars.
+   cfg: rows, label, values(row)->number[]  |  or q1/med/q3/lo/hi accessors */
+VIZ.boxplot=function(cvs,cfg){
+  var L=fld(cfg.label), VALS=cfg.values?fld(cfg.values):null, fmt=cfg.format||compact;
+  function quart(a){
+    a=a.map(finiteNumber).filter(function(v){return v!==null;}).sort(function(x,y){return x-y;});
+    if(!a.length) return null;
+    function q(p){ var i=(a.length-1)*p, lo=Math.floor(i), hi=Math.ceil(i);
+      return a[lo]+(a[hi]-a[lo])*(i-lo); }
+    var q1=q(.25), med=q(.5), q3=q(.75), iqr=q3-q1;
+    var loF=q1-1.5*iqr, hiF=q3+1.5*iqr, inl=a.filter(function(v){return v>=loF&&v<=hiF;});
+    return {q1:q1, med:med, q3:q3, n:a.length,
+            lo:inl.length?inl[0]:a[0], hi:inl.length?inl[inl.length-1]:a[a.length-1],
+            out:a.filter(function(v){return v<loF||v>hiF;})};
+  }
+  return mk(cvs,function(ctx,W,H,c){
+    var raw=cfg.rows();
+    if(!raw.length){ chartMessage(ctx,W,H); return; }
+    var stats=[], drop=0;
+    raw.forEach(function(r){
+      var st = VALS ? quart(VALS(r)||[]) : {q1:+fld(cfg.q1)(r), med:+fld(cfg.med)(r), q3:+fld(cfg.q3)(r),
+                                           lo:+fld(cfg.lo)(r), hi:+fld(cfg.hi)(r), out:[], n:null};
+      if(!st || [st.lo,st.q1,st.med,st.q3,st.hi].some(function(v){return !isFinite(v);})){ drop++; return; }
+      st.row=r; stats.push(st);
+    });
+    if(!stats.length){ chartMessage(ctx,W,H); return; }
+    ctx.font='600 11.5px system-ui, sans-serif';
+    var labelW=Math.min(cfg.labelW||190, Math.max(90, W*(cfg.labelRatio||0.3)));
+    var pad={t:16,b:26,r:16};
+    var PW=W-labelW-pad.r, rowH=(H-pad.t-pad.b)/stats.length;
+    var lo=Math.min.apply(null,stats.map(function(s){ return Math.min(s.lo, s.out.length?Math.min.apply(null,s.out):s.lo); }));
+    var hi=Math.max.apply(null,stats.map(function(s){ return Math.max(s.hi, s.out.length?Math.max.apply(null,s.out):s.hi); }));
+    if(cfg.zeroBased) lo=Math.min(0,lo);
+    var span=(hi-lo)||1; lo-=span*0.04; hi+=span*0.04;
+    var px=function(v){ return labelW+PW*(v-lo)/(hi-lo); };
+    /* vertical grid + x labels */
+    ctx.save(); ctx.strokeStyle=T.line; ctx.lineWidth=1; ctx.fillStyle=T.muted;
+    ctx.font='11px system-ui, sans-serif'; ctx.textAlign='center'; ctx.textBaseline='top';
+    ticks(lo,hi,4).forEach(function(v){
+      if(v<lo||v>hi) return;
+      var x=Math.round(px(v))+.5;
+      ctx.beginPath(); ctx.moveTo(x,pad.t); ctx.lineTo(x,H-pad.b); ctx.stroke();
+      ctx.fillText((cfg.tickFormat||compact)(v), x, H-pad.b+7);
+    });
+    ctx.restore();
+    var col=colorOf(cfg.color);
+    stats.forEach(function(st,i){
+      var cy=pad.t+rowH*i+rowH/2, bh=Math.min(cfg.boxH||16, rowH-8);
+      ctx.font='600 11.5px system-ui, sans-serif';
+      txt(ctx, ell(ctx,L(st.row),labelW-12), labelW-10, cy, 'right', T.text2,'600',11.5);
+      var k=c.t, mid=px(st.med);
+      var x1=mid+(px(st.lo)-mid)*k, x2=mid+(px(st.hi)-mid)*k;
+      var b1=mid+(px(st.q1)-mid)*k, b2=mid+(px(st.q3)-mid)*k;
+      ctx.save();
+      ctx.strokeStyle=T.lineStrong; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(x1,cy); ctx.lineTo(x2,cy); ctx.stroke();          /* whiskers */
+      [x1,x2].forEach(function(x){ ctx.beginPath();
+        ctx.moveTo(Math.round(x)+.5,cy-bh/3); ctx.lineTo(Math.round(x)+.5,cy+bh/3); ctx.stroke(); });
+      ctx.fillStyle=rgba(col,.30); ctx.fillRect(b1,cy-bh/2,Math.max(1,b2-b1),bh);   /* box */
+      ctx.strokeStyle=col; ctx.strokeRect(Math.round(b1)+.5,Math.round(cy-bh/2)+.5,Math.max(1,b2-b1),bh);
+      ctx.strokeStyle=T.text; ctx.lineWidth=2;                                       /* median */
+      ctx.beginPath(); ctx.moveTo(Math.round(mid)+.5,cy-bh/2); ctx.lineTo(Math.round(mid)+.5,cy+bh/2); ctx.stroke();
+      ctx.restore();
+      if(c.t>=1) st.out.forEach(function(v){                                         /* outliers, kept visible */
+        ctx.save(); ctx.fillStyle=T.surface; ctx.beginPath(); ctx.arc(px(v),cy,3.4,0,7); ctx.fill();
+        ctx.fillStyle=rgba(col,.85); ctx.beginPath(); ctx.arc(px(v),cy,2.4,0,7); ctx.fill(); ctx.restore(); });
+      var d=cfg.tip?cfg.tip(st.row,st,i):{title:String(L(st.row)), rows:[
+        {name:'max', val:fmt(st.hi)}, {name:'q3', val:fmt(st.q3)},
+        {name:'median', val:fmt(st.med)}, {name:'q1', val:fmt(st.q1)},
+        {name:'min', val:fmt(st.lo)}].concat(
+        st.n!=null?[{name:'n', val:nf(st.n)}]:[]).concat(
+        st.out.length?[{name:'outliers', val:nf(st.out.length)}]:[])};
+      c.hits.push({x:0,y:cy-rowH/2,w:W,h:rowH,title:d.title,rows:d.rows,note:d.note});
+    });
+    if(drop) txt(ctx, str('rowsOmitted',{n:drop}), W-6, H-6, 'right', T.muted,'600',10.5);
+  });
+};
+
+/* stacked area: composition over time, where the TOTAL is the point.
+   Honest caveat, printed by the factory: only the bottom band and the total
+   have a flat baseline. Middle bands cannot be compared by eye — if a middle
+   band is the subject, use VIZ.panels or a separate chart. */
+VIZ.stackedArea=function(cvs,cfg){
+  var X=fld(cfg.x), ser=cfg.series.map(function(sr){ return {name:sr.name,get:fld(sr.get),color:sr.color}; });
+  return mk(cvs,function(ctx,W,H,c){
+    ser.forEach(function(sr,i){ sr.hex=colorOf(sr.color, T.series[i%3]); });
+    var rows=usable(cfg.rows(), ser.map(function(sr){return sr.get;}));
+    if(rows.length<2){ chartMessage(ctx,W,H); return; }
+    if(needsNonNegative(ctx,W,H,rows,function(r){
+      return Math.min.apply(null, ser.map(function(sr){return sr.get(r);})); },'VIZ.columns or VIZ.panels')) return;
+    var pad={l:58,r:16,t:16,b:26}, PW=W-pad.l-pad.r, PH=H-pad.t-pad.b;
+    var totals=rows.map(function(r){ return ser.reduce(function(a,sr){ return a+sr.get(r); },0); });
+    var mx=Math.max.apply(null,totals)||1;
+    var tk=ticks(0,mx*1.06,4), hi=Math.max(tk[tk.length-1]||0, mx*1.04, 1e-9);
+    var px=function(i){ return pad.l+PW*i/(rows.length-1); };
+    var py=function(v){ return pad.t+PH*(1-v/hi); };
+    gridY(ctx,W,pad,tk.map(function(v){return {v:v,y:py(v)};}), cfg.tickFormat||compact);
+    var base=rows.map(function(){ return 0; });
+    ser.forEach(function(sr){
+      var top=rows.map(function(r,i){ return base[i]+sr.get(r)*c.t; });
+      ctx.save(); ctx.beginPath();
+      rows.forEach(function(r,i){ var x=px(i), y=py(top[i]); i?ctx.lineTo(x,y):ctx.moveTo(x,y); });
+      for(var i=rows.length-1;i>=0;i--) ctx.lineTo(px(i),py(base[i]));
+      ctx.closePath(); ctx.fillStyle=rgba(sr.hex,.68); ctx.fill();
+      ctx.strokeStyle=sr.hex; ctx.lineWidth=1.25; ctx.beginPath();
+      rows.forEach(function(r,i){ var x=px(i), y=py(top[i]); i?ctx.lineTo(x,y):ctx.moveTo(x,y); });
+      ctx.stroke(); ctx.restore();
+      base=top;
+    });
+    ctx.save(); ctx.fillStyle=T.muted; ctx.font='11px system-ui, sans-serif';
+    ctx.textBaseline='top'; ctx.textAlign='center';
+    var step=Math.max(1,Math.ceil(rows.length/(W>560?6:3))), last=-1e9;
+    rows.forEach(function(r,i){ if(i%step) return;
+      var x=px(i); if(x-last<50||x>W-pad.r-24) return; last=x;
+      ctx.fillText(ell(ctx,String(X(r)),step*PW/rows.length), x, pad.t+PH+8); });
+    ctx.restore();
+    rows.forEach(function(r,i){
+      var d=cfg.tip?cfg.tip(r,i,rows):{title:String(X(r)),
+        rows:ser.map(function(sr){ return {name:sr.name,val:(cfg.format||nf)(sr.get(r)),color:sr.hex}; })
+             .concat([{name:str('total'),val:(cfg.format||nf)(totals[i])}])};
+      c.hits.push({x:px(i)-PW/rows.length/2,y:pad.t,w:PW/rows.length,h:PH,
+        title:d.title,rows:d.rows,note:d.note});
+    });
+    if(c.t>=1 && cfg.bandNote!==false)
+      txt(ctx,'only the bottom band and the total share a flat baseline',
+          W-pad.r, pad.t-4, 'right', T.muted, '600', 10.5);
+    dropNote(ctx,W,H,rows);
   });
 };
 

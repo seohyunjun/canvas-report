@@ -9,8 +9,10 @@ The table that decides what you can honestly show, without knowing the domain.
 |---|---|---|---|
 | **Trend** | a time column + 1 measure, 6+ periods | is it rising or falling, is there seasonality | `VIZ.line` |
 | **Composition over time** | time + 2–3 measures **in the same unit** | which of two forces is winning | `VIZ.columns` |
+| **Composition of a total** | time + 2–4 parts summing to a meaningful total, non-negative | is the total growing, and which part carries it | `VIZ.stackedArea` |
 | **Flow (bridge)** | an entity key + two points in time | where did the net change come from | `VIZ.waterfall` |
-| **Distribution** | 1 measure, one row per entity | does the mean represent anything, where does it pile up | `VIZ.divColumns` |
+| **Distribution (one group)** | 1 measure, one row per entity | does the mean represent anything, where does it pile up | `VIZ.divColumns` |
+| **Distribution (many groups)** | 1 measure + 1 dimension, ≥ 5 values per group | which groups are wide, skewed, or full of outliers | `VIZ.boxplot` |
 | **Comparison (size)** | 1 dimension + 1 measure, cardinality ≤ 20 | who is big | `VIZ.hbars` |
 | **Comparison (direction)** | the above + two periods | who grew and who shrank | `VIZ.divHbars` |
 | **Comparison (multi-metric)** | 1 dimension + 2–3 measures in **different units** | is the biggest also the most numerous | `VIZ.panels` |
@@ -44,6 +46,15 @@ where the report actually is.
 
 **Parts of a whole.** Only when the parts genuinely sum to the whole, there are 2–5 of them, and
 none is negative. Otherwise it is a ranking, not a composition.
+
+**Stacked bands.** In a stacked area only the bottom band and the total sit on a flat baseline;
+every band above rides on the ones below, so its *shape* is readable but its *size* is not
+comparable by eye. Use it when the total is the subject. If a middle part is the subject, give it
+its own axis with `VIZ.panels`.
+
+**Box plots vs histograms.** A histogram answers "what does this one distribution look like".
+A box plot answers "how do these twenty distributions differ". Below about five values per group
+a box plot is over-claiming — show the points instead.
 
 ## What one section contains
 

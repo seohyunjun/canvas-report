@@ -31,8 +31,8 @@ twin, a help tooltip and a methodology section that says what the data cannot do
 **A single `.html` file.** Data embedded as JSON, charts drawn on canvas, zero external requests.
 It works offline, it survives being emailed, and it renders the same in five years.
 
-- **13 chart factories** — `line` `columns` `divColumns` `hbars` `divHbars` `panels` `bubbles`
-  `waterfall` `spark` `donut` `heatmap` `slope` `lollipop`
+- **15 chart factories** — `line` `columns` `divColumns` `hbars` `divHbars` `panels` `bubbles`
+  `waterfall` `spark` `donut` `heatmap` `slope` `lollipop` `boxplot` `stackedArea`
 - **10 themes** × day/night drops, generated to a contrast contract
 - **10 macrostructures** — Briefing · Ledger · Scrollytelling · Workbench · Broadsheet ·
   Poster/Almanac · Deck · Bridge · Comparison spread · Field notes
@@ -101,6 +101,8 @@ references/
   anti-patterns.md           read while generating
   pitfalls.md                read before touching the runtime
   slop-test.md               read only when it is built
+  external-tools.md          D3, Plotly, GSAP, Motion, anime.js, Lottie, Rive —
+                             what to borrow from each and what to refuse
 docs/themes.png              the contact sheet above
 ```
 

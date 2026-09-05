@@ -137,8 +137,12 @@ and copy · `[2]` the data JSON · `[3]` REPORT WIRING.
 builder. The bugs in them are already fixed — see [`references/pitfalls.md`](references/pitfalls.md).
 
 `VIZ` factories: `line` `columns` `divColumns` `hbars` `divHbars` `panels` `bubbles` `waterfall`
-`spark` `donut` `heatmap` `slope` `lollipop`. All take `(canvas, cfg)`, and `cfg.rows()` is a
-**function** so a filter change is picked up. Pass colours as **token names** (`'s1'`), never hex.
+`spark` `donut` `heatmap` `slope` `lollipop` `boxplot` `stackedArea`. All take `(canvas, cfg)`,
+and `cfg.rows()` is a **function** so a filter change is picked up. Pass colours as **token names**
+(`'s1'`), never hex.
+
+`chart.play(duration, easing)` takes any of nine named curves; overshoot curves are refused on
+charts and allowed on `R.motion()` / `R.countUp()`. See [`references/motion.md`](references/motion.md).
 
 Runtime helpers: `R.helpDot` `R.wireHelp` `R.buildTable` `R.wireToggles` `R.onView` `R.onTheme`
 `R.reveal` `R.countUp` `R.scrolly` `R.shrinkMasthead` `R.reduced` `R.paintAll` `R.tokens`.
@@ -253,7 +257,8 @@ to `.canvas-report/log.json`. Create the file if it does not exist.
 | [`references/macrostructures.md`](references/macrostructures.md) | step 3. **Index only**, then one file |
 | [`references/themes.md`](references/themes.md) | step 4. Catalogue and the rotation rule |
 | [`references/components.md`](references/components.md) | steps 4 and 6. Masthead, section head, insight, card archetypes |
-| [`references/motion.md`](references/motion.md) | step 6. Where movement belongs and where it does not |
+| [`references/motion.md`](references/motion.md) | step 6. Where movement belongs, and the easing vocabulary |
+| [`references/external-tools.md`](references/external-tools.md) | when tempted by D3, Plotly, GSAP, Motion, anime.js, Lottie or Rive |
 | [`references/tooltip-help.md`](references/tooltip-help.md) | step 7. Help copy and accessibility |
 | [`references/anti-patterns.md`](references/anti-patterns.md) | while generating. The named failures |
 | [`references/pitfalls.md`](references/pitfalls.md) | when adding a factory or touching the shell |
