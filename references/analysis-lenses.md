@@ -1,0 +1,68 @@
+# Analysis lenses — from data shape to chart
+
+The table that decides what you can honestly show, without knowing the domain.
+**Build a lens only when the left column is true.**
+
+## The mapping
+
+| Lens | Data shape it needs | Question it answers | Shell factory |
+|---|---|---|---|
+| **Trend** | a time column + 1 measure, 6+ periods | is it rising or falling, is there seasonality | `VIZ.line` |
+| **Composition over time** | time + 2–3 measures **in the same unit** | which of two forces is winning | `VIZ.columns` |
+| **Flow (bridge)** | an entity key + two points in time | where did the net change come from | `VIZ.waterfall` |
+| **Distribution** | 1 measure, one row per entity | does the mean represent anything, where does it pile up | `VIZ.divColumns` |
+| **Comparison (size)** | 1 dimension + 1 measure, cardinality ≤ 20 | who is big | `VIZ.hbars` |
+| **Comparison (direction)** | the above + two periods | who grew and who shrank | `VIZ.divHbars` |
+| **Comparison (multi-metric)** | 1 dimension + 2–3 measures in **different units** | is the biggest also the most numerous | `VIZ.panels` |
+| **Relationship** | 2 measures per entity (+ size, + direction) | do the two move together | `VIZ.bubbles` |
+| **Rank movement** | 1 measure at two points in time, ≤ 12 entities | who overtook whom | `VIZ.slope` |
+| **Cross-tab intensity** | 2 dimensions + 1 non-negative measure, ≤ 100 cells | where is the grid hot | `VIZ.heatmap` |
+| **Ranking (sparse)** | 1 dimension + 1 measure, ≤ 20 items | ranking where bars would be too heavy | `VIZ.lollipop` |
+| **Parts of a whole** | 2–5 nominal parts, non-negative | is one part dominant | `VIZ.donut` |
+| **Outliers** | an entity key + a sortable measure | who produced the result | `VIZ.hbars` + tabs |
+
+## Judgement rules
+
+**Time granularity.** Fewer than 6 periods is not a trend — demote it to a bar comparison.
+Past 25 periods, default the view to the most recent 12–13 and put the full range behind a filter.
+
+**Entity keys.** Before building a cohort or a bridge, compare `COUNT(DISTINCT key)` with `COUNT(*)`.
+A large gap means the key is masked, recycled, or needs to be a composite.
+**A bridge built on the wrong key tells a plausible lie in silence.**
+
+**Cardinality.**
+- ≤ 8 → show everything
+- 9–40 → top N plus a folded "other", or a size filter
+- \> 40 → switch to a scatter (one point per entity) or a top/bottom ranking. Forty bars is a table.
+
+**When the measure is a ratio.** Always state the denominator in the tooltip and the methodology.
+A large ratio from a small denominator needs a minimum-size filter, switched **on** by default.
+
+**Stock vs flow.** A balance at a point in time and a count of events during a period cannot be
+added or subtracted. If you have both, make the discrepancy its own section — that is usually
+where the report actually is.
+
+**Parts of a whole.** Only when the parts genuinely sum to the whole, there are 2–5 of them, and
+none is negative. Otherwise it is a ranking, not a composition.
+
+## What one section contains
+
+```
+title           what you found — a claim, not a question
+lede            2–3 sentences. why this lens
+toolbar         (optional) one row of filters governing this group
+card
+  h3 + help chip
+  card-note     basis, unit, caveat. Head off the misreading here
+  legend        required once there are 2+ series
+  canvas        the chart
+  tablewrap     the table twin (may start collapsed)
+```
+
+## Writing an insight
+
+- The title is a **claim**. "Results by region" ✗ / "The regions split in opposite directions" ✓
+- Put a number in the first sentence and wrap it in `<span class="fig">`.
+- Ask what would falsify it. If next period's data could not prove it wrong, it is a summary, not an insight.
+- If a change is explained by seasonality, a policy change, or a collection change, **say that**.
+  A spike with no cause is usually a data event, not a real one.

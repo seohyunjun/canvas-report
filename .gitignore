@@ -1,0 +1,11 @@
+# agent/tool state — never belongs in the repo
+.omc/
+.canvas-report/
+
+# python
+__pycache__/
+*.pyc
+
+# os
+.DS_Store
+Thumbs.db
