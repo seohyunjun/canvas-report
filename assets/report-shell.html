@@ -427,7 +427,8 @@ var CR_STRINGS = Object.assign({
   needsNumbers:  'every item needs a numeric value',
   delta:         'delta',
   tableShow:     'show table',
-  tableHide:     'hide table'
+  tableHide:     'hide table',
+  stackedBandNote:'only the bottom band and the total share a flat baseline'
 }, window.CR_STRINGS || {});
 
 var REPORT = (function(){
@@ -1475,8 +1476,7 @@ VIZ.stackedArea=function(cvs,cfg){
         title:d.title,rows:d.rows,note:d.note});
     });
     if(c.t>=1 && cfg.bandNote!==false)
-      txt(ctx,'only the bottom band and the total share a flat baseline',
-          W-pad.r, pad.t-4, 'right', T.muted, '600', 10.5);
+      txt(ctx, str('stackedBandNote'), W-pad.r, pad.t-4, 'right', T.muted, '600', 10.5);
     dropNote(ctx,W,H,rows);
   });
 };
@@ -1544,6 +1544,12 @@ function isDark(){
 }
 function refresh(){ readTokens(); themeHooks.forEach(function(f){ f(T); }); paintAll(); }
 var tb=document.getElementById('themeBtn');
+if(tb){
+  /* the toggle's own label is a string too — otherwise a translated report keeps
+     one English control. Markup supplies the glyph; CR_STRINGS supplies the word. */
+  tb.textContent='◐ '+str('themeToggle');
+  tb.setAttribute('aria-label', str('themeToggleAria'));
+}
 if(tb) tb.addEventListener('click',function(){
   document.documentElement.setAttribute('data-theme', isDark()?'light':'dark');
   setTimeout(refresh,30);
