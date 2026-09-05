@@ -52,10 +52,10 @@ critique: P4 H5 E4 S5 R4 V5 D5
 
 ## Procedure
 
-### Reading order — four files are not optional
+### Reading order — four files in full, and part of a fifth
 
 The reference map at the bottom of this file is an index, not a menu. **Four of those files are
-read on every report**, at the step that needs them, before you write the code for that step:
+read in full on every report**, at the step that needs them, before you write the code for that step:
 
 | Read it | At | Because skipping it costs you |
 |---|---|---|
@@ -63,6 +63,14 @@ read on every report**, at the step that needs them, before you write the code f
 | [`references/pitfalls.md`](references/pitfalls.md) | step 5, before the wiring | you re-step a mine the shell already fixed — canvas height, cached tokens, an unchecked key |
 | [`references/motion.md`](references/motion.md) | step 6 | you animate somewhere motion does not belong, or pick an easing that draws past the axis |
 | [`references/tooltip-help.md`](references/tooltip-help.md) | step 7 | help copy that names the chart type and forgets the formula |
+
+**A fifth is read in part, at step 0.** [`references/external-tools.md`](references/external-tools.md)
+is filed under "when tempted by D3, Plotly, GSAP…", which is right for its library assessments and
+wrong for two of its sections. **§ The D3 gallery, mapped onto this skill** is the chart-form
+vocabulary — which forms this skill covers, and which it deliberately refuses (hierarchies, networks,
+maps, streamgraph, violin, beeswarm, radial bars) together with the reason. **§ When to close this
+skill** tells you when the data means you should not be writing this report at all. Neither is about
+temptation; both belong beside the lens table, before a lens is picked. Read those two there.
 
 [`references/anti-patterns.md`](references/anti-patterns.md) stays open the whole time.
 The rest are conditional and the map says when.
@@ -87,6 +95,11 @@ Actually load or query it first and establish the following. **Do not guess; que
 **Read [`references/analysis-lenses.md`](references/analysis-lenses.md) now** — the whole file,
 not only the mapping table. Take the profile to it and **build only the lenses the shape supports.**
 A lens the data cannot carry is not included at all.
+
+Read the two form-scope sections of [`references/external-tools.md`](references/external-tools.md)
+alongside it — **§ The D3 gallery, mapped onto this skill** and **§ When to close this skill**. The
+lens table says what you *can* build from this shape; those two say what this skill has decided *not*
+to draw, and when the honest answer is a different document rather than a worse chart.
 
 Its judgement rules bind as hard as the mapping table does: under 6 periods is not a trend, over 25
 defaults to the most recent 12–13, cardinality over 8 folds, and **a bridge or a cohort gets its key
@@ -293,7 +306,7 @@ to `.canvas-report/log.json`. Create the file if it does not exist.
 | [`references/themes.md`](references/themes.md) | step 4. Catalogue and the rotation rule |
 | [`references/components.md`](references/components.md) | steps 4 and 6. Masthead, section head, insight, card archetypes |
 | [`references/motion.md`](references/motion.md) | **always**, step 6. Where movement belongs, and the easing vocabulary |
-| [`references/external-tools.md`](references/external-tools.md) | when tempted by D3, Plotly, GSAP, Motion, anime.js, Lottie or Rive |
+| [`references/external-tools.md`](references/external-tools.md) | **step 0 for two sections** — the D3-gallery form map and when to close this skill. The rest when tempted by D3, Plotly, GSAP, Motion, anime.js, Lottie or Rive |
 | [`references/tooltip-help.md`](references/tooltip-help.md) | **always**, step 7. Help copy and accessibility |
 | [`references/anti-patterns.md`](references/anti-patterns.md) | while generating. The named failures |
 | [`references/pitfalls.md`](references/pitfalls.md) | **always**, step 5, before the wiring. Not just for factory authors — Layout · Runtime · Numbers · Data are about the wiring |
