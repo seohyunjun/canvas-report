@@ -52,6 +52,24 @@ critique: P4 H5 E4 S5 R4 V5 D5
 
 ## Procedure
 
+### Reading order — four files are not optional
+
+The reference map at the bottom of this file is an index, not a menu. **Four of those files are
+read on every report**, at the step that needs them, before you write the code for that step:
+
+| Read it | At | Because skipping it costs you |
+|---|---|---|
+| [`references/analysis-lenses.md`](references/analysis-lenses.md) | step 0–1 | you build a lens the shape cannot carry, or blow past its judgement rules (period count, cardinality, key checks) |
+| [`references/pitfalls.md`](references/pitfalls.md) | step 5, before the wiring | you re-step a mine the shell already fixed — canvas height, cached tokens, an unchecked key |
+| [`references/motion.md`](references/motion.md) | step 6 | you animate somewhere motion does not belong, or pick an easing that draws past the axis |
+| [`references/tooltip-help.md`](references/tooltip-help.md) | step 7 | help copy that names the chart type and forgets the formula |
+
+[`references/anti-patterns.md`](references/anti-patterns.md) stays open the whole time.
+The rest are conditional and the map says when.
+
+**If you have not read a file, do not claim its gates.** Reporting a passing slop test on
+references you never opened is the one failure this skill cannot detect for you.
+
 ### 0. Profile the data — shape, not domain
 
 Actually load or query it first and establish the following. **Do not guess; query.**
@@ -66,8 +84,14 @@ Actually load or query it first and establish the following. **Do not guess; que
 | placeholder and sentinel values | `unclassified`, `N/A`, `-1`, `9999` leave the aggregates but stay in the totals |
 | whether two periods can be compared | whether the flow (bridge) and direction lenses are available |
 
-Take the profile to the table in [`references/analysis-lenses.md`](references/analysis-lenses.md)
-and **build only the lenses the shape supports.** A lens the data cannot carry is not included at all.
+**Read [`references/analysis-lenses.md`](references/analysis-lenses.md) now** — the whole file,
+not only the mapping table. Take the profile to it and **build only the lenses the shape supports.**
+A lens the data cannot carry is not included at all.
+
+Its judgement rules bind as hard as the mapping table does: under 6 periods is not a trend, over 25
+defaults to the most recent 12–13, cardinality over 8 folds, and **a bridge or a cohort gets its key
+checked with `COUNT(DISTINCT)` against `COUNT(*)` before it is built** — with the residual written
+into the methodology. Deviating from one of them is allowed; deviating silently is not.
 
 ### 1. Fix the insights before the charts
 
@@ -134,7 +158,14 @@ to change, marked in the header comment: `[T]` theme tokens · `[L]` UI strings 
 and copy · `[2]` the data JSON · `[3]` REPORT WIRING.
 
 **Do not touch** the `[S]` structure layer, the tooltip engine, the `VIZ` factories or the table
-builder. The bugs in them are already fixed — see [`references/pitfalls.md`](references/pitfalls.md).
+builder. The bugs in them are already fixed.
+
+**Read [`references/pitfalls.md`](references/pitfalls.md) before you write a line of wiring.**
+Not only when you add a factory — its *Layout*, *Runtime*, *Numbers* and *Data* sections are about
+the code **you** are about to write. Three that catch wiring authors every time: a canvas height set
+in CSS is ignored (the height comes from the `<canvas height="…">` **attribute**), a colour cached
+from `R.tokens()` outside the paint function goes stale, and an unchecked entity key makes a bridge
+lie in silence.
 
 `VIZ` factories: `line` `columns` `divColumns` `hbars` `divHbars` `panels` `bubbles` `waterfall`
 `spark` `donut` `heatmap` `slope` `lollipop` `boxplot` `stackedArea`. All take `(canvas, cfg)`,
@@ -174,13 +205,17 @@ section destroys the table of contents.
 
 A filter goes on **one line directly above the group it governs**, never inside a chart card.
 
-Motion is confined to the three places in [`references/motion.md`](references/motion.md) —
-the waterfall's flow, scroll transitions, and play-once-on-entry. Delete the rest.
+**Read [`references/motion.md`](references/motion.md) now.** Motion is confined to the three places
+it names — the waterfall's flow, scroll transitions, and play-once-on-entry. Delete the rest, and
+take the easing from its value-safe column: an overshoot curve on a chart draws the mark past its
+own axis.
 
 ### 7. Wire the help tooltips — a requirement of this skill
 
 Reader-facing explanation is a **tooltip**, not a separate note. Same engine as the value
-tooltip, different shape. Copy rules in [`references/tooltip-help.md`](references/tooltip-help.md).
+tooltip, different shape. **Read [`references/tooltip-help.md`](references/tooltip-help.md) now** —
+it fixes the copy order, caps you at three sentences, bans naming the chart type, and requires the
+word "estimate" inside the tooltip whenever the number is one.
 
 ```js
 // the question chip beside a chart title
@@ -253,15 +288,15 @@ to `.canvas-report/log.json`. Create the file if it does not exist.
 | [`assets/report-shell.html`](assets/report-shell.html) | step 5. The runtime you copy; it runs a demo as-is |
 | [`assets/themes.css`](assets/themes.css) | never directly — `apply-theme.py` reads it |
 | [`assets/apply-theme.py`](assets/apply-theme.py) | step 5. Swapping the theme |
-| [`references/analysis-lenses.md`](references/analysis-lenses.md) | steps 0–1. Data shape → lens → chart |
+| [`references/analysis-lenses.md`](references/analysis-lenses.md) | **always**, steps 0–1. Data shape → lens → chart, and the judgement rules |
 | [`references/macrostructures.md`](references/macrostructures.md) | step 3. **Index only**, then one file |
 | [`references/themes.md`](references/themes.md) | step 4. Catalogue and the rotation rule |
 | [`references/components.md`](references/components.md) | steps 4 and 6. Masthead, section head, insight, card archetypes |
-| [`references/motion.md`](references/motion.md) | step 6. Where movement belongs, and the easing vocabulary |
+| [`references/motion.md`](references/motion.md) | **always**, step 6. Where movement belongs, and the easing vocabulary |
 | [`references/external-tools.md`](references/external-tools.md) | when tempted by D3, Plotly, GSAP, Motion, anime.js, Lottie or Rive |
-| [`references/tooltip-help.md`](references/tooltip-help.md) | step 7. Help copy and accessibility |
+| [`references/tooltip-help.md`](references/tooltip-help.md) | **always**, step 7. Help copy and accessibility |
 | [`references/anti-patterns.md`](references/anti-patterns.md) | while generating. The named failures |
-| [`references/pitfalls.md`](references/pitfalls.md) | when adding a factory or touching the shell |
+| [`references/pitfalls.md`](references/pitfalls.md) | **always**, step 5, before the wiring. Not just for factory authors — Layout · Runtime · Numbers · Data are about the wiring |
 | [`references/slop-test.md`](references/slop-test.md) | step 10. **Only after it is built** |
 
 If the `dataviz` skill is available, it is the higher authority on colour. The palettes in
