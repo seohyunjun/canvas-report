@@ -1,5 +1,9 @@
 # canvas-report
 
+[![Latest release](https://img.shields.io/github/v/release/seohyunjun/canvas-report?sort=semver&label=release)](https://github.com/seohyunjun/canvas-report/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+![Network requests: 0](https://img.shields.io/badge/network%20requests-0-brightgreen)
+
 A skill that turns a dataset into **one self-contained HTML file a reader can explore** — every
 chart drawn directly on `<canvas>`, no libraries fetched, no network requests at all.
 
