@@ -2,6 +2,24 @@
 
 Versions are the `version:` field in `SKILL.md`. Dates are the day the work landed on `main`.
 
+## 2.1.1 — 2026-09-06
+
+Three defects found by building a report with 2.1.0.
+
+- **`onTheme` never ran the hook it registered.** It only pushed onto the list that a theme
+  toggle walks, so a legend built inside the hook stayed empty until the reader switched theme —
+  and most never do. A two-series chart shipped with blank swatches. It now runs the hook once at
+  registration as well; register it after the markup exists.
+- **The shell's header comment contained a literal `<title>` tag.** A `<title>.*?</title>`
+  substitution against the file matched the comment first and deleted the document head —
+  `<html lang>`, both `<meta>` tags and the real title — leaving the page to render without its
+  layout CSS applying. The comment now names the element without angle brackets, the way the
+  `id="report-data"` line already did. `pitfalls.md` records both.
+- **10 Field notes contradicted gate 46.** Its motion section said "almost none, `.reveal` only",
+  which the new play-once-on-entry default cannot satisfy by omission. It now says entry play
+  only — no emphasis animation, no re-sort travel — and points at `static:true` for a chart that
+  genuinely must hold still.
+
 ## 2.1.0 — 2026-09-06
 
 Everything below accumulated after 2.0.0 was tagged in the manifest and never released under a

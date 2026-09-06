@@ -26,8 +26,13 @@ methodology
 - Break the line across a gap. A line drawn through missing data is invented data.
 
 ## Motion
-- Almost none. `.reveal` only. A research notebook does not move.
+- **Entry play only.** `R.playAll()` as everywhere else — watching a chart draw makes the axis
+  register, and that is reading, not decoration. Nothing beyond it: no emphasis animation, no
+  re-sort travel, no scroll transitions. A research notebook is read, not performed.
 - Emphasise an outlier with a label and colour, not with animation.
+- If an observation genuinely needs a still chart — a chart whose growth would read as a trend it
+  does not have — declare it `static:true` and put the reason in the margin, where the other
+  caveats already live.
 
 ## Do not
 - **Fill the margin with decoration.** An observation with nothing to note gets no marginalia.

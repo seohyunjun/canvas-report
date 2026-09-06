@@ -177,6 +177,11 @@ A parse failure logs a warning — **if every chart is black or grey, suspect co
 contrast contract (body 7:1, muted text 4.5:1, chart marks 3:1) and series separation
 (≥55° of hue or ≥1.18 greyscale ratio). Recompute; do not eyeball.
 
+**A theme hook that only runs on change.** `onTheme(f)` used to register `f` and nothing more,
+so an HTML legend built inside the hook stayed **empty until the reader toggled the theme** — and
+most readers never do. The chart drew its two series and the swatches that name them were blank.
+→ `onTheme` now runs the hook once at registration as well. Register it after the markup exists.
+
 **Replacing the token object on theme change.** `readTokens()` used to assign a new `T`, so any
 wiring holding a reference from `R.tokens()` kept painting the old colours after a toggle.
 It now refreshes the same object in place. Still safest to call `R.tokens()` inside your paint
