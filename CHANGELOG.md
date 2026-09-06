@@ -2,6 +2,14 @@
 
 Versions are the `version:` field in `SKILL.md`. Dates are the day the work landed on `main`.
 
+## 2.1.3 — 2026-09-06
+
+- **A report served over HTTP fetched one thing after all** — not from the page, from the browser,
+  which probes the origin for `/favicon.ico` when no icon is declared. Measured on the published
+  example: one request, 5,442 bytes. The shell now inlines a `data:` SVG icon, so the count is
+  zero over HTTP as it always was from `file://`, and a report has a tab icon offline too.
+- `examples/` and GitHub Pages: one report published exactly as the skill produced it.
+
 ## 2.1.2 — 2026-09-06
 
 Two more found by building a report, both the same shape: a value handed to the shell that the
