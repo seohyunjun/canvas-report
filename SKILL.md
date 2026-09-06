@@ -53,8 +53,14 @@ file you did not open now requires fabricating text that a `grep -F` against the
 find, which is a different and much more obvious kind of wrong. Before you ship, run that check on
 your own stamp.
 
-A file you opened and took nothing from is not listed. If none of the always-read five produced a
+A file you opened and took nothing from is not listed. If none of the always-read files produced a
 decision worth quoting, that is the signal you skimmed rather than read — go back.
+
+**Pick a fragment that survives an edit.** Quote the sentence, not its list number: a quote that
+starts `13. Every chart has a table twin` breaks the moment a gate is inserted above it, and the
+report then cites a line that no longer exists. Drop the ordinal and quote
+`Every chart has a table twin` instead. Adding to a reference is safe; renumbering is not, so do
+not put a number inside the quotation marks.
 
 **A file this skill binds to more than one step needs one entry per section, named.** A single
 quote proves you opened the file; it says nothing about *which part*. `external-tools.md` is the
@@ -96,6 +102,7 @@ read in full on every report**, at the step that needs them, before you write th
 | Read it | At | Because skipping it costs you |
 |---|---|---|
 | [`references/analysis-lenses.md`](references/analysis-lenses.md) | step 0–1 | you build a lens the shape cannot carry, or blow past its judgement rules (period count, cardinality, key checks) |
+| [`references/uncertainty.md`](references/uncertainty.md) | step 1, with the insights | you write "X went up" where the data only supports "X is 13.2%" — a comparison shipped without a denominator, an interval and a reference |
 | [`references/pitfalls.md`](references/pitfalls.md) | step 5, before the wiring | you re-step a mine the shell already fixed — canvas height, cached tokens, an unchecked key |
 | [`references/motion.md`](references/motion.md) | step 6 | you animate somewhere motion does not belong, or pick an easing that draws past the axis |
 | [`references/tooltip-help.md`](references/tooltip-help.md) | step 7 | help copy that names the chart type and forgets the formula |
@@ -164,6 +171,14 @@ Write "what is true", not "here is the data".
 Look especially for **where two totals fail to reconcile.** A stock mixed with a flow, entities
 entering and leaving, two aggregates with different definitions — that is where the report is.
 
+**Read [`references/uncertainty.md`](references/uncertainty.md) here, while the sentences are still
+being written.** Each insight is about to become a claim, and it decides which of them you have
+earned. A magnitude ("직거래는 324건, 13.2%") is always safe. A comparison ("직거래가 늘었다") needs
+a denominator, an interval and the reference it is measured from, or it gets rewritten as a
+magnitude. The shell ships `R.wilson(k,n)` for shares; medians and ratios get a seeded bootstrap at
+build time, never in the browser. And if the data is a census rather than a sample — a billing
+export is — say so and draw no interval at all.
+
 ### 2. Look up the previous report — skip this and you will always produce the same one
 
 Read `.canvas-report/log.json` in the project root. Failing that, read the stamp comment at the
@@ -230,7 +245,8 @@ from `R.tokens()` outside the paint function goes stale, and an unchecked entity
 lie in silence.
 
 `VIZ` factories: `line` `columns` `divColumns` `hbars` `divHbars` `panels` `bubbles` `waterfall`
-`spark` `donut` `heatmap` `slope` `lollipop` `boxplot` `stackedArea`. All take `(canvas, cfg)`,
+`spark` `donut` `heatmap` `slope` `lollipop` `boxplot` `stackedArea` `concentration` `interval`.
+All take `(canvas, cfg)`,
 and `cfg.rows()` is a **function** so a filter change is picked up. Pass colours as **token names**
 (`'s1'`), never hex.
 
@@ -335,7 +351,7 @@ google-chrome --headless=new --no-sandbox --disable-gpu --hide-scrollbars \
 
 ### 10. Run the slop test and record the result
 
-Pass the 42 gates in [`references/slop-test.md`](references/slop-test.md).
+Pass the 45 gates in [`references/slop-test.md`](references/slop-test.md).
 **Do not read that file while generating** — the gates are a post-hoc check; the in-flight
 reference is [`references/anti-patterns.md`](references/anti-patterns.md).
 
@@ -368,6 +384,7 @@ this build and nothing else.
 | [`assets/themes.css`](assets/themes.css) | never directly — `apply-theme.py` reads it |
 | [`assets/apply-theme.py`](assets/apply-theme.py) | step 5. Swapping the theme |
 | [`references/analysis-lenses.md`](references/analysis-lenses.md) | **always**, steps 0–1. Data shape → lens → chart, and the judgement rules |
+| [`references/uncertainty.md`](references/uncertainty.md) | **always**, step 1. Which comparisons you have earned; Wilson, bootstrap, MAD; `VIZ.interval` and `VIZ.concentration` |
 | [`references/macrostructures.md`](references/macrostructures.md) | step 3. **Index only**, then one file |
 | [`references/themes.md`](references/themes.md) | step 4. Catalogue and the rotation rule |
 | [`references/components.md`](references/components.md) | steps 4 and 6. Masthead, section head, insight, card archetypes |

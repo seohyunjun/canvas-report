@@ -4,11 +4,11 @@
 [`anti-patterns.md`](anti-patterns.md). This file is the scorecard for a finished report.
 Anything that trips, fix and run again.
 
-42 gates in five groups. **If anything in group D trips, the rest of the score is meaningless.**
+45 gates in five groups. **If anything in group D trips, the rest of the score is meaningless.**
 
 ---
 
-## D · Data honesty (1–12) — stop immediately on failure
+## D · Data honesty (1–15) — stop immediately on failure
 
 1. There is not a single dual axis.
 2. Every bar chart starts at zero. (Lines may not; if so it is stated in the help tooltip.)
@@ -24,49 +24,53 @@ Anything that trips, fix and run again.
 11. Changes below 0.1% are not flattened to `0.0%`.
 12. The methodology carries all three of **data basis · formulas · known limits**, and the limits
     are not empty.
+13. Every comparison described as real carries a denominator, an interval, and the reference it is
+    measured from — or the report states the magnitude and stops.
+14. No p-value, no significance star, no use of the word "significant". Intervals only.
+15. If the data is a census rather than a sample, no interval is drawn and the methodology says so.
 
-## E · Explorability (13–21)
+## E · Explorability (16–24)
 
-13. Every chart has a table twin.
-14. Every chart card has at least one help chip (`R.helpDot`).
-15. Every computed metric carries a definition tooltip (`help-term`).
-16. No information lives only in a tooltip — the same content is in a `card-note` or the methodology.
-17. Help opens by hover, keyboard focus and touch tap alike (`R.wireHelp()` is called).
-18. Filters sit directly above the group they govern, never inside a chart card.
-19. A filter combination returning zero rows produces an empty-state message and a way back.
-20. Value labels are selective — endpoints, extremes and the key series only.
-21. Direction is never encoded by colour alone; a sign or arrow accompanies it.
+16. Every chart has a table twin.
+17. Every chart card has at least one help chip (`R.helpDot`).
+18. Every computed metric carries a definition tooltip (`help-term`).
+19. No information lives only in a tooltip — the same content is in a `card-note` or the methodology.
+20. Help opens by hover, keyboard focus and touch tap alike (`R.wireHelp()` is called).
+21. Filters sit directly above the group they govern, never inside a chart card.
+22. A filter combination returning zero rows produces an empty-state message and a way back.
+23. Value labels are selective — endpoints, extremes and the key series only.
+24. Direction is never encoded by colour alone; a sign or arrow accompanies it.
 
-## S · Structural variety (22–27)
+## S · Structural variety (25–30)
 
-22. A macrostructure was chosen and is named in the stamp.
-23. It differs from the previous report (last three entries of `.canvas-report/log.json`).
-24. The theme differs from the previous one on at least one of the three axes.
-25. The masthead archetype differs from the previous one.
-26. The chosen macro's data requirement is genuinely met (it is not a three-step scrollytelling piece).
-27. No section was built on a lens the data does not support — no empty charts, no forced ones.
+25. A macrostructure was chosen and is named in the stamp.
+26. It differs from the previous report (last three entries of `.canvas-report/log.json`).
+27. The theme differs from the previous one on at least one of the three axes.
+28. The masthead archetype differs from the previous one.
+29. The chosen macro's data requirement is genuinely met (it is not a three-step scrollytelling piece).
+30. No section was built on a lens the data does not support — no empty charts, no forced ones.
 
-## V · Visual discipline (28–35)
+## V · Visual discipline (31–38)
 
-28. No hex is written directly onto the canvas; every colour is passed as a token name.
-29. Fewer than four colours on nominal categories. Past that it is folded or split.
-30. Identity colours (`s1 s2 s3`) and direction colours (`pos neg`) are never mixed in one chart.
-31. No italic headings.
-32. Three type roles or fewer (`display` · `body` · `label`).
-33. No fake browser bar, phone frame or terminal window is drawn.
-34. The dark drop is declared in both `@media (prefers-color-scheme)` and `[data-theme]`.
-35. The dark drop was actually rendered and looked at — it is not an inversion.
+31. No hex is written directly onto the canvas; every colour is passed as a token name.
+32. Fewer than four colours on nominal categories. Past that it is folded or split.
+33. Identity colours (`s1 s2 s3`) and direction colours (`pos neg`) are never mixed in one chart.
+34. No italic headings.
+35. Three type roles or fewer (`display` · `body` · `label`).
+36. No fake browser bar, phone frame or terminal window is drawn.
+37. The dark drop is declared in both `@media (prefers-color-scheme)` and `[data-theme]`.
+38. The dark drop was actually rendered and looked at — it is not an inversion.
 
-## M · Motion and finish (36–42)
+## M · Motion and finish (39–45)
 
-36. The animation always ends — the final state draws even if rAF stops.
-37. The final state alone carries all the information.
-38. Under `prefers-reduced-motion` the animation is omitted, not slowed.
-39. No loops, staggered entrances, hover zoom or loading skeletons.
-40. Zero network requests. (If you deliberately added a web font, it is stated in the methodology.)
-41. Rendered and inspected at 1240 / 768 / 500px, and horizontal overflow was **measured** with
+39. The animation always ends — the final state draws even if rAF stops.
+40. The final state alone carries all the information.
+41. Under `prefers-reduced-motion` the animation is omitted, not slowed.
+42. No loops, staggered entrances, hover zoom or loading skeletons.
+43. Zero network requests. (If you deliberately added a web font, it is stated in the methodology.)
+44. Rendered and inspected at 1240 / 768 / 500px, and horizontal overflow was **measured** with
     `scrollWidth` against `innerWidth`.
-42. The stamp is at the top of the file and this report is recorded in `.canvas-report/log.json`.
+45. The stamp is at the top of the file and this report is recorded in `.canvas-report/log.json`.
 
 ---
 

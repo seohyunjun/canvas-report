@@ -108,6 +108,19 @@ anything. Series across a code change cannot simply be concatenated.
 because of reporting delay, and get revised up next release. That is not a decline. Annotate it,
 or exclude the period and say that you did.
 
+**An interval on a census.** A billing export, a full trade register, every row your system
+produced — these are populations, not samples of one. A Wilson band on them is theatre: it answers
+"what if we had drawn a different sample" when no sampling happened. → State that it is a census
+and draw the point value alone.
+
+**Comparing two intervals by eye.** Overlapping intervals do **not** imply no difference; the
+interval of the *difference* is narrower than either. Non-overlap does imply a difference.
+→ Say only what the picture supports, or compute the interval of the difference directly.
+
+**Gini as a headline.** One number for a whole distribution invites comparison between populations
+of different size and tail shape, and the comparison is usually invalid. → `VIZ.concentration`
+reports top-k share, which is bounded and means what it says.
+
 ## Layout
 
 **A grid child overflows on narrow screens.** Put a table with `min-width:520px` inside a grid

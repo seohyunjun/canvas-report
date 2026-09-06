@@ -428,7 +428,16 @@ var CR_STRINGS = Object.assign({
   delta:         'delta',
   tableShow:     'show table',
   tableHide:     'hide table',
-  stackedBandNote:'only the bottom band and the total share a flat baseline'
+  stackedBandNote:'only the bottom band and the total share a flat baseline',
+  concentrationMin:'a concentration curve needs at least 2 entities',
+  concentrationSum:'the values must add up to more than zero',
+  concentrationEven:'even split',
+  concentrationX:'entities, largest first',
+  concentrationTopN:'top {n} together',
+  reference:'reference',
+  intervalBand:'interval',
+  intervalCrosses:'the interval covers the reference — not distinguishable from it',
+  intervalClears:'the whole interval sits on one side of the reference'
 }, window.CR_STRINGS || {});
 
 var REPORT = (function(){
@@ -867,6 +876,19 @@ function chartMessage(ctx,W,H,message){
   if(l2) txt(ctx,l2,W/2,H/2+9,'center',T.muted,'600',12);
 }
 function finiteNumber(v){ var n=Number(v); return isFinite(n)?n:null; }
+/* Wilson score interval for a proportion. Reports quote shares constantly —
+   "13.5% of trades were direct" — and a share from 40 rows is not the same claim
+   as a share from 4,000. This is the cheap honest one: no normal approximation
+   collapse at p near 0 or 1, no simulation, exact in three lines.
+   Returns fractions, not percentages. references/uncertainty.md says when to use it. */
+function wilson(k,n,z){
+  k=Number(k); n=Number(n); z=Number(z)||1.96;          /* 1.96 = 95% */
+  if(!isFinite(k)||!isFinite(n)||n<=0||k<0||k>n) return null;
+  var p=k/n, z2=z*z, d=1+z2/n;
+  var centre=(p+z2/(2*n))/d;
+  var half=(z*Math.sqrt(p*(1-p)/n + z2/(4*n*n)))/d;
+  return {p:p, lo:Math.max(0,centre-half), hi:Math.min(1,centre+half), n:n, k:k};
+}
 /* Pass colours as TOKEN NAMES ('s1', 'pos'...). Resolving at draw time is what
    makes a chart follow the theme toggle; a hard-coded hex will not. */
 function colorOf(v,dflt){
@@ -1528,6 +1550,142 @@ VIZ.stackedArea=function(cvs,cfg){
   });
 };
 
+/* concentration curve: "how much of the total comes from how few".
+   Entities are sorted by value DESCENDING, so the curve reads top-down —
+   "the top 10% hold 62%" — which is the sentence reports actually write.
+   The textbook Lorenz curve is this mirrored (ascending, bowing below the
+   diagonal); the area between curve and diagonal is the same either way.
+   Gini is deliberately not computed: one number for a whole shape invites
+   a comparison between populations that the number cannot support.
+   cfg: rows, value, label, marks (percentages to call out, default [10,20,50]) */
+VIZ.concentration=function(cvs,cfg){
+  var V=fld(cfg.value), L=cfg.label?fld(cfg.label):null, fmt=cfg.format||compact;
+  var MARKS=cfg.marks||[10,20,50];
+  return mk(cvs,function(ctx,W,H,c){
+    var rows=usable(cfg.rows(),[V]).slice(), pad={l:52,r:18,t:18,b:34};
+    if(rows.length<2){ chartMessage(ctx,W,H,str('concentrationMin')); return; }
+    if(needsNonNegative(ctx,W,H,rows,V,'VIZ.divHbars')) return;
+    rows.sort(function(a,b){ return V(b)-V(a); });
+    var total=rows.reduce(function(a,r){ return a+V(r); },0);
+    if(!(total>0)){ chartMessage(ctx,W,H,str('concentrationSum')); return; }
+    var n=rows.length, PW=W-pad.l-pad.r, PH=H-pad.t-pad.b;
+    var px=function(p){ return pad.l+PW*p/100; }, py=function(p){ return pad.t+PH*(1-p/100); };
+    /* cumulative share of the total against cumulative share of the entities */
+    var pts=[{x:0,y:0,i:0}], run=0;
+    rows.forEach(function(r,i){ run+=V(r);
+      pts.push({x:(i+1)/n*100, y:run/total*100, i:i+1}); });
+    gridY(ctx,W,pad,ticks(0,100,4).map(function(v){return {v:v,y:py(v)};}),
+          function(v){ return Math.round(v)+'%'; });
+    /* the diagonal is what "no concentration at all" looks like */
+    ctx.save(); ctx.strokeStyle=T.lineStrong; ctx.lineWidth=1; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(px(0),py(0)); ctx.lineTo(px(100),py(100)); ctx.stroke(); ctx.restore();
+    txt(ctx,str('concentrationEven'),px(100)-4,py(100)+13,'right',T.muted,'600',10.5);
+    var col=colorOf(cfg.color,T.s1), k=Math.max(1,Math.round(pts.length*c.t));
+    ctx.save(); ctx.beginPath();
+    for(var j=0;j<k;j++){ var q=pts[j]; j?ctx.lineTo(px(q.x),py(q.y)):ctx.moveTo(px(q.x),py(q.y)); }
+    ctx.lineTo(px(pts[k-1].x),py(0)); ctx.lineTo(px(0),py(0)); ctx.closePath();
+    ctx.fillStyle=rgba(col,.13); ctx.fill(); ctx.restore();
+    ctx.save(); ctx.strokeStyle=col; ctx.lineWidth=2; ctx.lineJoin='round'; ctx.beginPath();
+    for(var m=0;m<k;m++){ var q2=pts[m]; m?ctx.lineTo(px(q2.x),py(q2.y)):ctx.moveTo(px(q2.x),py(q2.y)); }
+    ctx.stroke(); ctx.restore();
+    /* x axis */
+    ctx.save(); ctx.fillStyle=T.muted; ctx.font='11px system-ui, sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='top';
+    [0,25,50,75,100].forEach(function(v){ ctx.fillText(v+'%',px(v),pad.t+PH+8); });
+    ctx.restore();
+    txt(ctx,str('concentrationX'),pad.l+PW/2,H-8,'center',T.muted,'600',10.5);
+    /* called-out points: "top k% -> y% of the total" */
+    if(c.t>=1) MARKS.forEach(function(mk2){
+      if(mk2<=0||mk2>=100) return;
+      var idx=Math.max(1,Math.round(n*mk2/100)), share=0;
+      for(var q=0;q<idx;q++) share+=V(rows[q]);
+      share=share/total*100;
+      var X=px(idx/n*100), Y=py(share);
+      ctx.save(); ctx.strokeStyle=rgba(col,.5); ctx.lineWidth=1; ctx.setLineDash([2,3]);
+      ctx.beginPath(); ctx.moveTo(X,py(0)); ctx.lineTo(X,Y); ctx.lineTo(px(0),Y); ctx.stroke(); ctx.restore();
+      ctx.fillStyle=T.surface; ctx.beginPath(); ctx.arc(X,Y,5,0,7); ctx.fill();
+      ctx.fillStyle=col; ctx.beginPath(); ctx.arc(X,Y,3,0,7); ctx.fill();
+      txt(ctx, Math.round(share)+'%', X+7, Y-9, 'left', T.text,'680',11);
+    });
+    /* hit testing walks the curve, so the tooltip answers "top N = ?%" anywhere */
+    var slot=PW/Math.max(1,n);
+    rows.forEach(function(r,i){
+      var q3=pts[i+1], cum=0;
+      for(var w=0;w<=i;w++) cum+=V(rows[w]);
+      var d=cfg.tip?cfg.tip(r,i,rows,{cum:cum,share:q3.y,total:total}):{
+        title:(L?String(L(r)):str('top')+(i+1)),
+        rows:[{name:str('concentrationTopN',{n:i+1}),val:Math.round(q3.y*10)/10+'%'},
+              {name:str('total'),val:fmt(cum)+' / '+fmt(total)}]};
+      c.hits.push({x:px(q3.x)-slot,y:pad.t,w:slot,h:PH,title:d.title,rows:d.rows,note:d.note});
+    });
+    dropNote(ctx,W,H,rows);
+  });
+};
+
+/* value with an uncertainty band, one row per entity.
+   This is the chart that lets a report say "the difference is within noise".
+   cfg: rows, label, value, lo, hi, ref (optional reference line, e.g. the pooled value)
+   A band that crosses `ref` is drawn muted — it is not distinguishable from it. */
+VIZ.interval=function(cvs,cfg){
+  var L=fld(cfg.label), V=fld(cfg.value), LO=fld(cfg.lo), HI=fld(cfg.hi);
+  var fmt=cfg.format||compact, REF=finiteNumber(cfg.ref);
+  return mk(cvs,function(ctx,W,H,c){
+    var rows=usable(cfg.rows(),[V,LO,HI]), pad={t:16,b:30};
+    if(!rows.length){ chartMessage(ctx,W,H); return; }
+    ctx.font='600 11.5px system-ui, sans-serif';
+    var labelW=Math.min(cfg.labelW||190, Math.max(90,W*(cfg.labelRatio||0.3)));
+    var valueW=finiteNumber(cfg.valueW)||96, PW=W-labelW-valueW;
+    var rowH=(H-pad.t-pad.b)/rows.length;
+    var lo=Math.min.apply(null,rows.map(LO)), hi=Math.max.apply(null,rows.map(HI));
+    if(REF!==null){ lo=Math.min(lo,REF); hi=Math.max(hi,REF); }
+    var span=(hi-lo)||1; lo-=span*0.08; hi+=span*0.08;
+    var px=function(v){ return labelW+PW*(v-lo)/(hi-lo); };
+    ctx.save(); ctx.strokeStyle=T.line; ctx.lineWidth=1; ctx.fillStyle=T.muted;
+    ctx.font='11px system-ui, sans-serif'; ctx.textAlign='center'; ctx.textBaseline='top';
+    ticks(lo,hi,4).forEach(function(v){ if(v<lo||v>hi) return;
+      var x=Math.round(px(v))+.5;
+      ctx.beginPath(); ctx.moveTo(x,pad.t); ctx.lineTo(x,H-pad.b); ctx.stroke();
+      ctx.fillText((cfg.tickFormat||compact)(v), x, H-pad.b+7); });
+    ctx.restore();
+    if(REF!==null){                    /* the line a band either clears or does not */
+      var rx=Math.round(px(REF))+.5;
+      ctx.save(); ctx.strokeStyle=T.text2; ctx.lineWidth=1.5; ctx.setLineDash([5,3]);
+      ctx.beginPath(); ctx.moveTo(rx,pad.t-4); ctx.lineTo(rx,H-pad.b); ctx.stroke(); ctx.restore();
+      txt(ctx,(cfg.refLabel||str('reference'))+' '+fmt(REF),rx,pad.t-11,'center',T.text2,'650',10.5);
+    }
+    rows.forEach(function(r,i){
+      var cy=pad.t+rowH*i+rowH/2, v=V(r), a=LO(r), b=HI(r);
+      var crosses = REF===null ? false : (a<=REF && b>=REF);
+      /* colour says only "clears the reference or not"; the sign is printed too,
+         so direction is never carried by colour alone */
+      var col = REF===null ? colorOf(cfg.color,T.s1)
+              : crosses ? T.muted : (v>REF?T.pos:T.neg);
+      var k=c.t, mid=px(v), x1=mid+(px(a)-mid)*k, x2=mid+(px(b)-mid)*k;
+      ctx.font='600 11.5px system-ui, sans-serif';
+      txt(ctx, ell(ctx,L(r),labelW-12), labelW-10, cy, 'right', T.text2,'600',11.5);
+      ctx.save();
+      ctx.fillStyle=rgba(col,.22); ctx.fillRect(x1,cy-7,Math.max(1,x2-x1),14);
+      ctx.strokeStyle=col; ctx.lineWidth=1;
+      [x1,x2].forEach(function(x){ ctx.beginPath();
+        ctx.moveTo(Math.round(x)+.5,cy-7); ctx.lineTo(Math.round(x)+.5,cy+7); ctx.stroke(); });
+      ctx.beginPath(); ctx.moveTo(x1,cy); ctx.lineTo(x2,cy); ctx.stroke();
+      ctx.fillStyle=col; ctx.beginPath(); ctx.arc(mid,cy,4,0,7); ctx.fill();
+      ctx.restore();
+      if(c.t>=1){
+        ctx.save(); ctx.font='650 11.5px system-ui, sans-serif';
+        var lx=clampLabel(ctx,fmt(v),W-4,'right',labelW+4,W-4); ctx.restore();
+        txt(ctx,fmt(v),lx,cy,'right',T.text2,'650',11.5);
+      }
+      var d=cfg.tip?cfg.tip(r,i,rows,{crosses:crosses}):{title:String(L(r)),
+        rows:[{name:cfg.seriesName||str('value'),val:fmt(v),color:col},
+              {name:str('intervalBand'),val:fmt(a)+' – '+fmt(b)}],
+        note: REF===null?null:(crosses?str('intervalCrosses'):str('intervalClears'))};
+      c.hits.push({x:0,y:cy-rowH/2,w:W,h:rowH,title:d.title,rows:d.rows,note:d.note});
+    });
+    dropNote(ctx,W,H,rows);
+  });
+};
+
 /* ── table builder (the table twin every chart owes the reader) ───────────── */
 function buildTable(tableEl, cols, rows, opt){
   opt=opt||{};
@@ -1615,7 +1773,8 @@ return { data:JSON.parse(document.getElementById('report-data').textContent),
          el:el, helpDot:helpDot, wireHelp:wireHelp, wireToggles:wireToggles,
          buildTable:buildTable, onView:onView, paintAll:paintAll, onTheme:function(f){themeHooks.push(f);},
          countUp:countUp, reveal:reveal, scrolly:scrolly, shrinkMasthead:shrinkMasthead,
-         rgbOf:rgbOf, motion:motion, easings:easings, reduced:function(){return RM.matches;} };
+         rgbOf:rgbOf, motion:motion, easings:easings, reduced:function(){return RM.matches;},
+         wilson:wilson };
 })();
 </script>
 

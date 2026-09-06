@@ -22,6 +22,8 @@ The table that decides what you can honestly show, without knowing the domain.
 | **Ranking (sparse)** | 1 dimension + 1 measure, ≤ 20 items | ranking where bars would be too heavy | `VIZ.lollipop` |
 | **Parts of a whole** | 2–5 nominal parts, non-negative | is one part dominant | `VIZ.donut` |
 | **Outliers** | an entity key + a sortable measure | who produced the result | `VIZ.hbars` + tabs |
+| **Concentration** | 1 measure over 5+ entities, non-negative | how much of the total comes from how few | `VIZ.concentration` |
+| **Uncertainty** | a point estimate + an interval per row | is this difference mine to claim | `VIZ.interval` |
 
 ## Judgement rules
 
@@ -39,6 +41,16 @@ A large gap means the key is masked, recycled, or needs to be a composite.
 
 **When the measure is a ratio.** Always state the denominator in the tooltip and the methodology.
 A large ratio from a small denominator needs a minimum-size filter, switched **on** by default.
+If the report goes on to *compare* two ratios, that is a claim, not arithmetic — give each one an
+interval ([`uncertainty.md`](uncertainty.md)) or describe the magnitudes and stop.
+
+**Concentration is a finding, not a footnote.** If the top few entities carry most of the total,
+that is usually the most useful sentence in the report and it deserves the chart rather than a
+parenthesis. `VIZ.concentration` draws it; the top-k share is the statistic. Do not compute Gini.
+
+**A difference needs three things on the page:** the denominator, an interval, and the reference
+it is measured from. Missing any one of them, state the magnitude and stop.
+See [`uncertainty.md`](uncertainty.md) — it is read at step 1, with this file.
 
 **Stock vs flow.** A balance at a point in time and a count of events during a period cannot be
 added or subtracted. If you have both, make the discrepancy its own section — that is usually
