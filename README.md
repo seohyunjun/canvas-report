@@ -15,6 +15,14 @@ It also refuses to make the same report twice.
 
 ---
 
+## An example
+
+**[평균의 평균은 평균이 아니다](https://seohyunjun.github.io/canvas-report/examples/dart-2025-payroll-average.html)**
+— DART 2025 filings for 446 companies. The mean of company means is ₩83.5M a year; total payroll
+divided by total headcount is ₩99.7M. The ₩16.2M gap comes only from the choice of denominator.
+
+One file, five charts, no network requests. [More in `examples/`](examples/).
+
 ## Why
 
 Most report generators are accurate and forgettable. They produce a hero figure, three cards, a
