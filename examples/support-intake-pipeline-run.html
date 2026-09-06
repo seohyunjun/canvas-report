@@ -1,0 +1,1851 @@
+<!DOCTYPE html>
+<!-- canvas-report spec-sha256: 86cd04d31a6deb53762eb129800704dbbe6ff29085275a6b46dc191311e24f06 · rules: DATA-HONESTY-001,LENS-ELIGIBILITY-001,MACRO-SELECTION-001,THEME-SELECTION-001,CLAIMS-001,TABLE-TWIN-001,HELP-TWIN-001,ZERO-NETWORK-001,MOTION-INTENT-001,MOTION-FINAL-STATE-001,MOTION-REDUCED-001,FINAL-CHECKS-001 -->
+<!--
+  ============================================================================
+  canvas-report — reusable shell (domain-agnostic, theme-swappable)
+  ----------------------------------------------------------------------------
+  Open this file as-is and a demo runs. There are exactly four places to change:
+
+    [T] theme tokens   replace the block between the [T] marks with one theme
+                       from assets/themes.css (or run assets/apply-theme.py)
+    [L] strings        UI text the reader sees. Translate this, not the code.
+    [1] the title element + masthead archetype and copy
+        (written without angle brackets on purpose — see [3] and pitfalls.md)
+    [2] the id="report-data" JSON block  -> your data
+    [3] the "REPORT WIRING" block at the bottom -> your sections and charts
+
+  Do NOT edit: the [S] structure layer, the tooltip engine, the VIZ factories,
+  or the table builder. If you need another chart type, ADD a factory; keep the
+  (canvas, cfg) signature and route every colour through colorOf().
+
+  Stamp convention: leave one line directly below this comment.
+    canvas-report · macro: <macro> · theme: <theme> · masthead: <M#> · lenses: <...>
+    critique: P# H# E# S# R# V# D#
+  ============================================================================
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%23111'/%3E%3Crect x='3' y='9' width='2.4' height='4' fill='%23fff'/%3E%3Crect x='6.8' y='6' width='2.4' height='7' fill='%23fff'/%3E%3Crect x='10.6' y='3' width='2.4' height='10' fill='%23fff'/%3E%3C/svg%3E">   <!-- inlined so an HTTP-served report still fetches nothing -->
+<title>Data Report</title>
+<style>
+/* [T] theme tokens — replace this whole run with one THEME block from
+   assets/themes.css. The default is ALMANAC. Never ship the same theme twice
+   in a row; the rotation rule lives in references/themes.md. */
+/* ── THEME COBALT ─────────────────────────────────────────────────────────
+   COBALT — instrumentation · cool near-white + electric cobalt · light-native
+   ───────────────────────────────────────────────────────────────────────── */
+:root{
+  color-scheme: light;
+  --bg:#f8fafd; --surface-1:#ffffff; --surface-2:#e8eaec;
+  --text-primary:#192029; --text-secondary:#50565e; --text-muted:#6d7279;
+  --line:#cecfd1; --line-strong:#abacae;
+  --accent:#0062d6; --accent-ink:#0062d6;
+  --s1:#0062d6; --s2:#e37035; --s3:#006e5b;
+  --pos:#1364ce; --neg:#c8393a; --mid:#e5e6e7;
+  --focus:#0062d6;
+  --font-display:"Space Grotesk","Inter Tight",ui-sans-serif,system-ui,sans-serif;
+  --font-body:"Inter",system-ui,-apple-system,"Segoe UI",ui-sans-serif,sans-serif;
+  --font-label:"IBM Plex Mono","Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --radius:10px; --rule:1px; --track-display:-.024em; --label-caps:uppercase;
+  --shadow:0 1px 0 rgba(16,20,30,.04), 0 6px 18px -14px rgba(16,20,30,.35);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  color-scheme: dark;
+  --bg:#03080f; --surface-1:#0a1017; --surface-2:#131921;
+  --text-primary:#eff2f6; --text-secondary:#a2a5a7; --text-muted:#797a7c;
+  --line:#20242b; --line-strong:#3c4046;
+  --accent:#5c9eff; --accent-ink:#5c9eff;
+  --s1:#5097ff; --s2:#ffaf78; --s3:#1f9b82;
+  --pos:#5097ff; --neg:#e6625d; --mid:#111418;
+  --focus:#5c9eff;
+  --shadow:0 1px 0 rgba(255,255,255,.04), 0 6px 18px -12px rgba(0,0,0,.85);
+}}
+[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#03080f; --surface-1:#0a1017; --surface-2:#131921;
+  --text-primary:#eff2f6; --text-secondary:#a2a5a7; --text-muted:#797a7c;
+  --line:#20242b; --line-strong:#3c4046;
+  --accent:#5c9eff; --accent-ink:#5c9eff;
+  --s1:#5097ff; --s2:#ffaf78; --s3:#1f9b82;
+  --pos:#5097ff; --neg:#e6625d; --mid:#111418;
+  --focus:#5c9eff;
+  --shadow:0 1px 0 rgba(255,255,255,.04), 0 6px 18px -12px rgba(0,0,0,.85);
+}
+/* [/T] end theme tokens ─────────────────────────────────────────────────── */
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0; background:var(--bg); color:var(--text-primary);
+  font-family:var(--font-body); font-size:15px; line-height:1.65; letter-spacing:-.01em}
+img{max-width:100%} [hidden]{display:none!important} a{color:var(--accent-ink)}
+.wrap{max-width:1120px; margin:0 auto; padding:0 20px 96px}
+
+.masthead{border-bottom:1px solid var(--line); background:var(--surface-1)}
+.masthead .wrap{padding:28px 20px 24px; position:relative}
+.eyebrow{font-family:var(--font-label); font-size:11.5px; letter-spacing:.12em; text-transform:var(--label-caps);
+  color:var(--text-muted); font-weight:600; margin:0 0 8px}
+h1{font-family:var(--font-display); font-size:clamp(26px,4.4vw,38px); line-height:1.16; margin:0 0 10px;
+  font-weight:700; letter-spacing:var(--track-display)}
+.subtitle{margin:0; color:var(--text-secondary); max-width:62ch}
+.meta-row{display:flex; flex-wrap:wrap; gap:8px 18px; margin-top:16px; font-size:12.5px; color:var(--text-muted)}
+.meta-row b{font-weight:600; color:var(--text-secondary)}
+.theme-toggle{position:absolute; top:20px; right:20px; background:var(--surface-2); border:var(--rule) solid var(--line);
+  color:var(--text-secondary); border-radius:999px; padding:6px 14px; font-size:12.5px; cursor:pointer;
+  font-family:var(--font-label)}
+.meta-row{font-family:var(--font-label); letter-spacing:.01em}
+
+section{margin-top:56px}
+.sec-head{margin-bottom:18px}
+.sec-num{font-family:var(--font-label); font-size:11.5px; font-weight:700; color:var(--accent-ink);
+  letter-spacing:.12em; text-transform:var(--label-caps)}
+h2{font-family:var(--font-display); font-size:clamp(20px,2.9vw,26px); margin:2px 0 6px; font-weight:680;
+  letter-spacing:var(--track-display); line-height:1.2}
+h3{font-size:15px; margin:0 0 4px; font-weight:650}
+.lede{margin:0; color:var(--text-secondary); max-width:74ch; font-size:14.5px}
+
+.card{background:var(--surface-1); border:var(--rule) solid var(--line); border-radius:var(--radius);
+  padding:20px; box-shadow:var(--shadow)}
+.card + .card{margin-top:16px}
+.card-head{display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:6px}
+.card-note{font-size:12.5px; color:var(--text-muted); margin:2px 0 14px; max-width:76ch}
+.grid{display:grid; gap:16px}
+.grid>*, .hero>*, .insights>*{min-width:0}      /* stop a wide table from pushing the grid apart on narrow screens */
+.tablewrap{max-width:100%}
+@media(min-width:820px){ .grid-2{grid-template-columns:1fr 1fr} }
+
+.hero{display:grid; gap:22px; align-items:start}
+@media(min-width:860px){ .hero{grid-template-columns:minmax(0,1fr) minmax(0,1.05fr)} }
+.hero-fig{font-family:var(--font-display); font-size:clamp(42px,7.4vw,64px); font-weight:700; line-height:1.0;
+  letter-spacing:var(--track-display); margin:2px 0 4px}
+.hero-unit{font-size:.42em; font-weight:600; color:var(--text-secondary); margin-left:6px}
+.hero-label{font-size:13px; color:var(--text-muted); font-weight:600}
+.hero-sub{margin:10px 0 0; color:var(--text-secondary); font-size:14px}
+.tiles{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px}
+@media(min-width:520px){ .tiles{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))} }  /* 2 up at 520px, more as the row allows — a hard repeat(2) here killed the auto-fit above it */
+.tile{background:var(--surface-1); border:var(--rule) solid var(--line); border-radius:var(--radius); padding:14px 15px 12px}
+.tile-label{font-family:var(--font-label); font-size:11.5px; color:var(--text-muted); font-weight:600;
+  letter-spacing:.06em; text-transform:var(--label-caps); display:flex; align-items:center; gap:6px}
+.tile-value{font-family:var(--font-display); font-size:26px; font-weight:680; letter-spacing:var(--track-display);
+  margin:4px 0 2px; line-height:1.12}
+.tile-value small{font-size:13px; font-weight:600; color:var(--text-secondary)}
+.tile-delta{font-size:12.5px; font-weight:600}
+.tile canvas{display:block; width:100%; height:30px; margin-top:8px}
+.up{color:var(--pos)} .down{color:var(--neg)} .flat{color:var(--text-muted)}
+
+.insights{display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(268px,1fr))}
+.insight{background:var(--surface-1); border:var(--rule) solid var(--line); border-left:3px solid var(--s1);
+  border-radius:var(--radius); padding:16px 17px}
+.insight.warn{border-left-color:var(--s2)} .insight.neut{border-left-color:var(--text-muted)}
+.insight h3{font-size:14.5px; margin-bottom:6px}
+.insight p{margin:0; font-size:13.5px; color:var(--text-secondary)}
+.insight .fig{font-weight:680; color:var(--text-primary); font-variant-numeric:tabular-nums}
+
+.toolbar{display:flex; flex-wrap:wrap; gap:10px 14px; align-items:center; margin-bottom:16px;
+  padding:11px 14px; background:var(--surface-1); border:var(--rule) solid var(--line); border-radius:var(--radius)}
+.toolbar .grp{display:flex; align-items:center; gap:8px}
+.toolbar label{font-family:var(--font-label); font-size:11.5px; color:var(--text-muted); font-weight:600;
+  letter-spacing:.06em; text-transform:var(--label-caps)}
+.segmented{display:inline-flex; background:var(--surface-2); border:1px solid var(--line); border-radius:999px; padding:2px}
+.segmented button{border:0; background:transparent; color:var(--text-secondary); font:inherit; font-size:12.5px;
+  font-weight:600; padding:5px 13px; border-radius:999px; cursor:pointer}
+.segmented button[aria-pressed="true"]{background:var(--surface-1); color:var(--text-primary); box-shadow:0 1px 2px rgba(0,0,0,.08)}
+select,input[type=range]{font:inherit; font-size:13px}
+select{background:var(--surface-2); color:var(--text-primary); border:1px solid var(--line); border-radius:8px; padding:5px 9px}
+input[type=range]{accent-color:var(--s1); width:132px}
+.btn{border:1px solid var(--line); background:var(--surface-2); color:var(--text-secondary); font:inherit;
+  font-size:12.5px; font-weight:600; border-radius:8px; padding:5px 11px; cursor:pointer}
+.btn:hover{border-color:var(--line-strong); color:var(--text-primary)}
+:is(button,select,input,[tabindex]):focus-visible{outline:2px solid var(--focus); outline-offset:2px; border-radius:6px}
+
+.chart{position:relative; width:100%}
+.chart canvas{display:block; width:100%; height:240px; max-height:480px; touch-action:pan-y}
+.legend{display:flex; flex-wrap:wrap; gap:6px 18px; margin:2px 0 10px; font-size:12.5px; color:var(--text-secondary)}
+.legend span{display:inline-flex; align-items:center; gap:7px}
+.key{width:14px; height:3px; border-radius:2px; flex:none}
+.key.sq{width:11px; height:11px; border-radius:3px}
+.scale-legend{display:flex; align-items:center; gap:9px; font-size:12px; color:var(--text-muted); margin:2px 0 10px}
+.scale-bar{height:9px; width:150px; border-radius:5px}
+
+/* ── tooltips: the value tooltip and the help tooltip share one engine ─────── */
+.tt{position:fixed; z-index:60; pointer-events:none; background:var(--surface-1); color:var(--text-primary);
+  border:1px solid var(--line-strong); border-radius:10px; padding:9px 11px; font-size:12.5px; min-width:132px;
+  max-width:min(320px, calc(100vw - 24px)); box-shadow:0 6px 20px -8px rgba(0,0,0,.35); opacity:0;
+  transition:opacity .08s linear; line-height:1.55}
+.tt.on{opacity:1}
+.tt.help{max-width:min(340px, calc(100vw - 24px))}
+.tt .tt-title{font-weight:670; margin-bottom:5px}
+.tt .tt-row{display:flex; align-items:center; gap:8px; justify-content:space-between; margin-top:3px}
+.tt .tt-name{color:var(--text-secondary); display:flex; align-items:center; gap:6px}
+.tt .tt-val{font-weight:670; font-variant-numeric:tabular-nums}
+.tt .tt-body{color:var(--text-secondary)}
+.tt .tt-note{color:var(--text-muted); font-size:11.5px; margin-top:6px; border-top:1px solid var(--line); padding-top:5px}
+/* help affordances: dotted underline (a term) / question chip (a chart or section) */
+[data-help]{cursor:help}
+.help-term{border-bottom:1px dashed var(--line-strong); text-underline-offset:3px}
+.help-dot{display:inline-flex; align-items:center; justify-content:center; width:17px; height:17px; flex:none;
+  border-radius:999px; border:1px solid var(--line-strong); background:var(--surface-2); color:var(--text-muted);
+  font:inherit; font-size:11px; font-weight:700; line-height:1; cursor:help; padding:0; vertical-align:middle}
+.help-dot:hover{color:var(--text-primary); border-color:var(--text-muted)}
+
+.tablewrap{overflow-x:auto; margin-top:14px; border:var(--rule) solid var(--line); border-radius:var(--radius)}
+table{border-collapse:collapse; width:100%; font-size:13px; min-width:520px}
+th,td{padding:8px 12px; text-align:right; border-bottom:1px solid var(--line); white-space:nowrap}
+th:first-child,td:first-child{text-align:left; white-space:normal; min-width:130px}
+thead th{background:var(--surface-2); color:var(--text-secondary); font-weight:640; font-size:12px; position:sticky; top:0}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--surface-2)}
+td.num{font-variant-numeric:tabular-nums}
+th.sortable{cursor:pointer; user-select:none}
+th.sortable[aria-sort="descending"]::after{content:" ▾"} th.sortable[aria-sort="ascending"]::after{content:" ▴"}
+caption{caption-side:top; text-align:left; font-size:12.5px; color:var(--text-muted); padding:9px 12px}
+
+.tabs{display:flex; gap:4px; flex-wrap:wrap; border-bottom:1px solid var(--line); margin-bottom:2px}
+.tabs button{border:0; border-bottom:2px solid transparent; background:none; font:inherit; font-size:13.5px;
+  font-weight:600; color:var(--text-muted); padding:8px 12px; cursor:pointer; margin-bottom:-1px}
+.tabs button[aria-selected="true"]{color:var(--text-primary); border-bottom-color:var(--s1)}
+.drill{margin-top:14px; background:var(--surface-2); border:var(--rule) solid var(--line); border-radius:var(--radius); padding:14px 16px}
+.drill h4{margin:0 0 8px; font-size:14.5px}
+.drill dl{display:grid; grid-template-columns:repeat(auto-fit,minmax(112px,1fr)); gap:10px 16px; margin:0}
+.drill dt{font-size:12px; color:var(--text-muted); font-weight:600}
+.drill dd{margin:1px 0 0; font-size:15px; font-weight:660; font-variant-numeric:tabular-nums}
+.pill{display:inline-block; font-size:11.5px; font-weight:650; padding:2px 8px; border-radius:999px;
+  background:var(--surface-2); color:var(--text-secondary); border:1px solid var(--line)}
+.method{display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.method h3{font-size:14px; margin-bottom:5px}
+.method p,.method li{font-size:13px; color:var(--text-secondary); margin:0}
+.method ul{margin:0; padding-left:17px} .method li + li{margin-top:5px}
+footer{margin-top:56px; padding-top:20px; border-top:1px solid var(--line); font-size:12.5px; color:var(--text-muted)}
+
+/* ============================================================================
+ * [S] structure layer — macrostructures · archetypes · motion
+ * references/macrostructures/*.md and references/components.md compose these
+ * classes into "same runtime, different report". Do not delete this block.
+ * ==========================================================================*/
+
+/* ── masthead archetypes M1-M6 ────────────────────────────────────────────── */
+.masthead--rule{border-top:4px solid var(--text-primary)}
+.masthead--rule .wrap{padding-top:20px}
+
+.masthead--figure .wrap{display:grid; gap:18px 40px; align-items:end}
+@media(min-width:820px){ .masthead--figure .wrap{grid-template-columns:minmax(0,1.25fr) minmax(0,.85fr)} }
+.masthead--figure .mast-fig{font-family:var(--font-display); font-size:clamp(46px,8vw,84px); line-height:.92;
+  letter-spacing:var(--track-display); font-weight:700; margin:0; text-align:right}
+.masthead--figure .mast-fig small{display:block; font-family:var(--font-label); font-size:12px; font-weight:600;
+  letter-spacing:.1em; text-transform:var(--label-caps); color:var(--text-muted); margin-top:6px}
+
+.masthead--broadsheet{border-top:6px solid var(--text-primary); border-bottom:3px double var(--line-strong); text-align:center}
+.masthead--broadsheet h1{font-size:clamp(30px,6.4vw,58px); margin:6px 0 8px}
+.masthead--broadsheet .subtitle{margin-inline:auto}
+.masthead--broadsheet .meta-row{justify-content:center; border-top:1px solid var(--line); padding-top:10px}
+
+.masthead--index .wrap{display:grid; gap:20px 40px}
+@media(min-width:860px){ .masthead--index .wrap{grid-template-columns:minmax(0,1fr) minmax(0,300px)} }
+.mast-index{margin:0; padding:0; list-style:none; border-top:var(--rule) solid var(--line-strong);
+  font-family:var(--font-label); font-size:12.5px}
+.mast-index li{border-bottom:var(--rule) solid var(--line)}
+.mast-index a{display:flex; justify-content:space-between; gap:12px; padding:7px 0; text-decoration:none;
+  color:var(--text-secondary)}
+.mast-index a:hover{color:var(--text-primary)}
+.mast-index b{font-variant-numeric:tabular-nums; color:var(--text-primary); font-weight:660}
+
+.masthead--rail .wrap{display:grid; grid-template-columns:auto minmax(0,1fr); gap:24px}
+.mast-rail{font-family:var(--font-label); font-size:11.5px; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--text-muted); writing-mode:vertical-rl; transform:rotate(180deg); align-self:stretch;
+  border-right:var(--rule) solid var(--line); padding-right:10px}
+@media(max-width:640px){ .masthead--rail .wrap{grid-template-columns:1fr} .mast-rail{display:none} }
+
+.masthead--sticky{position:sticky; top:0; z-index:40; transition:padding .18s ease}
+.masthead--sticky.shrunk .wrap{padding-top:10px; padding-bottom:10px}
+.masthead--sticky.shrunk h1{font-size:17px; margin-bottom:0}
+.masthead--sticky.shrunk .subtitle,.masthead--sticky.shrunk .meta-row,.masthead--sticky.shrunk .eyebrow{display:none}
+
+/* ── section-head archetypes S1-S5 ────────────────────────────────────────── */
+.sec-head--hang{display:grid; gap:4px 20px}
+@media(min-width:900px){ .sec-head--hang{grid-template-columns:76px minmax(0,1fr)}
+  .sec-head--hang .sec-num{grid-row:span 3; padding-top:7px; text-align:right} }
+.sec-head--rule{border-top:2px solid var(--text-primary); padding-top:10px}
+.sec-head--rule .sec-num{float:left; margin-right:12px; line-height:1.9}
+.sec-head--rule .lede{clear:left; margin-top:6px}
+.sec-head--pinned{position:sticky; top:0; z-index:30; background:var(--bg); padding:12px 0 10px;
+  border-bottom:var(--rule) solid var(--line); margin-bottom:16px}
+.sec-head--ask h2{font-size:clamp(23px,3.6vw,33px); max-width:22ch}
+
+/* ── insight archetypes I1-I5 ─────────────────────────────────────────────── */
+.insights--ledger{display:block; border-top:2px solid var(--text-primary)}
+.insights--ledger .insight{background:none; border:0; border-bottom:var(--rule) solid var(--line); border-radius:0;
+  padding:14px 0; display:grid; gap:4px 24px}
+@media(min-width:760px){ .insights--ledger .insight{grid-template-columns:minmax(0,22ch) minmax(0,1fr)} }
+.insight--quote{border-left:0; border-top:3px solid var(--s1)}
+.insight--quote h3{font-family:var(--font-display); font-size:clamp(18px,2.4vw,23px); line-height:1.28; font-weight:600}
+.insight--stat{display:grid; gap:2px}
+.insight--stat .fig-big{font-family:var(--font-display); font-size:clamp(28px,4vw,40px); line-height:1.02;
+  letter-spacing:var(--track-display); font-weight:700}
+.insight--margin{background:none; border:0; border-left:var(--rule) solid var(--line-strong); border-radius:0;
+  padding:2px 0 2px 14px; font-size:13px}
+
+/* ── chart-card archetypes C1-C5 ──────────────────────────────────────────── */
+.card--hairline{background:none; border:0; border-top:2px solid var(--text-primary);
+  border-bottom:var(--rule) solid var(--line); border-radius:0; box-shadow:none; padding:16px 0 20px}
+.card--bleed{border-radius:0; border-left:0; border-right:0; box-shadow:none}
+@media(min-width:1160px){ .card--bleed{margin-inline:calc(50% - 50vw); padding-inline:max(20px, calc(50vw - 560px))} }
+.card--inset{background:var(--surface-2); box-shadow:none}
+.card--split{display:grid; gap:18px 22px}
+@media(min-width:980px){ .card--split{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr); align-items:start}
+  .card--split .tablewrap{margin-top:0; max-height:420px; overflow:auto} }
+
+/* ── macro layouts ────────────────────────────────────────────────────────── */
+/* 04 Workbench: sticky filter rail on the left */
+.layout-rail{display:grid; gap:26px}
+@media(min-width:1000px){ .layout-rail{grid-template-columns:236px minmax(0,1fr)}
+  .layout-rail > .rail{position:sticky; top:16px; align-self:start; max-height:calc(100vh - 32px); overflow:auto} }
+.rail{display:grid; gap:14px; padding:16px; background:var(--surface-1);
+  border:var(--rule) solid var(--line); border-radius:var(--radius)}
+.rail .grp{display:grid; gap:6px}
+
+/* 05 Broadsheet: newspaper columns */
+.layout-broadsheet{column-gap:34px; column-rule:var(--rule) solid var(--line)}
+@media(min-width:900px){ .layout-broadsheet{column-count:2} }
+@media(min-width:1240px){ .layout-broadsheet{column-count:3} }
+.layout-broadsheet > *{break-inside:avoid; margin-bottom:20px}
+.span-all{column-span:all}
+
+/* 06 Poster/Almanac: dense small-multiple grid.
+   Canvas height comes from the <canvas height="104"> ATTRIBUTE, not CSS —
+   fit() reads the attribute and overwrites style.height. */
+.layout-poster{display:grid; gap:12px; grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+.layout-poster .card{padding:13px}
+.layout-poster .card h3{font-size:13px}
+.layout-poster .card .tile-value{font-size:21px}
+
+/* 07 Deck: viewport-height sections + scroll snap */
+.layout-deck{scroll-snap-type:y proximity}
+.layout-deck > section{min-height:min(94vh,880px); display:flex; flex-direction:column; justify-content:center;
+  scroll-snap-align:start; padding-block:36px}
+@media(prefers-reduced-motion:reduce){ .layout-deck{scroll-snap-type:none} }
+
+/* 03 Scrollytelling: pinned canvas + steps */
+.layout-scrolly{display:grid; gap:24px}
+@media(min-width:940px){ .layout-scrolly{grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr)}
+  .layout-scrolly .stick{position:sticky; top:14vh; align-self:start} }
+.steps{display:grid; gap:min(46vh,360px)}
+.step{background:var(--surface-1); border:var(--rule) solid var(--line); border-radius:var(--radius);
+  padding:18px 19px; opacity:.42; transition:opacity .3s ease}
+.step.on{opacity:1; border-color:var(--line-strong)}
+@media(prefers-reduced-motion:reduce){ .step{opacity:1} }
+
+/* 10 Field notes: body text + marginalia column */
+.layout-margin{display:grid; gap:14px 26px}
+@media(min-width:1040px){ .layout-margin{grid-template-columns:minmax(0,200px) minmax(0,1fr)}
+  .layout-margin > .marginalia{text-align:right} }
+.marginalia{font-family:var(--font-label); font-size:12px; color:var(--text-muted); line-height:1.5}
+
+/* 02 Ledger: the metric index table */
+.ledger{width:100%; border-collapse:collapse; font-size:13.5px; min-width:0}
+.ledger th,.ledger td{border-bottom:var(--rule) solid var(--line); padding:9px 10px}
+.ledger tbody tr{cursor:pointer}
+.ledger tbody tr[aria-expanded="true"]{background:var(--surface-2)}
+
+/* ── motion ───────────────────────────────────────────────────────────────── */
+/* Content is visible from its default state. If IntersectionObserver or the
+   script fails, nothing may disappear. */
+.reveal{opacity:1; transform:none}
+.reveal.in{animation:reveal-in .48s cubic-bezier(.22,.61,.36,1) both}
+@keyframes reveal-in{from{opacity:.15; transform:translateY(10px)}to{opacity:1; transform:none}}
+@media(prefers-reduced-motion:reduce){ .reveal.in{animation:none} }
+.counting{font-variant-numeric:tabular-nums}
+/* [/S] end structure layer ───────────────────────────────────────────────── */
+.sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap}
+@media (prefers-reduced-motion: reduce){ *{animation-duration:.001ms!important; transition-duration:.001ms!important} }
+</style>
+</head>
+<body>
+
+<!-- [1] masthead ────────────────────────────────────────────────────────── -->
+<header class="masthead">
+  <div class="wrap">
+    <button class="theme-toggle" id="themeBtn" type="button" aria-label="Switch between light and dark">◐ Theme</button>
+    <p class="eyebrow" id="hEyebrow">Data report</p>
+    <h1 id="hTitle">Title</h1>
+    <p class="subtitle" id="hSub"></p>
+    <div class="meta-row" id="hMeta"></div>
+  </div>
+</header>
+
+<main class="wrap" id="main">
+  <!-- [3] the WIRING block builds the sections into here -->
+</main>
+
+<div class="tt" id="tt" role="status" aria-live="polite"></div>
+
+<!-- [2] data ────────────────────────────────────────────────────────────── -->
+<script id="report-data" type="application/json">
+{"rows":[{"backlog_end":268,"handling_hours":2063.8,"month":"2024-01-01","tickets_opened":1391,"tickets_resolved":1303},{"backlog_end":311,"handling_hours":1644.5,"month":"2024-02-01","tickets_opened":1077,"tickets_resolved":1034},{"backlog_end":319,"handling_hours":1857.6,"month":"2024-03-01","tickets_opened":1085,"tickets_resolved":1077},{"backlog_end":316,"handling_hours":1937.3,"month":"2024-04-01","tickets_opened":1133,"tickets_resolved":1136},{"backlog_end":417,"handling_hours":1726.2,"month":"2024-05-01","tickets_opened":1166,"tickets_resolved":1065},{"backlog_end":499,"handling_hours":1786.6,"month":"2024-06-01","tickets_opened":1131,"tickets_resolved":1049},{"backlog_end":491,"handling_hours":1919.7,"month":"2024-07-01","tickets_opened":1167,"tickets_resolved":1175},{"backlog_end":572,"handling_hours":1771.8,"month":"2024-08-01","tickets_opened":1162,"tickets_resolved":1081},{"backlog_end":627,"handling_hours":1822.3,"month":"2024-09-01","tickets_opened":1334,"tickets_resolved":1279},{"backlog_end":626,"handling_hours":1993.3,"month":"2024-10-01","tickets_opened":1221,"tickets_resolved":1222},{"backlog_end":757,"handling_hours":2063.3,"month":"2024-11-01","tickets_opened":1382,"tickets_resolved":1251},{"backlog_end":804,"handling_hours":2326.7,"month":"2024-12-01","tickets_opened":1382,"tickets_resolved":1335},{"backlog_end":775,"handling_hours":2413.6,"month":"2025-01-01","tickets_opened":1577,"tickets_resolved":1606},{"backlog_end":902,"handling_hours":1818.8,"month":"2025-02-01","tickets_opened":1329,"tickets_resolved":1202},{"backlog_end":1003,"handling_hours":1726.3,"month":"2025-03-01","tickets_opened":1302,"tickets_resolved":1201},{"backlog_end":1001,"handling_hours":2382.5,"month":"2025-04-01","tickets_opened":1399,"tickets_resolved":1401},{"backlog_end":1092,"handling_hours":1987.1,"month":"2025-05-01","tickets_opened":1399,"tickets_resolved":1308},{"backlog_end":1082,"handling_hours":2315.1,"month":"2025-06-01","tickets_opened":1403,"tickets_resolved":1413},{"backlog_end":1106,"handling_hours":2167.6,"month":"2025-07-01","tickets_opened":1439,"tickets_resolved":1415},{"backlog_end":1128,"handling_hours":2200.8,"month":"2025-08-01","tickets_opened":1440,"tickets_resolved":1418},{"backlog_end":1234,"handling_hours":1930.9,"month":"2025-09-01","tickets_opened":1524,"tickets_resolved":1418},{"backlog_end":1294,"handling_hours":1929.6,"month":"2025-10-01","tickets_opened":1344,"tickets_resolved":1284},{"backlog_end":1321,"handling_hours":2565.5,"month":"2025-11-01","tickets_opened":1526,"tickets_resolved":1499},{"backlog_end":1392,"handling_hours":2183.1,"month":"2025-12-01","tickets_opened":1395,"tickets_resolved":1324}],"spec":{"charts":[{"aria_label":"Line chart of tickets opened each month from January 2024 to December 2025","dataset":"source","encodings":{"value":"tickets_opened","x":"month"},"fields":["month","tickets_opened"],"help":"Measure: tickets_opened, counted per calendar month. Basis: every row of the source file. Interaction: hover a point for its month and value, or open the table below for all 24 figures.","id":"c1","motion":{"enabled":true,"reason":"One entry sweep left to right establishes that the series is ordered by time before the reader looks for the peaks."},"note":"One point per month, 24 in total. The axis starts at zero so the peaks are read against the whole quantity, not against a cropped baseline.","section_id":"intake","table":{"columns":["month","tickets_opened"]},"title":"Tickets opened by month","type":"line"},{"aria_label":"Column chart of recorded handling hours for each month","dataset":"source","encodings":{"value":"handling_hours","x":"month"},"fields":["month","handling_hours"],"help":"Measure: handling_hours, as recorded in the source. Basis: the same 24 months as the intake series. Interaction: hover a column for its month and hours; the table lists every value.","id":"c2","motion":{"enabled":true,"reason":"Columns growing once from the zero baseline shows the reader where the baseline is before any comparison is made."},"note":"Column height is hours recorded against tickets resolved that month. Bars start at zero because the length is the quantity.","section_id":"capacity","table":{"columns":["month","handling_hours","tickets_resolved"]},"title":"Recorded handling hours by month","type":"columns"},{"aria_label":"Column chart of the backlog outstanding at the end of each month","dataset":"source","encodings":{"value":"backlog_end","x":"month"},"fields":["month","backlog_end"],"help":"Measure: backlog_end, the count outstanding when the month closed. Basis: carried forward month to month; the balance before 2024-01 is not in the data. Interaction: hover a mark for its month and level.","id":"c3","motion":{"enabled":false,"reason":"A rising level is read by comparing columns against each other, and animating a growth this monotone would suggest a flow the measure does not describe."},"note":"Column height is the count still open when the month closed. The value is a level, not a flow, so consecutive columns are not additive and must not be read as a running total.","section_id":"capacity","table":{"columns":["month","backlog_end","tickets_opened","tickets_resolved"]},"title":"Backlog outstanding at each month end","type":"columns"},{"aria_label":"Scatter plot of tickets opened against handling hours, one mark per month, sized by tickets resolved","dataset":"source","encodings":{"label":"month","size":"tickets_resolved","x":"tickets_opened","y":"handling_hours"},"fields":["month","tickets_opened","handling_hours","tickets_resolved"],"help":"Measures: tickets_opened on the horizontal axis, handling_hours on the vertical, tickets_resolved as mark size. Basis: one mark per month. Interaction: hover a mark for its month and all three values.","id":"c4","motion":{"enabled":false,"reason":"The marks carry no order, so entry motion would imply a sequence between months that the plot does not encode."},"note":"One mark per month. Mark size is tickets resolved. No trend line is drawn and no correlation coefficient is calculated: 24 points with this spread would not earn one.","section_id":"relation","table":{"columns":["month","tickets_opened","handling_hours","tickets_resolved"]},"title":"Tickets opened against hours recorded","type":"bubbles"}],"grain":"one row per calendar month, 2024-01 to 2025-12 (24 months)","insights":[{"claim":"Resolution ran behind intake in 18 of the 24 months, and the month-end backlog rose from 268 to 1,392.","evidence_fields":["month","tickets_opened","tickets_resolved","backlog_end"],"id":"i1","limitation":"The opening balance before 2024-01 is not in the data, so the first month's backlog cannot be decomposed into carried-over and new work."},{"claim":"Intake rose from 14,631 tickets in 2024 to 17,077 in 2025, a 16.7 per cent increase, but the gap between the busiest month (2025-01, 1,577) and the quietest (2024-02, 1,077) is larger than that annual difference.","evidence_fields":["month","tickets_opened"],"id":"i2","limitation":"Two calendar years support exactly one year-over-year comparison, and month-to-month variation is wider than the annual change, so the direction is weaker evidence than the totals suggest."},{"claim":"Handling hours per resolved ticket stayed between 1.36 and 1.74 across all 24 months, with a median of 1.63 and no visible drift.","evidence_fields":["handling_hours","tickets_resolved"],"id":"i3","limitation":"The ratio is derived per month. The data records no per-ticket duration, so it cannot separate a change in volume from a change in the effort each ticket takes."}],"lenses":{"rejected":["cohort"],"selected":["trend","distribution","relationship"]},"macro":"Briefing","masthead":"M4","metadata":{"eyebrow":"canvas-report example · synthetic data","locale":"en","subtitle":"Monthly tickets opened, resolved and left outstanding, 2024-01 to 2025-12. The data is generated, not measured — this report exists to show what the pipeline emits.","title":"Two years of support intake"},"methodology":{"basis":["The data is synthetic. It was generated for this example with a seeded random function and describes no real organisation, product, or team. Nothing here should be cited as a finding about support work.","One CSV of 24 rows, one row per calendar month from 2024-01 to 2025-12, with no null values in any column.","Every figure in this report is read from that file. Nothing is interpolated, smoothed, or filled.","The backlog column is a month-end level carried forward; the balance standing before 2024-01 is outside the file."],"formulas":["Annual intake = sum of tickets_opened over the twelve months of the calendar year.","Year-over-year change = (17,077 - 14,631) / 14,631 = 16.7 per cent.","Handling hours per resolved ticket = handling_hours / tickets_resolved, computed per month and never pooled across months.","Deficit month = a month where tickets_resolved is less than tickets_opened; 18 of 24 months qualify."],"limitations":["The data is generated, so every relationship in it was put there by the generator. The report is evidence about the pipeline, not about support operations.","Two calendar years give one year-over-year comparison. The annual direction rests on a single pair of totals.","No correlation coefficient is reported for tickets opened against handling hours; 24 monthly points would not support one.","The data has no team, channel, or per-ticket duration, so none of the variation here can be attributed to a cause.","The January and September peaks are described as observed. Two years is not enough to call them seasonal."]},"plan_sha256":"5167609cebbf7dbab88cf0d4d2d8580b9cba2d8acd19a977cef9bf60b3d829fa","rule_decisions":[{"decision":"Every claim and number is read from the profiled columns; the opening backlog balance is named as absent rather than estimated; and the methodology says in its first line that the data is synthetic, so no reader takes a generated series for a measurement.","rule_id":"DATA-HONESTY-001"},{"decision":"trend, distribution and relationship are eligible for a 24-point monthly series; cohort is rejected because the file has no entity to follow across periods.","rule_id":"LENS-ELIGIBILITY-001"},{"decision":"Briefing chosen from the compatible set (Bridge, Briefing, Broadsheet); Ledger, Workbench and Poster are incompatible at four measures and no dimension column.","rule_id":"MACRO-SELECTION-001"},{"decision":"cobalt, compatible and at rotation distance 3 in the generated candidate set.","rule_id":"THEME-SELECTION-001"},{"decision":"Each of the three insights names its evidence fields and states what it cannot show.","rule_id":"CLAIMS-001"},{"decision":"All four charts declare table columns, and the backlog and scatter tables carry the neighbouring measures a reader needs to check the claim.","rule_id":"TABLE-TWIN-001"},{"decision":"Each chart's help names its measure, its basis, and how to interact with it.","rule_id":"HELP-TWIN-001"},{"decision":"The builder embeds the rows in the document and uses the shipped system-font stacks; nothing is fetched.","rule_id":"ZERO-NETWORK-001"},{"decision":"c1 and c2 animate once on entry with a stated reason; c3 and c4 are declared static and say why.","rule_id":"MOTION-INTENT-001"},{"decision":"Entry motion lands on the complete series, which is also what a reader with reduced motion sees immediately.","rule_id":"MOTION-FINAL-STATE-001"},{"decision":"The runtime omits animation under prefers-reduced-motion; no information is carried by the motion alone.","rule_id":"MOTION-REDUCED-001"},{"decision":"check-render.py and check-motion.py are run through validate-report.py before the run is called complete. c3 was replanned from lollipop to columns after CHART-007: the runtime draws at most 20 lollipop marks and the source has 24 months.","rule_id":"FINAL-CHECKS-001"}],"schema_version":"1.0","sections":[{"id":"intake","lede":"Tickets opened each month. The two January peaks and the September rise are visible without smoothing, so the series is drawn as observed.","title":"What came in"},{"id":"capacity","lede":"Recorded handling hours beside the backlog standing at the end of each month. The two answer different questions: one is effort spent, the other is work not yet done.","title":"What it cost, and what was left"},{"id":"relation","lede":"Each month plotted as one mark. This shows whether the busiest months were also the most expensive, without asserting that one causes the other.","title":"Volume against effort"}],"theme":"cobalt"}}
+</script>
+
+<script>
+/* ============================================================================
+ * Shared runtime — everything down to the "REPORT WIRING" comment is
+ * domain-agnostic. Do not edit it.
+ * ==========================================================================*/
+/* [L] strings — every word the reader sees. Translate THIS, not the code.
+   Set window.CR_STRINGS before this script to override any key. */
+var CR_STRINGS = Object.assign({
+  themeToggle:   'Theme',
+  themeToggleAria:'Switch between light and dark',
+  tableView:     'table view',
+  noData:        'No data to show',
+  negativeUnsupported: 'negative values are not supported here — use {alt}',
+  rowsOmitted:   '{n} rows omitted (non-numeric)',
+  value:         'value',
+  change:        'change',
+  total:         'total',
+  max:           'max ',
+  top:           'top ',
+  colourParseFail:'[canvas-report] could not parse colour:',
+  colourParseHint:'— keep theme tokens as hex.',
+  donutMin:      'a donut needs at least 2 categories',
+  donutMax:      'a donut shows at most 5 categories',
+  donutSign:     'donut values must be numbers >= 0',
+  heatmapMax:    'a heatmap shows at most 100 cells',
+  heatmapCell:   'each cell needs one number >= 0',
+  slopeMax:      'a slope chart shows at most 12 series',
+  lollipopMax:   'a lollipop chart shows at most 20 items',
+  slopeNeedsEnds:'the start and end values must both be numbers',
+  needsNumbers:  'every item needs a numeric value',
+  delta:         'delta',
+  tableShow:     'show table',
+  tableHide:     'hide table',
+  stackedBandNote:'only the bottom band and the total share a flat baseline',
+  concentrationMin:'a concentration curve needs at least 2 entities',
+  concentrationSum:'the values must add up to more than zero',
+  concentrationEven:'even split',
+  concentrationX:'entities, largest first',
+  concentrationTopN:'top {n} together',
+  reference:'reference',
+  intervalBand:'interval',
+  intervalCrosses:'the interval covers the reference — not distinguishable from it',
+  intervalClears:'the whole interval sits on one side of the reference'
+}, window.CR_STRINGS || {});
+
+var REPORT = (function(){
+"use strict";
+var LANG = document.documentElement.lang || 'en';   /* drives Intl number formatting */
+var S = CR_STRINGS;
+function str(key, vars){                       /* str('rowsOmitted',{n:3}) */
+  var t = S[key] || key;
+  if(vars) Object.keys(vars).forEach(function(k){ t = t.split('{'+k+'}').join(vars[k]); });
+  return t;
+}
+var RM = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+/* ── number formatting (locale comes from <html lang>) ────────────────────── */
+var _nf = new Intl.NumberFormat(LANG);
+var _cf;
+try { _cf = new Intl.NumberFormat(LANG,{notation:'compact', maximumFractionDigits:1}); } catch(e){ _cf=null; }
+function nf(n){ return (n==null||isNaN(n))?'—':_nf.format(Number(n)); }
+function compact(n){
+  if(n==null||isNaN(n)) return '—';
+  if(_cf) return _cf.format(Number(n));
+  var a=Math.abs(n);
+  return a>=1e6?(n/1e6).toFixed(1)+'M':a>=1e3?(n/1e3).toFixed(1)+'K':String(Math.round(n));
+}
+function sg(n,unit){ if(n==null||isNaN(n)) return '—';
+  var s=n>0?'+':(n<0?'−':'±'); return s+_nf.format(Math.abs(n))+(unit||''); }
+function pc(n){ if(n==null||isNaN(n)) return '—';
+  var a=Math.abs(n), s=n>0?'+':(n<0?'−':'±');
+  /* two decimals below 0.1% so a small change is not flattened to "0.0%" */
+  return s+(a>0&&a<0.1?a.toFixed(2):a.toFixed(1))+'%'; }
+function dirCls(n){ return n>0?'up':(n<0?'down':'flat'); }
+
+/* ── theme tokens ─────────────────────────────────────────────────────────── */
+var T={};
+function cvar(n){ return getComputedStyle(document.body).getPropertyValue(n).trim(); }
+function readTokens(){
+  /* Replacing T would strand any wiring holding a reference from R.tokens(),
+     so refresh the SAME object in place. */
+  var n={ s1:cvar('--s1'), s2:cvar('--s2'), s3:cvar('--s3'), pos:cvar('--pos'), neg:cvar('--neg'),
+      mid:cvar('--mid'), line:cvar('--line'), lineStrong:cvar('--line-strong'),
+      surface:cvar('--surface-1'), surface2:cvar('--surface-2'), bg:cvar('--bg'),
+      accent:cvar('--accent'), accentInk:cvar('--accent-ink'),
+      text:cvar('--text-primary'), text2:cvar('--text-secondary'), muted:cvar('--text-muted') };
+  Object.keys(n).forEach(function(k){ T[k]=n[k]; });
+  T.series=[T.s1,T.s2,T.s3];
+}
+readTokens();
+/* colour -> [r,g,b]. Shipped themes are hex, but oklch()/rgb()/hsl() are read
+   back through a 1x1 canvas. The canvas is not a CSS colour parser, so a parse
+   failure warns loudly instead of quietly painting everything black. */
+var _pc=document.createElement('canvas'); _pc.width=_pc.height=1;
+var _pctx=_pc.getContext('2d',{willReadFrequently:true});
+var _pcache=Object.create(null);   /* so a key like 'constructor' cannot reach the prototype */
+function rgbOf(v){
+  v=String(v||'').trim();
+  if(_pcache[v]) return _pcache[v];
+  var m=/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(v), out;
+  if(m){ var h=m[1]; if(h.length===3) h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+    out=[parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; }
+  else{
+    try{
+      _pctx.clearRect(0,0,1,1); _pctx.fillStyle='#000000'; _pctx.fillStyle=v;
+      if(_pctx.fillStyle==='#000000' && !/^(#0{3,6}|black|rgba?\(0[,\s]+0[,\s]+0)/i.test(v)){
+        console.warn(str('colourParseFail'), v, str('colourParseHint'));
+      }
+      _pctx.fillRect(0,0,1,1);
+      var d=_pctx.getImageData(0,0,1,1).data; out=[d[0],d[1],d[2]];
+    }catch(e){ out=[128,128,128]; }
+  }
+  _pcache[v]=out; return out;
+}
+function hex2rgb(h){ return rgbOf(h); }              /* kept for older wiring */
+function rgba(h,a){ var c=rgbOf(h); return 'rgba('+c[0]+','+c[1]+','+c[2]+','+a+')'; }
+function mix(a,b,t){ var x=rgbOf(a),y=rgbOf(b);
+  return 'rgb('+Math.round(x[0]+(y[0]-x[0])*t)+','+Math.round(x[1]+(y[1]-x[1])*t)+','+Math.round(x[2]+(y[2]-x[2])*t)+')'; }
+/* diverging scale: t in [-1,1], neutral grey at the centre. Never a rainbow. */
+function diverge(t){ t=Math.max(-1,Math.min(1,t||0)); return t<0?mix(T.mid,T.neg,-t):mix(T.mid,T.pos,t); }
+
+/* ── tooltip engine (shared by value tooltips and help tooltips) ──────────── */
+var ttEl=document.getElementById('tt'), ttPinned=null;
+function el(tag,cls,txt){ var e=document.createElement(tag); if(cls)e.className=cls; if(txt!=null)e.textContent=txt; return e; }
+function place(x,y){
+  ttEl.classList.add('on');
+  var pad=14, w=ttEl.offsetWidth, h=ttEl.offsetHeight;
+  var px=x+pad, py=y+pad;
+  if(px+w>innerWidth-8) px=x-w-pad;
+  if(py+h>innerHeight-8) py=y-h-pad;
+  ttEl.style.left=Math.max(8,px)+'px'; ttEl.style.top=Math.max(8,py)+'px';
+}
+/* value tooltip: {title, rows:[{name,val,color,cls}], note} */
+function showData(ev,d){
+  ttEl.className='tt';
+  while(ttEl.firstChild) ttEl.removeChild(ttEl.firstChild);
+  ttEl.appendChild(el('div','tt-title',d.title));
+  (d.rows||[]).forEach(function(r){
+    var row=el('div','tt-row'), nm=el('span','tt-name');
+    if(r.color){ var k=el('i'); k.style.cssText='width:12px;height:3px;border-radius:2px;flex:none;background:'+r.color; nm.appendChild(k); }
+    nm.appendChild(document.createTextNode(r.name));           /* labels come from data and are never trusted -> textContent, never innerHTML */
+    var v=el('span','tt-val'+(r.cls?' '+r.cls:''), r.val);
+    row.appendChild(nm); row.appendChild(v); ttEl.appendChild(row);
+  });
+  if(d.note) ttEl.appendChild(el('div','tt-note',d.note));
+  place(ev.clientX, ev.clientY);
+}
+/* help tooltip: data-help="body" [data-help-title] [data-help-note] */
+function showHelp(target){
+  ttEl.className='tt help';
+  while(ttEl.firstChild) ttEl.removeChild(ttEl.firstChild);
+  var t=target.getAttribute('data-help-title');
+  if(t) ttEl.appendChild(el('div','tt-title',t));
+  ttEl.appendChild(el('div','tt-body',target.getAttribute('data-help')||''));
+  var n=target.getAttribute('data-help-note');
+  if(n) ttEl.appendChild(el('div','tt-note',n));
+  var r=target.getBoundingClientRect();
+  place(r.left+r.width/2-8, r.bottom-6);
+}
+function hideTip(){ if(ttPinned) return; ttEl.classList.remove('on'); }
+function forceHide(){ ttPinned=null; ttEl.classList.remove('on'); }
+document.addEventListener('scroll', forceHide, true);
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') forceHide(); });
+
+/* auto-wire [data-help] — mouse hover, keyboard focus and touch tap all open it */
+function wireHelp(root){
+  (root||document).querySelectorAll('[data-help]').forEach(function(n){
+    if(n.__helpWired) return; n.__helpWired=true;
+    if(!n.hasAttribute('tabindex') && !/^(A|BUTTON|INPUT|SELECT|TEXTAREA)$/.test(n.tagName)) n.tabIndex=0;
+    if(n.tagName!=='BUTTON' && !n.hasAttribute('role')) n.setAttribute('role','note');
+    if(!n.getAttribute('aria-label')) n.setAttribute('aria-label',
+      (n.getAttribute('data-help-title')? n.getAttribute('data-help-title')+' — ':'')+n.getAttribute('data-help'));
+    n.addEventListener('pointerenter', function(){ if(!ttPinned) showHelp(n); });
+    n.addEventListener('pointerleave', hideTip);
+    n.addEventListener('focus', function(){ showHelp(n); });
+    n.addEventListener('blur', forceHide);
+    n.addEventListener('click', function(e){                  /* touch: tap pins the tooltip, tap again releases it */
+      e.preventDefault();
+      if(ttPinned===n){ forceHide(); } else { ttPinned=null; showHelp(n); ttPinned=n; }
+    });
+  });
+}
+document.addEventListener('click', function(e){ if(ttPinned && !ttPinned.contains(e.target)) forceHide(); }, true);
+/* build a help chip: helpDot('title','body') -> <button class="help-dot"> */
+function helpDot(title, body, note){
+  var b=el('button','help-dot','?'); b.type='button';
+  if(title) b.setAttribute('data-help-title',title);
+  b.setAttribute('data-help',body||''); if(note) b.setAttribute('data-help-note',note);
+  return b;
+}
+
+/* ── canvas plumbing ──────────────────────────────────────────────────────── */
+var charts=[];
+function fit(cvs){
+  var dpr=Math.min(2, window.devicePixelRatio||1);
+  /* Setting cvs.height updates the height attribute. Keep the original logical
+     height so repeated DPR-scaled paints do not double the chart each time. */
+  var H=cvs.__logicalHeight||(cvs.__logicalHeight=+cvs.getAttribute('height')||240);
+  cvs.style.height=H+'px';
+  var W=Math.max(150, cvs.clientWidth || cvs.parentElement.clientWidth);
+  cvs.width=Math.round(W*dpr); cvs.height=Math.round(H*dpr);
+  var ctx=cvs.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
+  return {ctx:ctx,W:W,H:H};
+}
+function mk(cvs, draw, opt){
+  var c={cvs:cvs, draw:draw, hits:[], t:1, opt:opt||{}};
+  /* Generated reports declare motion on the canvas. The builder owns these
+     attributes; report Agents never mutate chart handles or runtime code. */
+  if(cvs.dataset.motionEnabled==='false') c.opt.static=true;
+  c.motion={enabled:cvs.dataset.motionEnabled==='true', reason:cvs.dataset.motionReason||''};
+  charts.push(c); cvs.__chart=c;
+  if(window.ResizeObserver) new ResizeObserver(function(){ paint(c); }).observe(cvs.parentElement);
+  else window.addEventListener('resize', function(){ paint(c); });
+  bindHover(c);
+  /* __played lets a verifier ask whether this chart ever animated on its own,
+     however it was wired. See assets/check-motion.py. */
+  c.play=function(dur,easingName){ c.__played=true; anim(c,dur||800,null,easingName); return c; };
+  return c;
+}
+function paint(c){ var g=fit(c.cvs); c.g=g; c.hits=[]; c.draw(g.ctx,g.W,g.H,c); }
+function paintAll(){ charts.forEach(paint); }
+/* Wire every chart to play once as it enters view. This is the report's default
+   motion, not an extra: opt a chart out with mk(...,{static:true}), never opt in.
+   Charts already on screen start immediately; the rest wait for entry. Reduced
+   motion is handled downstream by anim(), which jumps straight to the final state. */
+function playAll(dur,easingName){
+  charts.forEach(function(c){
+    if(c.opt.static || c.__wired) return;
+    c.__wired=true;
+    onView(c.cvs, function(){ c.play(dur||700, easingName); });
+  });
+}
+function pick(c,p){
+  var found=null,best=Infinity;
+  for(var i=0;i<c.hits.length;i++){ var h=c.hits[i];
+    if(h.test){ if(h.test(p)) return h; }
+    else if(h.r!=null){ var d=Math.hypot(p.x-h.x,p.y-h.y); if(d<=Math.max(h.r+8,14)&&d<best){best=d;found=h;} }
+    else if(p.x>=h.x&&p.x<=h.x+h.w&&p.y>=h.y&&p.y<=h.y+h.h){ found=h; break; }
+  }
+  return found;
+}
+function bindHover(c){
+  var cvs=c.cvs;
+  function at(ev){ var r=cvs.getBoundingClientRect(); return {x:ev.clientX-r.left, y:ev.clientY-r.top}; }
+  cvs.addEventListener('pointermove', function(ev){
+    if(ttPinned) return;
+    var h=pick(c,at(ev));
+    c.hover=h;
+    if(h){ showData(ev,h); cvs.style.cursor=h.click?'pointer':'default'; } else { hideTip(); cvs.style.cursor='default'; }
+    if(c.opt.repaintOnHover) paint(c);
+  });
+  cvs.addEventListener('pointerleave', function(){ c.hover=null; hideTip(); if(c.opt.repaintOnHover) paint(c); });
+  cvs.addEventListener('click', function(ev){ var h=pick(c,at(ev)); if(h&&h.click) h.click(); });
+}
+/* animation — the final state is ALWAYS drawn, even if rAF stops (background
+   tab, headless capture). That safety timer is not optional. */
+/* Easing vocabulary. The named-curve idea is the portable half of GSAP,
+   anime.js and Motion — you do not need their runtimes to use their curves.
+
+   VALUE-SAFE curves are monotonic and never exceed 1, so they are legal on a
+   value-scaled mark (a bar length, an area height).
+   OVERSHOOT curves pass 1 before settling. On a bar that literally draws the
+   value past its own axis for a few frames — slop-test gate 3. They are
+   therefore allowed on opacity and position only, and anim() refuses them. */
+var easings={
+  linear:function(t){ return t; },
+  outCubic:function(t){ return 1-Math.pow(1-t,3); },                       /* default */
+  inOutCubic:function(t){ return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2; },
+  outQuint:function(t){ return 1-Math.pow(1-t,5); },
+  outExpo:function(t){ return t>=1?1:1-Math.pow(2,-10*t); },
+  outCirc:function(t){ return Math.sqrt(1-Math.pow(t-1,2)); },
+  inOutQuint:function(t){ return t<.5?16*t*t*t*t*t:1-Math.pow(-2*t+2,5)/2; },
+  /* ── overshoot: never on a value-scaled mark ───────────────────────────── */
+  outBack:function(t){ var c1=1.70158,c3=c1+1;
+    return 1+c3*Math.pow(t-1,3)+c1*Math.pow(t-1,2); },
+  spring:function(t){ if(t<=0)return 0; if(t>=1)return 1;
+    return 1-Math.pow(2,-9*t)*Math.cos(t*Math.PI*3.2); }
+};
+/* Curves that pass 1 on the way. Kept as data so anim() can refuse them. */
+var overshootEasings={outBack:1, spring:1};
+function anim(c,dur,done,easingName){
+  var fired=false, token={};
+  function finish(){ if(fired || c.__token!==token)return; fired=true; c.t=1; paint(c); if(done) done(); }
+  c.__token=token;
+  if(RM.matches){ finish(); return; }
+  dur=Math.min(900,Math.max(0,Number(dur)||800));
+  if(overshootEasings[easingName]){
+    /* A chart's t scales the DATA. An overshoot curve would draw the mark past
+       its axis. Refuse it here rather than let a wrong value flash on screen. */
+    console.warn('[canvas-report] easing "'+easingName+'" overshoots 1 and cannot '+
+                 'drive a value-scaled mark. Falling back to outCubic. '+
+                 'Use it with R.motion() or R.countUp() instead.');
+    easingName='outCubic';
+  }
+  var ease=easings[easingName]||easings.outCubic;
+  var t0=null; c.t=0;
+  (function step(ts){
+    if(c.__token!==token) return;
+    if(t0==null) t0=ts;
+    /* Clamp BOTH ends. The first call comes from performance.now() and the rest from
+       rAF timestamps; when those two clocks disagree — headless capture under virtual
+       time is the reliable way to see it — ts can land before t0 and p goes negative.
+       An easing fed a negative t returns a large negative number, and every mark then
+       draws far outside its plot. Clamping low costs nothing and removes the class. */
+    var p=Math.min(1,Math.max(0,(ts-t0)/dur));
+    c.t=ease(p); paint(c);
+    if(p<1) requestAnimationFrame(step); else finish();
+  })(performance.now());
+  setTimeout(finish, dur+260);
+}
+/* Native one-shot motion, small emphasis only. Content already renders in its
+   final state; motion never carries information. */
+function motion(node,keyframes,options){
+  if(!node) return null;
+  options=options||{};
+  var frames=Array.isArray(keyframes)?keyframes:[keyframes||{}];
+  var safe=[], last={};
+  function validTransform(v){
+    var m, re=/translate(?:X|Y)?\(\s*(-?\d+(?:\.\d+)?)px(?:\s*,\s*(-?\d+(?:\.\d+)?)px)?\s*\)/g;
+    if(typeof v!=='string' || !/^(\s*translate(?:X|Y)?\(\s*-?\d+(?:\.\d+)?px(?:\s*,\s*-?\d+(?:\.\d+)?px)?\s*\)\s*)+$/.test(v)) return false;
+    while((m=re.exec(v))) if(Math.abs(Number(m[1]))>24 || (m[2]&&Math.abs(Number(m[2]))>24)) return false;
+    return true;
+  }
+  frames.forEach(function(frame){
+    var out={};
+    if(frame && frame.opacity!=null && isFinite(Number(frame.opacity)))
+      out.opacity=Math.max(0,Math.min(1,Number(frame.opacity)));
+    if(frame && frame.transform!=null && validTransform(frame.transform)) out.transform=frame.transform;
+    safe.push(out); last=out;
+  });
+  function finalState(){ if(last.opacity!=null) node.style.opacity=last.opacity;
+    if(last.transform!=null) node.style.transform=last.transform; }
+  if(node.__reportMotion){ node.__reportMotion.cancel(); clearTimeout(node.__reportMotionTimer); }
+  if(RM.matches || !node.animate){ finalState(); return null; }
+  var dur=Math.min(900,Math.max(0,Number(options.duration)||300));
+  var easing=typeof options.easing==='string' && easings[options.easing] ? options.easing : 'outCubic';
+  var cssEase={linear:'linear', outCubic:'cubic-bezier(.22,.61,.36,1)',
+    inOutCubic:'cubic-bezier(.65,0,.35,1)', outQuint:'cubic-bezier(.23,1,.32,1)',
+    outExpo:'cubic-bezier(.16,1,.3,1)', outCirc:'cubic-bezier(0,.55,.45,1)',
+    inOutQuint:'cubic-bezier(.83,0,.17,1)',
+    outBack:'cubic-bezier(.34,1.56,.64,1)',        /* overshoot is fine on opacity/translate */
+    spring:'cubic-bezier(.34,1.56,.64,1)'}[easing];
+  var a=node.animate(safe,{duration:dur,easing:cssEase,fill:'forwards',iterations:1});
+  node.__reportMotion=a;
+  function finish(){ if(node.__reportMotion===a){ finalState(); node.__reportMotion=null; } }
+  a.onfinish=finish; a.oncancel=function(){ if(node.__reportMotion===a) node.__reportMotion=null; };
+  node.__reportMotionTimer=setTimeout(finish,dur+260);
+  return a;
+}
+function onView(node, fn){
+  if(!window.IntersectionObserver){ fn(); return; }
+  var io=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ io.unobserve(e.target); fn(); } }); },{threshold:.25});
+  io.observe(node);
+}
+
+/* ── structure and motion helpers (used by the macrostructures) ───────────── */
+/* count-up. Under reduced-motion it jumps straight to the final value, and it
+   always ends on the final value. */
+function countUp(node,to,dur,fmt,easingName){
+  fmt=fmt||nf; to=Number(to);
+  if(!isFinite(to)){ node.textContent='—'; return; }
+  if(RM.matches||!dur){ node.textContent=fmt(to); return; }
+  /* A number is not a mark on an axis, so an overshoot curve is legal here —
+     it reads as the figure settling. It still lands exactly on `to`. */
+  var ease=easings[easingName]||easings.outCubic;
+  var t0=null, done=false;
+  function finish(){ if(done)return; done=true; node.textContent=fmt(to); }
+  function step(ts){ if(t0==null)t0=ts; var k=Math.min(1,(ts-t0)/dur);
+    node.textContent=fmt(to*ease(k));
+    if(k<1 && !done) requestAnimationFrame(step); else finish(); }
+  requestAnimationFrame(step); setTimeout(finish,dur+260);
+}
+/* switch .reveal elements on once, as they enter the viewport */
+function reveal(root){
+  var ns=(root||document).querySelectorAll('.reveal');
+  if(RM.matches||!('IntersectionObserver' in window)){
+    Array.prototype.forEach.call(ns,function(n){ n.classList.add('in'); }); return; }
+  var io=new IntersectionObserver(function(es){ es.forEach(function(e){
+    if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }); },{threshold:.14});
+  Array.prototype.forEach.call(ns,function(n){ io.observe(n); });
+}
+/* scrollytelling: calls onStep(index, node) as each .step activates, so the
+   pinned canvas can redraw */
+function scrolly(container,onStep){
+  var steps=container.querySelectorAll('.step'), cur=-1;
+  function set(i){ if(i===cur)return; cur=i;
+    Array.prototype.forEach.call(steps,function(n,j){ n.classList.toggle('on',j===i); });
+    if(onStep) onStep(i,steps[i]); }
+  if(!('IntersectionObserver' in window)){ Array.prototype.forEach.call(steps,function(n){n.classList.add('on');}); set(steps.length-1); return; }
+  var io=new IntersectionObserver(function(es){ es.forEach(function(e){
+    if(e.isIntersecting) set(Array.prototype.indexOf.call(steps,e.target)); }); },
+    {rootMargin:'-45% 0px -45% 0px'});
+  Array.prototype.forEach.call(steps,function(n){ io.observe(n); });
+  set(0);
+}
+/* sticky masthead (M6): shrink past a scroll threshold */
+function shrinkMasthead(el,after){
+  after=after||120; var on=false;
+  function chk(){ var v=window.scrollY>after; if(v!==on){ on=v; el.classList.toggle('shrunk',v); } }
+  window.addEventListener('scroll',chk,{passive:true}); chk();
+}
+
+/* ── axis and mark helpers ────────────────────────────────────────────────── */
+function ticks(min,max,n){
+  n=n||5; min=Number(min); max=Number(max);
+  if(!isFinite(min)||!isFinite(max)) return [];      /* a missing value must not turn the axis into NaN */
+  if(max<min){ var _t=min; min=max; max=_t; }
+  if(min===max){min-=1;max+=1;}
+  var span=max-min, raw=span/n, mag=Math.pow(10,Math.floor(Math.log10(raw))), norm=raw/mag;
+  var step=(norm<1.5?1:norm<3?2:norm<7?5:10)*mag;
+  var s=Math.ceil(min/step)*step, out=[];
+  /* `+0` collapses negative zero: without it a tick lands on -0 and prints "-0" */
+  for(var v=s; v<=max+step*1e-3; v+=step) out.push((Math.round(v*1e6)/1e6)+0 || 0);
+  return out;
+}
+function gridY(ctx,W,pad,rows,fmt){
+  ctx.save(); ctx.strokeStyle=T.line; ctx.lineWidth=1; ctx.fillStyle=T.muted;
+  ctx.font='11px system-ui, sans-serif'; ctx.textAlign='right'; ctx.textBaseline='middle';
+  rows.forEach(function(t){ var y=Math.round(t.y)+.5;
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y); ctx.stroke();
+    ctx.fillText(fmt(t.v), pad.l-8, y); });
+  ctx.restore();
+}
+function barV(ctx,x,y,w,h,r){ /* vertical bar: y is the data end, y+h the baseline; only the data end is rounded */
+  r=Math.min(r,Math.abs(w)/2,Math.abs(h));
+  ctx.beginPath();
+  if(h>=0){ ctx.moveTo(x,y+h); ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y);
+            ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r); ctx.lineTo(x+w,y+h); }
+  else { ctx.moveTo(x,y+h); ctx.lineTo(x,y-r); ctx.quadraticCurveTo(x,y,x+r,y);
+         ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y-r); ctx.lineTo(x+w,y+h); }
+  ctx.closePath(); ctx.fill();
+}
+function barH(ctx,x,y,w,h,r){ /* horizontal bar: x is the baseline, x+w the data end */
+  r=Math.min(r,Math.abs(h)/2,Math.abs(w));
+  ctx.beginPath();
+  if(w>=0){ ctx.moveTo(x,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+            ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h); ctx.lineTo(x,y+h); }
+  else { ctx.moveTo(x,y); ctx.lineTo(x+w+r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+         ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w+r,y+h); ctx.lineTo(x,y+h); }
+  ctx.closePath(); ctx.fill();
+}
+function txt(ctx,s,x,y,align,color,weight,size){
+  ctx.save(); ctx.fillStyle=color||T.text2; ctx.font=(weight||'600')+' '+(size||11.5)+'px system-ui, sans-serif';
+  ctx.textAlign=align||'left'; ctx.textBaseline='middle'; ctx.fillText(s,x,y); ctx.restore();
+}
+function ell(ctx,s,max){ s=String(s);
+  if(ctx.measureText(s).width<=max) return s;
+  var t=s; while(t.length>1 && ctx.measureText(t+'…').width>max) t=t.slice(0,-1);
+  return t+'…';
+}
+function fld(f){ return typeof f==='function'?f:function(r){ return r[f]; }; }
+/* ── missing-value guard ───────────────────────────────────────────────────
+   A null/NaN/string reaching a canvas coordinate makes the mark vanish with no
+   error at all. Filter at the factory door, and PRINT how many rows were
+   dropped — never hide it. */
+function fin(v){ return finiteNumber(v); }        /* short alias for finiteNumber */
+function usable(rows, getters){
+  var out=[], drop=0;
+  for(var i=0;i<rows.length;i++){
+    var ok=true;
+    for(var g=0;g<getters.length;g++){ if(fin(getters[g](rows[i]))===null){ ok=false; break; } }
+    if(ok) out.push(rows[i]); else drop++;
+  }
+  out.dropped=drop; return out;
+}
+function dropNote(ctx,W,H,rows){
+  if(!rows.dropped) return;
+  txt(ctx, str('rowsOmitted',{n:rows.dropped}), W-6, H-6, 'right', T.muted, '600', 10.5);
+}
+/* keep a value label inside the plot */
+function clampLabel(ctx,s,x,align,lo,hi){
+  var w=ctx.measureText(String(s)).width;
+  var left = align==='right' ? x-w : (align==='center' ? x-w/2 : x);
+  if(left<lo) left=lo;
+  if(left+w>hi) left=hi-w;
+  return align==='right' ? left+w : (align==='center' ? left+w/2 : left);
+}
+/* when a factory cannot take negatives, say so instead of drawing garbage */
+function needsNonNegative(ctx,W,H,rows,get,alt){
+  for(var i=0;i<rows.length;i++){ if(get(rows[i])<0){
+    chartMessage(ctx,W,H,str('negativeUnsupported',{alt:alt}));
+    return true; } }
+  return false;
+}
+function chartMessage(ctx,W,H,message){
+  var s=String(message||str('noData')), max=W-24;
+  ctx.save(); ctx.font='600 12px system-ui, sans-serif';
+  if(ctx.measureText(s).width<=max){ ctx.restore(); txt(ctx,s,W/2,H/2,'center',T.muted,'600',12); return; }
+  /* wrap to two lines, then truncate, so the message stays on the canvas */
+  var words=s.split(' '), a='', b='';
+  for(var i=0;i<words.length;i++){
+    var t=a?a+' '+words[i]:words[i];
+    if(ctx.measureText(t).width<=max) a=t; else b=b?b+' '+words[i]:words[i];
+  }
+  var l1=ell(ctx,a,max), l2=b?ell(ctx,b,max):'';
+  ctx.restore();
+  txt(ctx,l1,W/2,H/2-(l2?9:0),'center',T.muted,'600',12);
+  if(l2) txt(ctx,l2,W/2,H/2+9,'center',T.muted,'600',12);
+}
+function finiteNumber(v){ var n=Number(v); return isFinite(n)?n:null; }
+/* Wilson score interval for a proportion. Reports quote shares constantly —
+   "13.5% of trades were direct" — and a share from 40 rows is not the same claim
+   as a share from 4,000. This is the cheap honest one: no normal approximation
+   collapse at p near 0 or 1, no simulation, exact in three lines.
+   Returns fractions, not percentages. references/uncertainty.md says when to use it. */
+function wilson(k,n,z){
+  k=Number(k); n=Number(n); z=Number(z)||1.96;          /* 1.96 = 95% */
+  if(!isFinite(k)||!isFinite(n)||n<=0||k<0||k>n) return null;
+  var p=k/n, z2=z*z, d=1+z2/n;
+  var centre=(p+z2/(2*n))/d;
+  var half=(z*Math.sqrt(p*(1-p)/n + z2/(4*n*n)))/d;
+  return {p:p, lo:Math.max(0,centre-half), hi:Math.min(1,centre+half), n:n, k:k};
+}
+/* Pass colours as TOKEN NAMES ('s1', 'pos'...). Resolving at draw time is what
+   makes a chart follow the theme toggle; a hard-coded hex will not. */
+function colorOf(v,dflt){
+  if(v==null) return dflt||T.s1;
+  if(typeof v==='function') return v();
+  return (T[v]!==undefined && typeof T[v]==='string') ? T[v] : v;
+}
+
+/* ============================================================================
+ * VIZ — chart factories. Every factory takes (canvas, cfg) and returns a handle.
+ * Shared cfg: rows, tip(row,i)->{title,rows,note}, format(v)->string
+ * ==========================================================================*/
+var VIZ={};
+
+/* line: one series + area wash + crosshair. Time axis only. */
+VIZ.line=function(cvs,cfg){
+  var X=fld(cfg.x), Y=fld(cfg.y), fmt=cfg.format||nf;
+  return mk(cvs,function(ctx,W,H,c){
+    var col=colorOf(cfg.color), rows=usable(cfg.rows(),[Y]), pad={l:cfg.padLeft||58,r:22,t:16,b:26};
+    if(!rows.length) return;
+    var vals=rows.map(Y), mn=Math.min.apply(null,vals), mx=Math.max.apply(null,vals);
+    var pv=(mx-mn)*0.18||1, lo=cfg.zeroBased?0:mn-pv, hi=mx+pv;
+    var PW=W-pad.l-pad.r, PH=H-pad.t-pad.b;
+    var px=function(i){ return pad.l+(rows.length<2?PW/2:PW*i/(rows.length-1)); };
+    var py=function(v){ return pad.t+PH*(1-(v-lo)/(hi-lo)); };
+    gridY(ctx,W,pad,ticks(lo,hi,4).map(function(v){return {v:v,y:py(v)};}), cfg.tickFormat||compact);
+    var n=Math.min(rows.length, Math.max(1,Math.round(rows.length*c.t)));  /* never run past the number of rows */
+    ctx.save(); ctx.beginPath();
+    for(var i=0;i<n;i++){ var x=px(i),y=py(vals[i]); i?ctx.lineTo(x,y):ctx.moveTo(x,y); }
+    ctx.lineTo(px(n-1),pad.t+PH); ctx.lineTo(px(0),pad.t+PH); ctx.closePath();
+    ctx.fillStyle=rgba(col,.10); ctx.fill(); ctx.restore();
+    ctx.save(); ctx.strokeStyle=col; ctx.lineWidth=2; ctx.lineJoin='round'; ctx.lineCap='round'; ctx.beginPath();
+    for(var j=0;j<n;j++){ var xx=px(j),yy=py(vals[j]); j?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy); }
+    ctx.stroke(); ctx.restore();
+    /* x labels: drop any that would collide */
+    ctx.save(); ctx.fillStyle=T.muted; ctx.font='11px system-ui, sans-serif'; ctx.textBaseline='top';
+    var step=Math.max(1,Math.ceil(rows.length/(W>560?7:4))), picks=[], last=-1e9, gap=52;
+    for(var k=0;k<rows.length;k+=step) picks.push(k);
+    if(picks[picks.length-1]!==rows.length-1) picks.push(rows.length-1);
+    while(picks.length>2 && px(picks[picks.length-1])-px(picks[picks.length-2])<gap) picks.splice(picks.length-2,1);
+    picks.forEach(function(i){
+      if(px(i)-last<gap && i!==rows.length-1) return; last=px(i);
+      ctx.textAlign=i===0?'left':(i===rows.length-1?'right':'center');
+      ctx.fillText(X(rows[i]), Math.min(W-pad.r,Math.max(pad.l,px(i))), pad.t+PH+8);
+    });
+    ctx.restore();
+    if(c.t>=1){                                   /* endpoint marker + the one direct value label */
+      var lx=px(rows.length-1), ly=py(vals[vals.length-1]);
+      ctx.fillStyle=T.surface; ctx.beginPath(); ctx.arc(lx,ly,6,0,7); ctx.fill();
+      ctx.fillStyle=col; ctx.beginPath(); ctx.arc(lx,ly,4,0,7); ctx.fill();
+      txt(ctx,fmt(vals[vals.length-1]),lx-9,ly-13,'right',T.text,'680',12);
+      var mi=vals.indexOf(mx);
+      if(mi>=0 && mi<vals.length-4 && rows.length>6)
+        txt(ctx,(cfg.maxLabel||str('top'))+fmt(mx),px(mi),py(mx)-13, mi>rows.length*.7?'right':'left',T.muted,'600',11);
+    }
+    if(c.hover){                                  /* crosshair: the reader aims at an x position, not a point */
+      var hx=px(c.hover.i);
+      ctx.save(); ctx.strokeStyle=T.lineStrong; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(Math.round(hx)+.5,pad.t); ctx.lineTo(Math.round(hx)+.5,pad.t+PH); ctx.stroke();
+      var hy=py(vals[c.hover.i]);
+      ctx.fillStyle=T.surface; ctx.beginPath(); ctx.arc(hx,hy,7,0,7); ctx.fill();
+      ctx.fillStyle=col; ctx.beginPath(); ctx.arc(hx,hy,4.5,0,7); ctx.fill(); ctx.restore();
+    }
+    var bw=PW/Math.max(1,rows.length-1);
+    rows.forEach(function(r,i){
+      var d=cfg.tip?cfg.tip(r,i,rows):{title:String(X(r)),rows:[{name:cfg.seriesName||str('value'),val:fmt(Y(r)),color:col}]};
+      c.hits.push({x:px(i)-bw/2,y:pad.t,w:bw,h:PH,i:i,title:d.title,rows:d.rows,note:d.note});
+    });
+  },{repaintOnHover:true});
+};
+
+/* grouped columns: 2-3 series IN THE SAME UNIT. Different units -> VIZ.panels. */
+VIZ.columns=function(cvs,cfg){
+  var X=fld(cfg.x), ser=cfg.series.map(function(s){ return {name:s.name,get:fld(s.get),color:s.color}; });
+  return mk(cvs,function(ctx,W,H,c){
+    ser.forEach(function(s,i){ s.hex=colorOf(s.color, T.series[i%3]); });
+    var rows=usable(cfg.rows(), ser.map(function(s){return s.get;})), pad={l:58,r:16,t:16,b:26};
+    if(!rows.length) return;
+    var mx=Math.max.apply(null, rows.map(function(r){ return Math.max.apply(null, ser.map(function(s){return s.get(r);})); }));
+    if(needsNonNegative(ctx,W,H,rows,function(r){ return Math.min.apply(null, ser.map(function(s){return s.get(r);})); },'VIZ.divColumns')) return;
+    var tk=ticks(0,mx*1.08,4), hi=Math.max(tk[tk.length-1]||0, mx*1.04, 1e-9);  /* the axis must always cover the data */
+    var PW=W-pad.l-pad.r, PH=H-pad.t-pad.b, py=function(v){ return pad.t+PH*(1-v/hi); };
+    gridY(ctx,W,pad,tk.map(function(v){return {v:v,y:py(v)};}), cfg.tickFormat||compact);
+    var slot=PW/rows.length, gap=2, bw=Math.min(24,(slot-6-gap*(ser.length-1))/ser.length);
+    rows.forEach(function(r,i){
+      var x0=pad.l+slot*i+(slot-(bw*ser.length+gap*(ser.length-1)))/2;
+      ser.forEach(function(s,si){
+        var h=(PH*s.get(r)/hi)*c.t;
+        ctx.fillStyle=s.hex; barV(ctx, x0+si*(bw+gap), pad.t+PH-h, bw, h, 4);
+      });
+      var d=cfg.tip?cfg.tip(r,i,rows):{title:String(X(r)),
+        rows:ser.map(function(s){ return {name:s.name,val:(cfg.format||nf)(s.get(r)),color:s.hex}; })};
+      c.hits.push({x:pad.l+slot*i,y:pad.t,w:slot,h:PH,title:d.title,rows:d.rows,note:d.note});
+    });
+    ctx.save(); ctx.fillStyle=T.muted; ctx.font='11px system-ui, sans-serif';
+    ctx.textBaseline='top'; ctx.textAlign='center';
+    var step=Math.max(1,Math.ceil(rows.length/(W>560?6:3))), last=-1e9;
+    rows.forEach(function(r,i){ if(i%step) return;
+      var x=pad.l+slot*i+slot/2; if(x-last<50||x>W-pad.r-24) return; last=x;
+      ctx.fillText(ell(ctx,X(r),slot*step-6), x, pad.t+PH+8); });
+    ctx.restore();
+    dropNote(ctx,W,H,rows);
+  });
+};
+
+/* diverging columns (histogram, deltas): colour splits on sign */
+VIZ.divColumns=function(cvs,cfg){
+  var X=fld(cfg.x), Y=fld(cfg.y), fmt=cfg.format||nf;
+  return mk(cvs,function(ctx,W,H,c){
+    /* rotated labels plus an axis note need more room underneath */
+    var rows=usable(cfg.rows(),[Y]), pad={l:52,r:12,t:cfg.padTop||18,
+      b:(cfg.rotate?52:30)+(cfg.axisNote?14:0)};
+    if(!rows.length) return;
+    var mx=Math.max.apply(null,rows.map(Y));
+    if(needsNonNegative(ctx,W,H,rows,Y,'VIZ.divHbars or VIZ.waterfall')) return;
+    var tk=ticks(0,mx*1.06,4), hi=Math.max(tk[tk.length-1]||0,mx*1.06,1e-9);
+    var PW=W-pad.l-pad.r, PH=H-pad.t-pad.b, py=function(v){ return pad.t+PH*(1-v/hi); };
+    gridY(ctx,W,pad,tk.map(function(v){return {v:v,y:py(v)};}), cfg.tickFormat||compact);
+    var slot=PW/rows.length, bw=Math.min(26,slot-3), half=(rows.length-1)/2;
+    rows.forEach(function(r,i){
+      var cx=pad.l+slot*i+slot/2;
+      var t01=cfg.sign?cfg.sign(r,i,rows):(i<half?-(half-i)/half:(i-half)/half);
+      /* cfg.colorOf wins; a plain cfg.color token makes it a single-hue histogram
+         (a distribution of a positive quantity has no direction to encode); with
+         neither, it diverges around the midpoint as a signed histogram should. */
+      var col=cfg.colorOf?cfg.colorOf(r,i,rows)
+             :cfg.color?colorOf(cfg.color)
+             :diverge(t01<0?Math.min(-.35,t01):Math.max(.35,t01));
+      var h=(PH*Y(r)/hi)*c.t;
+      ctx.fillStyle=col; barV(ctx,cx-bw/2,pad.t+PH-h,bw,h,4);
+      if(c.t>=1 && Y(r)/mx>0.08) txt(ctx,compact(Y(r)),cx,pad.t+PH-h-11,'center',T.text2,'650',11);
+      var d=cfg.tip?cfg.tip(r,i,rows):{title:String(X(r)),rows:[{name:cfg.seriesName||str('value'),val:fmt(Y(r)),color:col}]};
+      c.hits.push({x:cx-slot/2,y:pad.t,w:slot,h:PH,title:d.title,rows:d.rows,note:d.note});
+    });
+    ctx.save(); ctx.fillStyle=T.muted; ctx.font='10.5px system-ui, sans-serif'; ctx.textBaseline='top';
+    rows.forEach(function(r,i){
+      var cx=pad.l+slot*i+slot/2;
+      if(cfg.rotate){ ctx.save(); ctx.translate(cx,pad.t+PH+8); ctx.rotate(-Math.PI/4);
+        /* a rotated label is bounded by the diagonal; untruncated it runs off the left */
+        ctx.textAlign='right'; ctx.fillText(ell(ctx,X(r),(pad.b-14)*1.414),0,0); ctx.restore(); }
+      else { ctx.textAlign='center'; ctx.fillText(ell(ctx,X(r),slot-4), cx, pad.t+PH+8); }
+    });
+    ctx.restore();
+    if(cfg.axisNote) txt(ctx,cfg.axisNote,pad.l+PW/2,H-8,'center',T.muted,'600',11);
+    if(cfg.topNote) txt(ctx,cfg.topNote,pad.l,12,'left',T.muted,'600',11);
+    dropNote(ctx,W,H,rows);
+  });
+};
+
+/* horizontal bars (one series): ranking and magnitude */
+VIZ.hbars=function(cvs,cfg){
+  var L=fld(cfg.label), V=fld(cfg.value), fmt=cfg.format||compact;
+  /* cfg.key gives a row a stable identity across re-sorts. With it, play() makes a
+     mark TRAVEL from the row it held to the row it now belongs in, instead of
+     regrowing from zero — object constancy, ported from D3's keyed join without the
+     runtime (references/external-tools.md § What was actually adopted).
+     Without cfg.key nothing changes: the bar grows from zero as it always did. */
+  var K=cfg.key?fld(cfg.key):null;
+  return mk(cvs,function(ctx,W,H,c){
+    var rows=usable(cfg.rows(),[V]), pad={t:14,b:12};
+    if(!rows.length) return;
+    var labelW=Math.min(cfg.labelW||210, Math.max(96,W*(cfg.labelRatio||0.3)));
+    var PW=W-labelW-(cfg.valueW||64), rowH=(H-pad.t-pad.b)/rows.length;
+    /* cfg.max pins the scale for side-by-side comparison (see macro 09) */
+    var mx=finiteNumber(cfg.max) || Math.max.apply(null,rows.map(function(r){return Math.abs(V(r));})) || 1;
+    var prev=K&&c.__prev, moving=!!(prev&&c.t<1), snap=K?Object.create(null):null;
+    ctx.font='600 11.5px system-ui, sans-serif';
+    rows.forEach(function(r,i){
+      var k=K?String(K(r)):null, p=(moving&&prev[k])?prev[k]:null;
+      /* a row that was not on screen before has nowhere to travel from: it grows
+         in place, and fades in so the arrival is not mistaken for a jump */
+      var pos = p ? p.i+(i-p.i)*c.t : i;
+      var val = p ? p.v+(Math.abs(V(r))-p.v)*c.t : Math.abs(V(r))*c.t;
+      var alpha = (moving&&!p) ? c.t : 1;
+      var cy=pad.t+rowH*pos+rowH/2, bh=Math.min(cfg.barH||18,rowH-5);
+      ctx.save(); if(alpha<1) ctx.globalAlpha=alpha;
+      ctx.font='600 11.5px system-ui, sans-serif';
+      txt(ctx, ell(ctx,L(r),labelW-12), labelW-10, cy, 'right', T.text2,'600',11.5);
+      var bw=PW*val/mx;
+      ctx.fillStyle=cfg.colorOf?cfg.colorOf(r,i):colorOf(cfg.color);
+      barH(ctx,labelW,cy-bh/2,Math.max(2,bw),bh,4);
+      if(c.t>=1){ ctx.save(); ctx.font='650 11.5px system-ui, sans-serif';
+        var lx=clampLabel(ctx,fmt(V(r)),labelW+bw+8,'left',labelW+4,W-4); ctx.restore();
+        txt(ctx,fmt(V(r)),lx,cy,'left',T.text2,'650',11.5); }
+      ctx.restore();
+      if(snap) snap[k]={i:i, v:Math.abs(V(r))};
+      var d=cfg.tip?cfg.tip(r,i,rows):{title:String(L(r)),rows:[{name:cfg.seriesName||str('value'),val:fmt(V(r))}]};
+      c.hits.push({x:0,y:cy-rowH/2,w:W,h:rowH,title:d.title,rows:d.rows,note:d.note,click:cfg.onSelect&&function(){cfg.onSelect(r);}});
+    });
+    if(snap&&c.t>=1) c.__prev=snap;
+    dropNote(ctx,W,H,rows);
+  });
+};
+
+/* diverging horizontal bars: left/right of zero. This chart owns its row labels. */
+VIZ.divHbars=function(cvs,cfg){
+  var L=fld(cfg.label), V=fld(cfg.value), fmt=cfg.format||function(v){return sg(v,'');};
+  return mk(cvs,function(ctx,W,H,c){
+    var rows=usable(cfg.rows(),[V]), pad={t:16,b:22};
+    if(!rows.length) return;
+    /* Measure with the font you draw with. Otherwise ell() decides the label fits
+       and txt() draws it wider, so it is clipped at the canvas edge. */
+    ctx.font='600 12px system-ui, sans-serif';
+    var labelW=Math.min(cfg.labelW||96, Math.max(56, W*(cfg.labelRatio||.28))),
+        rowH=(H-pad.t-pad.b)/rows.length;
+    /* cfg.max pins the scale so two charts can be compared side by side
+       (macro 09 requires it). Without it each chart scales itself and the
+       comparison becomes an illusion. */
+    var mx=(finiteNumber(cfg.max) || Math.max.apply(null,rows.map(function(r){return Math.abs(V(r));})) || 1)*1.15;
+    var cx0=labelW+(W-labelW)*.46;
+    /* Reserve room so a negative value label cannot land on the row name. If this
+       goes negative on a narrow canvas the bars draw backwards, hence the floor. */
+    var half=Math.max(16, Math.min(cx0-labelW-56, W-cx0-52));
+    ctx.save(); ctx.strokeStyle=T.lineStrong; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(Math.round(cx0)+.5,pad.t); ctx.lineTo(Math.round(cx0)+.5,H-pad.b); ctx.stroke(); ctx.restore();
+    txt(ctx,'0',cx0,H-8,'center',T.muted,'500',10.5);
+    rows.forEach(function(r,i){
+      var cy=pad.t+rowH*i+rowH/2, bh=Math.min(18,rowH-6), v=V(r);
+      ctx.font='600 12px system-ui, sans-serif';
+      txt(ctx, ell(ctx,L(r),labelW-12), labelW-10, cy,'right',T.text2,'600',12);
+      var bw=(half*v/mx)*c.t;
+      ctx.fillStyle=v>=0?T.pos:T.neg;
+      barH(ctx,cx0,cy-bh/2,bw,bh,4);
+      if(c.t>=1){ ctx.save(); ctx.font='650 11.5px system-ui, sans-serif';
+        var al=v>=0?'left':'right', lx=clampLabel(ctx,fmt(v),cx0+bw+(v>=0?8:-8),al,labelW+2,W-4);
+        ctx.restore(); txt(ctx,fmt(v),lx,cy,al,T.text2,'650',11.5); }
+      var d=cfg.tip?cfg.tip(r,i,rows):{title:String(L(r)),rows:[{name:cfg.seriesName||str('change'),val:fmt(v),cls:dirCls(v)}]};
+      c.hits.push({x:0,y:cy-rowH/2,w:W,h:rowH,title:d.title,rows:d.rows,note:d.note});
+    });
+    dropNote(ctx,W,H,rows);
+  });
+};
+
+/* small multiples: 2-3 metrics in DIFFERENT units, one axis each, same rows.
+   This is the replacement for a dual axis. */
+VIZ.panels=function(cvs,cfg){
+  var L=fld(cfg.label);
+  return mk(cvs,function(ctx,W,H,c){
+    var rows=usable(cfg.rows(), cfg.panels.map(function(p){return fld(p.get);})), top=26, bot=16;
+    if(!rows.length) return;
+    /* colours arrive as token names, same contract as every other factory */
+    var ps=cfg.panels.map(function(p,pi){ return {title:p.title,get:fld(p.get),
+      color:colorOf(p.color, T.series[pi%3]), format:p.format||compact}; });
+    var labelW=Math.min(96,W*.24), gutter=Math.max(38,W*.07);
+    var panelW=(W-labelW-gutter*(ps.length-1)-18)/ps.length;
+    var rowH=(H-top-bot)/rows.length;
+    ps.forEach(function(p,pi){
+      p.x=labelW+pi*(panelW+gutter);
+      /* magnitude comparison, so measure on absolute value; an all-zero or all-negative
+         panel must not collapse the axis */
+      p.mx=Math.max.apply(null,rows.map(function(r){ return Math.abs(p.get(r)); }))||1;
+      txt(ctx,p.title,p.x,10,'left',T.text2,'650',11.5);
+      txt(ctx,(cfg.maxPrefix||str('max'))+compact(p.mx),p.x+panelW,10,'right',T.muted,'500',10.5);
+    });
+    rows.forEach(function(r,i){
+      var cy=top+rowH*i+rowH/2;
+      ctx.font='600 11.5px system-ui, sans-serif';
+      txt(ctx, ell(ctx,L(r),labelW-12), labelW-10, cy,'right',T.text2,'600',11.5);
+      ps.forEach(function(p){
+        var v=p.get(r), bh=Math.min(20,rowH-8), bw=(panelW*Math.abs(v)/p.mx)*c.t;
+        ctx.fillStyle=p.color; barH(ctx,p.x,cy-bh/2,Math.max(2,bw),bh,4);
+        if(c.t>=1){
+          var s=p.format(v);
+          ctx.save(); ctx.font='650 11px system-ui, sans-serif';
+          var tw=ctx.measureText(s).width, inside=bw>tw+26;
+          /* keep the label in its panel: if it will not fit inside the bar, push it out
+             only as far as the panel edge */
+          var lx=inside ? p.x+bw-7
+                        : clampLabel(ctx,s,p.x+bw+7,'left',p.x,Math.min(p.x+panelW+gutter-6, W-4));
+          ctx.restore();
+          txt(ctx,s,lx,cy,inside?'right':'left',inside?T.surface:T.text2,'650',11);
+        }
+        var d=cfg.tip?cfg.tip(r,i,rows):{title:String(L(r)),
+          rows:ps.map(function(q){ return {name:q.title,val:q.format(q.get(r)),color:q.color}; })};
+        c.hits.push({x:p.x,y:cy-rowH/2,w:panelW,h:rowH,title:d.title,rows:d.rows,note:d.note});
+      });
+    });
+  });
+};
+
+/* bubble scatter: relationship of two metrics + size (magnitude) + diverging
+   colour (direction). Hit testing is nearest-point. */
+VIZ.bubbles=function(cvs,cfg){
+  var X=fld(cfg.x), Y=fld(cfg.y), S=fld(cfg.size), L=fld(cfg.label), C=cfg.colorValue?fld(cfg.colorValue):null;
+  return mk(cvs,function(ctx,W,H,c){
+    var rows=usable(cfg.rows(),[X,Y,S]), pad={l:56,r:22,t:18,b:44};
+    if(!rows.length) return;
+    if(needsNonNegative(ctx,W,H,rows,function(r){ return Math.min(X(r),Y(r)); },'a chart with a signed axis')) return;
+    var mX=(Math.max.apply(null,rows.map(X))||1)*1.08, mY=(Math.max.apply(null,rows.map(Y))||1)*1.12;
+    var PW=W-pad.l-pad.r, PH=H-pad.t-pad.b;
+    var px=function(v){ return pad.l+PW*v/mX; }, py=function(v){ return pad.t+PH*(1-v/mY); };
+    var fx=cfg.tickFormatX||compact, fy=cfg.tickFormatY||compact;
+    gridY(ctx,W,pad,ticks(0,mY,5).map(function(v){return {v:v,y:py(v)};}), fy);
+    ctx.save(); ctx.fillStyle=T.muted; ctx.font='11px system-ui, sans-serif'; ctx.textAlign='center'; ctx.textBaseline='top';
+    ticks(0,mX,5).forEach(function(v){ ctx.fillText(fx(v),px(v),pad.t+PH+8); });
+    ctx.restore();
+    if(cfg.identityLine){                          /* y=x reference line — only when both axes share a unit */
+      var d=Math.min(mX,mY);
+      ctx.save(); ctx.strokeStyle=T.lineStrong; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(px(0),py(0)); ctx.lineTo(px(d),py(d)); ctx.stroke(); ctx.restore();
+      txt(ctx,cfg.identityLine,px(d)+8,py(d)+4,'left',T.muted,'600',11);
+    }
+    if(cfg.axisX) txt(ctx,cfg.axisX,W-pad.r,H-8,'right',T.muted,'600',11);
+    if(cfg.axisY) txt(ctx,cfg.axisY,pad.l-46,pad.t-4,'left',T.muted,'600',11);
+    var mS=Math.max.apply(null,rows.map(function(r){ return Math.abs(S(r)); }))||1;
+    rows.slice().sort(function(a,b){ return S(b)-S(a); }).forEach(function(r){
+      var rad=(4+16*Math.sqrt(S(r)/mS))*c.t, x=px(X(r)), y=py(Y(r));
+      var hex=C?diverge(C(r)/(cfg.colorScale||1)):colorOf(cfg.color);
+      var on=cfg.selected&&cfg.selected()===L(r);
+      ctx.save(); ctx.fillStyle=hex; ctx.globalAlpha=on?.95:.72;
+      ctx.beginPath(); ctx.arc(x,y,rad,0,7); ctx.fill();
+      ctx.globalAlpha=1; ctx.strokeStyle=on?T.text:T.surface; ctx.lineWidth=2;   /* a surface-coloured ring separates overlapping marks (ink, not data) */
+      ctx.beginPath(); ctx.arc(x,y,rad,0,7); ctx.stroke(); ctx.restore();
+      var d2=cfg.tip?cfg.tip(r):{title:String(L(r)),rows:[]};
+      c.hits.push({x:x,y:y,r:Math.max(rad,12),title:d2.title,rows:d2.rows,note:d2.note,
+        click:cfg.onSelect&&function(){ cfg.onSelect(r); }});
+    });
+    if(c.t>=1 && cfg.labelExtremes){                /* label only a few extremes directly */
+      ctx.save(); ctx.font='650 11px system-ui, sans-serif';
+      cfg.labelExtremes(rows).forEach(function(r){
+        var rad=4+16*Math.sqrt(S(r)/mS), x=px(X(r)), y=py(Y(r)), right=x<pad.l+PW*.6;
+        txt(ctx, ell(ctx,L(r),PW*.34), x+(right?rad+7:-rad-7), y, right?'left':'right', T.text2,'650',11);
+      });
+      ctx.restore();
+    }
+    dropNote(ctx,W,H,rows);
+  },{repaintOnHover:true});
+};
+
+/* donut: 2-5 nominal parts. All-zero input degrades to an empty ring. */
+VIZ.donut=function(cvs,cfg){
+  var L=fld(cfg.label), V=fld(cfg.value), fmt=cfg.format||nf;
+  return mk(cvs,function(ctx,W,H,c){
+    var rows=typeof cfg.rows==='function'?cfg.rows():cfg.rows||[], clean=[], invalid=false;
+    if(rows.length<2){ chartMessage(ctx,W,H,str('donutMin')); return; }
+    if(rows.length>5){ chartMessage(ctx,W,H,str('donutMax')); return; }
+    rows.forEach(function(r,i){ var v=finiteNumber(V(r)); if(v==null||v<0) invalid=true;
+      clean.push({row:r,i:i,value:v}); });
+    if(invalid){ chartMessage(ctx,W,H,str('donutSign')); return; }
+    var total=clean.reduce(function(sum,d){ return sum+d.value; },0), cx=W/2, cy=H/2;
+    var outer=Math.max(24,Math.min(W,H)*.34), inner=outer*.58, start=-Math.PI/2;
+    ctx.save(); ctx.strokeStyle=T.surface2; ctx.lineWidth=outer-inner; ctx.beginPath(); ctx.arc(cx,cy,(outer+inner)/2,0,Math.PI*2); ctx.stroke(); ctx.restore();
+    if(!total){ txt(ctx,cfg.centerLabel||'—',cx,cy,'center',T.muted,'680',13); return; }
+    clean.forEach(function(d,i){
+      var sweep=Math.PI*2*d.value/total, end=start+sweep*c.t, col=colorOf(d.row.color,cfg.color||T.series[i%3]);
+      if(end>start){ ctx.save(); ctx.strokeStyle=col; ctx.lineWidth=outer-inner; ctx.lineCap='butt';
+        ctx.beginPath(); ctx.arc(cx,cy,(outer+inner)/2,start,end); ctx.stroke(); ctx.restore(); }
+      var a0=start, a1=start+sweep, tip=cfg.tip?cfg.tip(d.row,d.i,rows):{title:String(L(d.row)),
+        rows:[{name:cfg.seriesName||str('value'),val:fmt(d.value),color:col}],note:fmt(d.value/total*100)+'%'};
+      c.hits.push({title:tip.title,rows:tip.rows,note:tip.note,test:(function(from,to,base){
+        return function(p){ var dx=p.x-cx,dy=p.y-cy,rad=Math.sqrt(dx*dx+dy*dy),a=Math.atan2(dy,dx);
+          if(a<base) a+=Math.PI*2; return rad>=inner-8&&rad<=outer+8&&a>=from&&a<=to; };
+      })(a0,a1,-Math.PI/2)});
+      start=a1;
+    });
+    txt(ctx,cfg.centerLabel||fmt(total),cx,cy-4,'center',T.text,'680',15);
+    txt(ctx,cfg.centerLabel?'':(cfg.centerNote||str('total')),cx,cy+14,'center',T.muted,'600',10.5);
+  });
+};
+
+/* heatmap: one hue, sequential intensity, across an x/y category grid. */
+VIZ.heatmap=function(cvs,cfg){
+  var X=fld(cfg.x), Y=fld(cfg.y), V=fld(cfg.value), fmt=cfg.format||nf;
+  return mk(cvs,function(ctx,W,H,c){
+    var rows=typeof cfg.rows==='function'?cfg.rows():cfg.rows||[], xs=[], ys=[], seenX=Object.create(null),
+        seenY=Object.create(null), cells=Object.create(null), invalid=false;
+    if(!rows.length){ chartMessage(ctx,W,H); return; }
+    if(rows.length>100){ chartMessage(ctx,W,H,str('heatmapMax')); return; }
+    rows.forEach(function(r){ var x=String(X(r)),y=String(Y(r)),v=finiteNumber(V(r)),key=x+'\u0000'+y;
+      if(v==null||v<0||cells[key]) invalid=true; cells[key]=1;
+      if(!seenX[x]){seenX[x]=1;xs.push(x);} if(!seenY[y]){seenY[y]=1;ys.push(y);} });
+    if(invalid){ chartMessage(ctx,W,H,str('heatmapCell')); return; }
+    if(!xs.length||!ys.length){ chartMessage(ctx,W,H); return; }
+    var vals=rows.map(function(r){return finiteNumber(V(r));}), lo=Math.min.apply(null,vals), hi=Math.max.apply(null,vals);
+    var labelW=Math.min(110,Math.max(52,W*.22)), top=28, bottom=18, PW=W-labelW-10, PH=H-top-bottom;
+    var cw=PW/xs.length, ch=PH/ys.length, base=colorOf(cfg.color,T.s1);
+    ctx.save(); ctx.font='600 10.5px system-ui, sans-serif';
+    xs.forEach(function(x,i){ txt(ctx,ell(ctx,x,cw-4),labelW+cw*(i+.5),top-12,'center',T.muted,'600',10.5); });
+    ys.forEach(function(y,i){ txt(ctx,ell(ctx,y,labelW-10),labelW-8,top+ch*(i+.5),'right',T.text2,'600',10.5); });
+    ctx.restore();
+    rows.forEach(function(r,i){
+      var xi=xs.indexOf(String(X(r))), yi=ys.indexOf(String(Y(r))), v=finiteNumber(V(r));
+      var q=hi===lo?(v===0?0:.75):(v-lo)/(hi-lo), intensity=Math.max(.08,Math.min(1,q*c.t));
+      var col=mix(T.surface,base,intensity), x=labelW+xi*cw+1, y=top+yi*ch+1;
+      ctx.fillStyle=col; ctx.fillRect(x,y,Math.max(0,cw-2),Math.max(0,ch-2));
+      if(cw>42&&ch>25&&c.t>=1) txt(ctx,fmt(v),x+cw/2-1,y+ch/2,'center',q>.55?T.surface:T.text2,'650',10.5);
+      var tip=cfg.tip?cfg.tip(r,i,rows):{title:String(Y(r))+' · '+String(X(r)),rows:[{name:cfg.seriesName||str('value'),val:fmt(v),color:col}]};
+      c.hits.push({x:x,y:y,w:Math.max(0,cw-2),h:Math.max(0,ch-2),title:tip.title,rows:tip.rows,note:tip.note});
+    });
+  });
+};
+
+/* slope: two points in time joined by a line, read as rank/value movement. */
+VIZ.slope=function(cvs,cfg){
+  var L=fld(cfg.label), A=fld(cfg.before), B=fld(cfg.after), fmt=cfg.format||nf;
+  return mk(cvs,function(ctx,W,H,c){
+    var rows=typeof cfg.rows==='function'?cfg.rows():cfg.rows||[];
+    if(!rows.length){ chartMessage(ctx,W,H); return; }
+    if(rows.length>12){ chartMessage(ctx,W,H,str('slopeMax')); return; }
+    var vals=rows.map(function(r){return [finiteNumber(A(r)),finiteNumber(B(r))];}), lo=Infinity,hi=-Infinity;
+    if(vals.some(function(v){return v[0]==null||v[1]==null;})){
+      chartMessage(ctx,W,H,str('slopeNeedsEnds')); return;
+    }
+    vals.forEach(function(v){lo=Math.min(lo,v[0],v[1]);hi=Math.max(hi,v[0],v[1]);}); if(lo===hi){lo-=1;hi+=1;}
+    var pad={l:64,r:64,t:28,b:18}, left=pad.l,right=W-pad.r, PH=H-pad.t-pad.b;
+    var py=function(v){return pad.t+PH*(1-(v-lo)/(hi-lo));};
+    var names=cfg.labels||{}, before=Array.isArray(names)?names[0]:(names.before||cfg.beforeLabel||'Before'),
+        after=Array.isArray(names)?names[1]:(names.after||cfg.afterLabel||'After');
+    txt(ctx,before,left,13,'center',T.muted,'650',11); txt(ctx,after,right,13,'center',T.muted,'650',11);
+    rows.forEach(function(r,i){
+      var a=vals[i][0],b=vals[i][1], y1=py(a),y2=py(b), endX=left+(right-left)*c.t, endY=y1+(y2-y1)*c.t;
+      var col=colorOf(r.color,cfg.color||T.series[i%3]);
+      ctx.save(); ctx.strokeStyle=col; ctx.lineWidth=2; ctx.beginPath();ctx.moveTo(left,y1);ctx.lineTo(endX,endY);ctx.stroke();
+      ctx.fillStyle=col;ctx.beginPath();ctx.arc(left,y1,3.5,0,7);ctx.fill();
+      if(c.t>.92){ctx.beginPath();ctx.arc(right,y2,3.5,0,7);ctx.fill();}ctx.restore();
+      if(c.t>=1){ txt(ctx,ell(ctx,L(r),pad.l-8),left-8,y1,'right',T.text2,'600',10.5); txt(ctx,fmt(b),right+8,y2,'left',T.text2,'650',10.5); }
+      var tip=cfg.tip?cfg.tip(r,i,rows):{title:String(L(r)),rows:[{name:before,val:fmt(a),color:col},{name:after,val:fmt(b),color:col}]};
+      c.hits.push({x:left,y:y1,r:5,title:tip.title,rows:tip.rows,note:tip.note});
+      c.hits.push({x:right,y:y2,r:5,title:tip.title,rows:tip.rows,note:tip.note});
+    });
+  });
+};
+
+/* lollipop: ranking, drawn as a stem from the baseline to the value. */
+VIZ.lollipop=function(cvs,cfg){
+  var L=fld(cfg.label), V=fld(cfg.value), fmt=cfg.format||compact;
+  var K=cfg.key?fld(cfg.key):null;      /* keyed re-sort — see VIZ.hbars */
+  return mk(cvs,function(ctx,W,H,c){
+    var rows=typeof cfg.rows==='function'?cfg.rows():cfg.rows||[];
+    if(!rows.length){ chartMessage(ctx,W,H); return; }
+    if(rows.length>20){ chartMessage(ctx,W,H,str('lollipopMax')); return; }
+    /* valueW is the room reserved on the right for the value label. Open it to cfg the
+       way hbars does — 58 is not enough for a currency string like '₩39,018'. */
+    var pad={t:14,b:12}, labelW=Math.min(cfg.labelW||170,Math.max(82,W*.28)),
+        valueW=finiteNumber(cfg.valueW)||58;
+    var PW=W-labelW-valueW, rowH=(H-pad.t-pad.b)/rows.length, vals=rows.map(function(r){return finiteNumber(V(r));});
+    if(vals.some(function(v){return v==null;})){ chartMessage(ctx,W,H,str('needsNumbers')); return; }
+    var min=Math.min.apply(null,vals), max=Math.max.apply(null,vals), maxP=Math.max(0,max)||1, maxN=Math.abs(Math.min(0,min))||1;
+    var zero=labelW+(min<0?PW*maxN/(maxN+maxP):0);
+    ctx.save();ctx.strokeStyle=T.line;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(Math.round(zero)+.5,pad.t);ctx.lineTo(Math.round(zero)+.5,H-pad.b);ctx.stroke();ctx.restore();
+    var prev=K&&c.__prev, moving=!!(prev&&c.t<1), snap=K?Object.create(null):null;
+    rows.forEach(function(r,i){
+      var k=K?String(K(r)):null, p=(moving&&prev[k])?prev[k]:null;
+      var pos = p ? p.i+(i-p.i)*c.t : i;
+      var v=vals[i], vv = p ? p.v+(v-p.v)*c.t : v;
+      var alpha = (moving&&!p) ? c.t : 1;
+      var cy=pad.t+rowH*(pos+.5), fullX=vv<0?zero+(labelW-zero)*Math.abs(vv)/maxN:zero+(W-valueW-zero)*vv/maxP;
+      /* with a key the dot slides between rows and between values; without one it
+         still sweeps out from zero exactly as before */
+      var x=p?fullX:zero+(fullX-zero)*c.t, col=colorOf(r.color,cfg.color||(v<0?T.neg:T.s1));
+      if(snap) snap[k]={i:i, v:v};
+      if(alpha<1){ ctx.save(); ctx.globalAlpha=alpha; }
+      /* ell() measures with whatever font is currently set. If that differs from the one
+         txt() draws with, a label it judged to fit is drawn wider and runs off the left
+         edge — a hard clip with no ellipsis. Set the drawing font immediately before
+         measuring, on every row (same treatment as hbars, divHbars and panels). */
+      ctx.font='600 11px system-ui, sans-serif';
+      txt(ctx,ell(ctx,L(r),labelW-10),labelW-8,cy,'right',T.text2,'600',11);
+      ctx.save();ctx.strokeStyle=col;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(zero,cy);ctx.lineTo(x,cy);ctx.stroke();
+      ctx.fillStyle=col;ctx.beginPath();ctx.arc(x,cy,Math.min(6,Math.max(3,rowH*.24)),0,7);ctx.fill();ctx.restore();
+      if(c.t>=1){                       /* keep the value label inside the plot (as hbars does) */
+        ctx.save(); ctx.font='650 11px system-ui, sans-serif';
+        var al=v>=0?'left':'right';
+        var lx=clampLabel(ctx,fmt(v),x+(v>=0?8:-8),al,2,W-2); ctx.restore();
+        txt(ctx,fmt(v),lx,cy,al,T.text2,'650',11);
+      }
+      if(alpha<1) ctx.restore();
+      var tip=cfg.tip?cfg.tip(r,i,rows):{title:String(L(r)),rows:[{name:cfg.seriesName||str('value'),val:fmt(v),color:col}]};
+      c.hits.push({x:0,y:cy-rowH/2,w:W,h:rowH,title:tip.title,rows:tip.rows,note:tip.note});
+    });
+    if(snap&&c.t>=1) c.__prev=snap;
+  });
+};
+
+/* waterfall (bridge): opening -> components -> closing. Bars diverge from zero. */
+VIZ.waterfall=function(cvs,cfg){
+  var fmt=cfg.format||function(v){ return sg(v,''); };
+  var c=mk(cvs,function(ctx,W,H,ch){
+    var steps=usable(cfg.steps(),[function(x){return x.value;}]), pad={l:64,r:20,t:44,b:56};
+    if(!steps.length) return;
+    var PW=W-pad.l-pad.r, PH=H-pad.t-pad.b;
+    var mxv=Math.max.apply(null,steps.map(function(s){return Math.abs(s.value);}))||1;
+    var lo=-mxv*1.35, hi=mxv*1.35;                 /* the axis range comes from the DATA, never back-computed from the ticks */
+    var py=function(v){ return pad.t+PH*(1-(v-lo)/(hi-lo)); };
+    gridY(ctx,W,pad,ticks(lo,hi,6).filter(function(v){return v>=lo&&v<=hi;}).map(function(v){return {v:v,y:py(v)};}),
+      function(v){ return (v>0?'+':'')+compact(v); });
+    var y0=Math.round(py(0))+.5;
+    ctx.save(); ctx.strokeStyle=T.lineStrong; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(pad.l,y0); ctx.lineTo(W-pad.r,y0); ctx.stroke(); ctx.restore();
+    var slot=PW/steps.length, bw=Math.min(46,slot*.44);
+    steps.forEach(function(s,i){
+      var appear=Math.max(0,Math.min(1,ch.t*steps.length-i)), cx=pad.l+slot*i+slot/2;
+      var v=s.value*appear, h=py(0)-py(v);
+      if(appear>0 && Math.abs(h)<2) h=(s.value>0?2:-2);
+      ctx.fillStyle=s.total?rgba(T.text,.55):(s.value>0?T.pos:T.neg);
+      barV(ctx,cx-bw/2,py(0)-h,bw,h,4);
+      if(appear>.6){
+        var ly=Math.max(pad.t+10,Math.min(pad.t+PH-10, py(s.value)+(s.value>0?-14:16)));
+        txt(ctx,fmt(s.value),cx,ly,'center',T.text,'680',12.5);
+      }
+      ctx.save(); ctx.fillStyle=T.text2; ctx.font='600 11.5px system-ui, sans-serif';
+      ctx.textAlign='center'; ctx.textBaseline='top';
+      ctx.fillText(ell(ctx,s.name,slot-6),cx,pad.t+PH+10);
+      if(s.sub){ ctx.fillStyle=T.muted; ctx.font='11px system-ui, sans-serif'; ctx.fillText(s.sub,cx,pad.t+PH+26); }
+      ctx.restore();
+      var d=cfg.tip?cfg.tip(s):{title:s.name,rows:[{name:cfg.seriesName||str('delta'),val:fmt(s.value),cls:dirCls(s.value)}]};
+      ch.hits.push({x:cx-slot/2,y:pad.t,w:slot,h:PH,title:d.title,rows:d.rows,note:d.note});
+    });
+    if(cfg.startLabel) txt(ctx,cfg.startLabel,pad.l,18,'left',T.muted,'600',12);
+    if(cfg.endLabel)   txt(ctx,cfg.endLabel,W-pad.r,18,'right',T.muted,'600',12);
+  });
+  /* __played lets a verifier ask whether this chart ever animated on its own,
+     however it was wired. See assets/check-motion.py. */
+  c.play=function(dur,easingName){ c.__played=true; anim(c,dur||800,null,easingName); return c; };
+  return c;
+};
+
+/* sparkline: a 12-25 point trend inside a stat tile */
+/* In a small-multiple grid (macro 06) every cell MUST share one axis, so pass
+   cfg.min / cfg.max to pin the range. Omit them and each cell scales itself. */
+VIZ.spark=function(cvs,cfg){
+  return mk(cvs,function(ctx,W,H){
+    var v=cfg.values().map(fin).filter(function(x){ return x!==null; }), c2=colorOf(cfg.color);
+    if(!v.length) return;
+    if(v.length===1) v=[v[0],v[0]];        /* one point cannot make a line — this used to divide by zero */
+    var mn=(cfg.min!=null)?cfg.min:Math.min.apply(null,v),
+        mx=(cfg.max!=null)?cfg.max:Math.max.apply(null,v), sp=(mx-mn)||1;
+    ctx.strokeStyle=rgba(c2,.45); ctx.lineWidth=2; ctx.lineJoin='round'; ctx.lineCap='round';
+    ctx.beginPath();
+    v.forEach(function(y,i){ var X=2+(W-4)*i/(v.length-1), Y=H-3-(H-6)*(y-mn)/sp; i?ctx.lineTo(X,Y):ctx.moveTo(X,Y); });
+    ctx.stroke();
+    var lx=W-5, ly=H-3-(H-6)*(v[v.length-1]-mn)/sp;
+    ctx.fillStyle=T.surface; ctx.beginPath(); ctx.arc(lx,ly,5,0,7); ctx.fill();
+    ctx.fillStyle=c2; ctx.beginPath(); ctx.arc(lx,ly,3.5,0,7); ctx.fill();
+  });
+};
+
+/* box plot: compare the SHAPE of a distribution across groups. A histogram
+   (divColumns) shows one distribution well; this shows twenty, comparably.
+   Horizontal, so long category labels behave like hbars.
+   cfg: rows, label, values(row)->number[]  |  or q1/med/q3/lo/hi accessors */
+VIZ.boxplot=function(cvs,cfg){
+  var L=fld(cfg.label), VALS=cfg.values?fld(cfg.values):null, fmt=cfg.format||compact;
+  function quart(a){
+    a=a.map(finiteNumber).filter(function(v){return v!==null;}).sort(function(x,y){return x-y;});
+    if(!a.length) return null;
+    function q(p){ var i=(a.length-1)*p, lo=Math.floor(i), hi=Math.ceil(i);
+      return a[lo]+(a[hi]-a[lo])*(i-lo); }
+    var q1=q(.25), med=q(.5), q3=q(.75), iqr=q3-q1;
+    var loF=q1-1.5*iqr, hiF=q3+1.5*iqr, inl=a.filter(function(v){return v>=loF&&v<=hiF;});
+    return {q1:q1, med:med, q3:q3, n:a.length,
+            lo:inl.length?inl[0]:a[0], hi:inl.length?inl[inl.length-1]:a[a.length-1],
+            out:a.filter(function(v){return v<loF||v>hiF;})};
+  }
+  return mk(cvs,function(ctx,W,H,c){
+    var raw=cfg.rows();
+    if(!raw.length){ chartMessage(ctx,W,H); return; }
+    var stats=[], drop=0;
+    raw.forEach(function(r){
+      var st = VALS ? quart(VALS(r)||[]) : {q1:+fld(cfg.q1)(r), med:+fld(cfg.med)(r), q3:+fld(cfg.q3)(r),
+                                           lo:+fld(cfg.lo)(r), hi:+fld(cfg.hi)(r), out:[], n:null};
+      if(!st || [st.lo,st.q1,st.med,st.q3,st.hi].some(function(v){return !isFinite(v);})){ drop++; return; }
+      st.row=r; stats.push(st);
+    });
+    if(!stats.length){ chartMessage(ctx,W,H); return; }
+    ctx.font='600 11.5px system-ui, sans-serif';
+    var labelW=Math.min(cfg.labelW||190, Math.max(90, W*(cfg.labelRatio||0.3)));
+    var pad={t:16,b:26,r:16};
+    var PW=W-labelW-pad.r, rowH=(H-pad.t-pad.b)/stats.length;
+    var lo=Math.min.apply(null,stats.map(function(s){ return Math.min(s.lo, s.out.length?Math.min.apply(null,s.out):s.lo); }));
+    var hi=Math.max.apply(null,stats.map(function(s){ return Math.max(s.hi, s.out.length?Math.max.apply(null,s.out):s.hi); }));
+    if(cfg.zeroBased) lo=Math.min(0,lo);
+    var span=(hi-lo)||1; lo-=span*0.04; hi+=span*0.04;
+    var px=function(v){ return labelW+PW*(v-lo)/(hi-lo); };
+    /* vertical grid + x labels */
+    ctx.save(); ctx.strokeStyle=T.line; ctx.lineWidth=1; ctx.fillStyle=T.muted;
+    ctx.font='11px system-ui, sans-serif'; ctx.textAlign='center'; ctx.textBaseline='top';
+    ticks(lo,hi,4).forEach(function(v){
+      if(v<lo||v>hi) return;
+      var x=Math.round(px(v))+.5;
+      ctx.beginPath(); ctx.moveTo(x,pad.t); ctx.lineTo(x,H-pad.b); ctx.stroke();
+      ctx.fillText((cfg.tickFormat||compact)(v), x, H-pad.b+7);
+    });
+    ctx.restore();
+    var col=colorOf(cfg.color);
+    stats.forEach(function(st,i){
+      var cy=pad.t+rowH*i+rowH/2, bh=Math.min(cfg.boxH||16, rowH-8);
+      ctx.font='600 11.5px system-ui, sans-serif';
+      txt(ctx, ell(ctx,L(st.row),labelW-12), labelW-10, cy, 'right', T.text2,'600',11.5);
+      var k=c.t, mid=px(st.med);
+      var x1=mid+(px(st.lo)-mid)*k, x2=mid+(px(st.hi)-mid)*k;
+      var b1=mid+(px(st.q1)-mid)*k, b2=mid+(px(st.q3)-mid)*k;
+      ctx.save();
+      ctx.strokeStyle=T.lineStrong; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(x1,cy); ctx.lineTo(x2,cy); ctx.stroke();          /* whiskers */
+      [x1,x2].forEach(function(x){ ctx.beginPath();
+        ctx.moveTo(Math.round(x)+.5,cy-bh/3); ctx.lineTo(Math.round(x)+.5,cy+bh/3); ctx.stroke(); });
+      ctx.fillStyle=rgba(col,.30); ctx.fillRect(b1,cy-bh/2,Math.max(1,b2-b1),bh);   /* box */
+      ctx.strokeStyle=col; ctx.strokeRect(Math.round(b1)+.5,Math.round(cy-bh/2)+.5,Math.max(1,b2-b1),bh);
+      ctx.strokeStyle=T.text; ctx.lineWidth=2;                                       /* median */
+      ctx.beginPath(); ctx.moveTo(Math.round(mid)+.5,cy-bh/2); ctx.lineTo(Math.round(mid)+.5,cy+bh/2); ctx.stroke();
+      ctx.restore();
+      if(c.t>=1) st.out.forEach(function(v){                                         /* outliers, kept visible */
+        ctx.save(); ctx.fillStyle=T.surface; ctx.beginPath(); ctx.arc(px(v),cy,3.4,0,7); ctx.fill();
+        ctx.fillStyle=rgba(col,.85); ctx.beginPath(); ctx.arc(px(v),cy,2.4,0,7); ctx.fill(); ctx.restore(); });
+      var d=cfg.tip?cfg.tip(st.row,st,i):{title:String(L(st.row)), rows:[
+        {name:'max', val:fmt(st.hi)}, {name:'q3', val:fmt(st.q3)},
+        {name:'median', val:fmt(st.med)}, {name:'q1', val:fmt(st.q1)},
+        {name:'min', val:fmt(st.lo)}].concat(
+        st.n!=null?[{name:'n', val:nf(st.n)}]:[]).concat(
+        st.out.length?[{name:'outliers', val:nf(st.out.length)}]:[])};
+      c.hits.push({x:0,y:cy-rowH/2,w:W,h:rowH,title:d.title,rows:d.rows,note:d.note});
+    });
+    if(drop) txt(ctx, str('rowsOmitted',{n:drop}), W-6, H-6, 'right', T.muted,'600',10.5);
+  });
+};
+
+/* stacked area: composition over time, where the TOTAL is the point.
+   Honest caveat, printed by the factory: only the bottom band and the total
+   have a flat baseline. Middle bands cannot be compared by eye — if a middle
+   band is the subject, use VIZ.panels or a separate chart. */
+VIZ.stackedArea=function(cvs,cfg){
+  var X=fld(cfg.x), ser=cfg.series.map(function(sr){ return {name:sr.name,get:fld(sr.get),color:sr.color}; });
+  return mk(cvs,function(ctx,W,H,c){
+    ser.forEach(function(sr,i){ sr.hex=colorOf(sr.color, T.series[i%3]); });
+    var rows=usable(cfg.rows(), ser.map(function(sr){return sr.get;}));
+    if(rows.length<2){ chartMessage(ctx,W,H); return; }
+    if(needsNonNegative(ctx,W,H,rows,function(r){
+      return Math.min.apply(null, ser.map(function(sr){return sr.get(r);})); },'VIZ.columns or VIZ.panels')) return;
+    var pad={l:58,r:16,t:16,b:26}, PW=W-pad.l-pad.r, PH=H-pad.t-pad.b;
+    var totals=rows.map(function(r){ return ser.reduce(function(a,sr){ return a+sr.get(r); },0); });
+    var mx=Math.max.apply(null,totals)||1;
+    var tk=ticks(0,mx*1.06,4), hi=Math.max(tk[tk.length-1]||0, mx*1.04, 1e-9);
+    var px=function(i){ return pad.l+PW*i/(rows.length-1); };
+    var py=function(v){ return pad.t+PH*(1-v/hi); };
+    gridY(ctx,W,pad,tk.map(function(v){return {v:v,y:py(v)};}), cfg.tickFormat||compact);
+    var base=rows.map(function(){ return 0; });
+    ser.forEach(function(sr){
+      var top=rows.map(function(r,i){ return base[i]+sr.get(r)*c.t; });
+      ctx.save(); ctx.beginPath();
+      rows.forEach(function(r,i){ var x=px(i), y=py(top[i]); i?ctx.lineTo(x,y):ctx.moveTo(x,y); });
+      for(var i=rows.length-1;i>=0;i--) ctx.lineTo(px(i),py(base[i]));
+      ctx.closePath(); ctx.fillStyle=rgba(sr.hex,.68); ctx.fill();
+      ctx.strokeStyle=sr.hex; ctx.lineWidth=1.25; ctx.beginPath();
+      rows.forEach(function(r,i){ var x=px(i), y=py(top[i]); i?ctx.lineTo(x,y):ctx.moveTo(x,y); });
+      ctx.stroke(); ctx.restore();
+      base=top;
+    });
+    ctx.save(); ctx.fillStyle=T.muted; ctx.font='11px system-ui, sans-serif';
+    ctx.textBaseline='top'; ctx.textAlign='center';
+    var step=Math.max(1,Math.ceil(rows.length/(W>560?6:3))), last=-1e9;
+    rows.forEach(function(r,i){ if(i%step) return;
+      var x=px(i); if(x-last<50||x>W-pad.r-24) return; last=x;
+      ctx.fillText(ell(ctx,String(X(r)),step*PW/rows.length), x, pad.t+PH+8); });
+    ctx.restore();
+    rows.forEach(function(r,i){
+      var d=cfg.tip?cfg.tip(r,i,rows):{title:String(X(r)),
+        rows:ser.map(function(sr){ return {name:sr.name,val:(cfg.format||nf)(sr.get(r)),color:sr.hex}; })
+             .concat([{name:str('total'),val:(cfg.format||nf)(totals[i])}])};
+      c.hits.push({x:px(i)-PW/rows.length/2,y:pad.t,w:PW/rows.length,h:PH,
+        title:d.title,rows:d.rows,note:d.note});
+    });
+    if(c.t>=1 && cfg.bandNote!==false)
+      txt(ctx, str('stackedBandNote'), W-pad.r, pad.t-4, 'right', T.muted, '600', 10.5);
+    dropNote(ctx,W,H,rows);
+  });
+};
+
+/* concentration curve: "how much of the total comes from how few".
+   Entities are sorted by value DESCENDING, so the curve reads top-down —
+   "the top 10% hold 62%" — which is the sentence reports actually write.
+   The textbook Lorenz curve is this mirrored (ascending, bowing below the
+   diagonal); the area between curve and diagonal is the same either way.
+   Gini is deliberately not computed: one number for a whole shape invites
+   a comparison between populations that the number cannot support.
+   cfg: rows, value, label, marks (percentages to call out, default [10,20,50]) */
+VIZ.concentration=function(cvs,cfg){
+  var V=fld(cfg.value), L=cfg.label?fld(cfg.label):null, fmt=cfg.format||compact;
+  var MARKS=cfg.marks||[10,20,50];
+  return mk(cvs,function(ctx,W,H,c){
+    var rows=usable(cfg.rows(),[V]).slice(), pad={l:52,r:18,t:18,b:34};
+    if(rows.length<2){ chartMessage(ctx,W,H,str('concentrationMin')); return; }
+    if(needsNonNegative(ctx,W,H,rows,V,'VIZ.divHbars')) return;
+    rows.sort(function(a,b){ return V(b)-V(a); });
+    var total=rows.reduce(function(a,r){ return a+V(r); },0);
+    if(!(total>0)){ chartMessage(ctx,W,H,str('concentrationSum')); return; }
+    var n=rows.length, PW=W-pad.l-pad.r, PH=H-pad.t-pad.b;
+    var px=function(p){ return pad.l+PW*p/100; }, py=function(p){ return pad.t+PH*(1-p/100); };
+    /* cumulative share of the total against cumulative share of the entities */
+    var pts=[{x:0,y:0,i:0}], run=0;
+    rows.forEach(function(r,i){ run+=V(r);
+      pts.push({x:(i+1)/n*100, y:run/total*100, i:i+1}); });
+    gridY(ctx,W,pad,ticks(0,100,4).map(function(v){return {v:v,y:py(v)};}),
+          function(v){ return Math.round(v)+'%'; });
+    /* the diagonal is what "no concentration at all" looks like */
+    ctx.save(); ctx.strokeStyle=T.lineStrong; ctx.lineWidth=1; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(px(0),py(0)); ctx.lineTo(px(100),py(100)); ctx.stroke(); ctx.restore();
+    txt(ctx,str('concentrationEven'),px(100)-4,py(100)+13,'right',T.muted,'600',10.5);
+    var col=colorOf(cfg.color,T.s1), k=Math.max(1,Math.round(pts.length*c.t));
+    ctx.save(); ctx.beginPath();
+    for(var j=0;j<k;j++){ var q=pts[j]; j?ctx.lineTo(px(q.x),py(q.y)):ctx.moveTo(px(q.x),py(q.y)); }
+    ctx.lineTo(px(pts[k-1].x),py(0)); ctx.lineTo(px(0),py(0)); ctx.closePath();
+    ctx.fillStyle=rgba(col,.13); ctx.fill(); ctx.restore();
+    ctx.save(); ctx.strokeStyle=col; ctx.lineWidth=2; ctx.lineJoin='round'; ctx.beginPath();
+    for(var m=0;m<k;m++){ var q2=pts[m]; m?ctx.lineTo(px(q2.x),py(q2.y)):ctx.moveTo(px(q2.x),py(q2.y)); }
+    ctx.stroke(); ctx.restore();
+    /* x axis */
+    ctx.save(); ctx.fillStyle=T.muted; ctx.font='11px system-ui, sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='top';
+    [0,25,50,75,100].forEach(function(v){ ctx.fillText(v+'%',px(v),pad.t+PH+8); });
+    ctx.restore();
+    txt(ctx,str('concentrationX'),pad.l+PW/2,H-8,'center',T.muted,'600',10.5);
+    /* called-out points: "top k% -> y% of the total" */
+    if(c.t>=1) MARKS.forEach(function(mk2){
+      if(mk2<=0||mk2>=100) return;
+      var idx=Math.max(1,Math.round(n*mk2/100)), share=0;
+      for(var q=0;q<idx;q++) share+=V(rows[q]);
+      share=share/total*100;
+      var X=px(idx/n*100), Y=py(share);
+      ctx.save(); ctx.strokeStyle=rgba(col,.5); ctx.lineWidth=1; ctx.setLineDash([2,3]);
+      ctx.beginPath(); ctx.moveTo(X,py(0)); ctx.lineTo(X,Y); ctx.lineTo(px(0),Y); ctx.stroke(); ctx.restore();
+      ctx.fillStyle=T.surface; ctx.beginPath(); ctx.arc(X,Y,5,0,7); ctx.fill();
+      ctx.fillStyle=col; ctx.beginPath(); ctx.arc(X,Y,3,0,7); ctx.fill();
+      txt(ctx, Math.round(share)+'%', X+7, Y-9, 'left', T.text,'680',11);
+    });
+    /* hit testing walks the curve, so the tooltip answers "top N = ?%" anywhere */
+    var slot=PW/Math.max(1,n);
+    rows.forEach(function(r,i){
+      var q3=pts[i+1], cum=0;
+      for(var w=0;w<=i;w++) cum+=V(rows[w]);
+      var d=cfg.tip?cfg.tip(r,i,rows,{cum:cum,share:q3.y,total:total}):{
+        title:(L?String(L(r)):str('top')+(i+1)),
+        rows:[{name:str('concentrationTopN',{n:i+1}),val:Math.round(q3.y*10)/10+'%'},
+              {name:str('total'),val:fmt(cum)+' / '+fmt(total)}]};
+      c.hits.push({x:px(q3.x)-slot,y:pad.t,w:slot,h:PH,title:d.title,rows:d.rows,note:d.note});
+    });
+    dropNote(ctx,W,H,rows);
+  });
+};
+
+/* value with an uncertainty band, one row per entity.
+   This is the chart that lets a report say "the difference is within noise".
+   cfg: rows, label, value, lo, hi, ref (optional reference line, e.g. the pooled value)
+   A band that crosses `ref` is drawn muted — it is not distinguishable from it. */
+VIZ.interval=function(cvs,cfg){
+  var L=fld(cfg.label), V=fld(cfg.value), LO=fld(cfg.lo), HI=fld(cfg.hi);
+  var fmt=cfg.format||compact, REF=finiteNumber(cfg.ref);
+  return mk(cvs,function(ctx,W,H,c){
+    var rows=usable(cfg.rows(),[V,LO,HI]), pad={t:16,b:30};
+    if(!rows.length){ chartMessage(ctx,W,H); return; }
+    ctx.font='600 11.5px system-ui, sans-serif';
+    var labelW=Math.min(cfg.labelW||190, Math.max(90,W*(cfg.labelRatio||0.3)));
+    var valueW=finiteNumber(cfg.valueW)||96, PW=W-labelW-valueW;
+    var rowH=(H-pad.t-pad.b)/rows.length;
+    var lo=Math.min.apply(null,rows.map(LO)), hi=Math.max.apply(null,rows.map(HI));
+    if(REF!==null){ lo=Math.min(lo,REF); hi=Math.max(hi,REF); }
+    var span=(hi-lo)||1; lo-=span*0.08; hi+=span*0.08;
+    var px=function(v){ return labelW+PW*(v-lo)/(hi-lo); };
+    ctx.save(); ctx.strokeStyle=T.line; ctx.lineWidth=1; ctx.fillStyle=T.muted;
+    ctx.font='11px system-ui, sans-serif'; ctx.textAlign='center'; ctx.textBaseline='top';
+    ticks(lo,hi,4).forEach(function(v){ if(v<lo||v>hi) return;
+      var x=Math.round(px(v))+.5;
+      ctx.beginPath(); ctx.moveTo(x,pad.t); ctx.lineTo(x,H-pad.b); ctx.stroke();
+      ctx.fillText((cfg.tickFormat||compact)(v), x, H-pad.b+7); });
+    ctx.restore();
+    if(REF!==null){                    /* the line a band either clears or does not */
+      var rx=Math.round(px(REF))+.5;
+      ctx.save(); ctx.strokeStyle=T.text2; ctx.lineWidth=1.5; ctx.setLineDash([5,3]);
+      ctx.beginPath(); ctx.moveTo(rx,pad.t-4); ctx.lineTo(rx,H-pad.b); ctx.stroke(); ctx.restore();
+      txt(ctx,(cfg.refLabel||str('reference'))+' '+fmt(REF),rx,pad.t-11,'center',T.text2,'650',10.5);
+    }
+    rows.forEach(function(r,i){
+      var cy=pad.t+rowH*i+rowH/2, v=V(r), a=LO(r), b=HI(r);
+      var crosses = REF===null ? false : (a<=REF && b>=REF);
+      /* colour says only "clears the reference or not"; the sign is printed too,
+         so direction is never carried by colour alone */
+      var col = REF===null ? colorOf(cfg.color,T.s1)
+              : crosses ? T.muted : (v>REF?T.pos:T.neg);
+      var k=c.t, mid=px(v), x1=mid+(px(a)-mid)*k, x2=mid+(px(b)-mid)*k;
+      ctx.font='600 11.5px system-ui, sans-serif';
+      txt(ctx, ell(ctx,L(r),labelW-12), labelW-10, cy, 'right', T.text2,'600',11.5);
+      ctx.save();
+      ctx.fillStyle=rgba(col,.22); ctx.fillRect(x1,cy-7,Math.max(1,x2-x1),14);
+      ctx.strokeStyle=col; ctx.lineWidth=1;
+      [x1,x2].forEach(function(x){ ctx.beginPath();
+        ctx.moveTo(Math.round(x)+.5,cy-7); ctx.lineTo(Math.round(x)+.5,cy+7); ctx.stroke(); });
+      ctx.beginPath(); ctx.moveTo(x1,cy); ctx.lineTo(x2,cy); ctx.stroke();
+      ctx.fillStyle=col; ctx.beginPath(); ctx.arc(mid,cy,4,0,7); ctx.fill();
+      ctx.restore();
+      if(c.t>=1){
+        ctx.save(); ctx.font='650 11.5px system-ui, sans-serif';
+        var lx=clampLabel(ctx,fmt(v),W-4,'right',labelW+4,W-4); ctx.restore();
+        txt(ctx,fmt(v),lx,cy,'right',T.text2,'650',11.5);
+      }
+      var d=cfg.tip?cfg.tip(r,i,rows,{crosses:crosses}):{title:String(L(r)),
+        rows:[{name:cfg.seriesName||str('value'),val:fmt(v),color:col},
+              {name:str('intervalBand'),val:fmt(a)+' – '+fmt(b)}],
+        note: REF===null?null:(crosses?str('intervalCrosses'):str('intervalClears'))};
+      c.hits.push({x:0,y:cy-rowH/2,w:W,h:rowH,title:d.title,rows:d.rows,note:d.note});
+    });
+    dropNote(ctx,W,H,rows);
+  });
+};
+
+/* ── table builder (the table twin every chart owes the reader) ───────────── */
+function buildTable(tableEl, cols, rows, opt){
+  opt=opt||{};
+  while(tableEl.firstChild) tableEl.removeChild(tableEl.firstChild);
+  if(opt.caption) tableEl.appendChild(el('caption',null,opt.caption));
+  var htr=el('tr');
+  cols.forEach(function(col,ci){
+    var th=el('th',null,col.name); th.scope='col';
+    if(opt.sortable){
+      th.className='sortable'; th.tabIndex=0;
+      var go=function(){
+        var dir=(tableEl.__sort===ci&&tableEl.__dir===-1)?1:-1;
+        tableEl.__sort=ci; tableEl.__dir=dir;
+        var sorted=rows.slice().sort(function(a,b){
+          var x=col.sortVal?col.sortVal(a):col.value(a), y=col.sortVal?col.sortVal(b):col.value(b);
+          if(typeof x==='string'||typeof y==='string') return String(x).localeCompare(String(y),LANG)*dir*-1;
+          return (x-y)*dir*-1;
+        });
+        buildTable(tableEl,cols,sorted,Object.assign({},opt,{_s:ci,_d:dir}));
+      };
+      th.addEventListener('click',go);
+      th.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(); } });
+      if(opt._s===ci) th.setAttribute('aria-sort', opt._d===-1?'descending':'ascending');
+    }
+    htr.appendChild(th);
+  });
+  var thead=el('thead'); thead.appendChild(htr); tableEl.appendChild(thead);
+  var tb=el('tbody');
+  rows.forEach(function(r){
+    var tr=el('tr');
+    cols.forEach(function(col){
+      var td=el('td'); if(col.num!==false) td.className='num';
+      td.textContent=col.value(r);
+      if(col.cls) td.className=(td.className+' '+col.cls(r)).trim();
+      tr.appendChild(td);
+    });
+    tb.appendChild(tr);
+  });
+  tableEl.appendChild(tb);
+  if(opt.sortable){ tableEl.__sort=opt._s; tableEl.__dir=opt._d; }
+  return tableEl;
+}
+/* auto-wire any button carrying data-table-toggle="id" */
+function wireToggles(root){
+  (root||document).querySelectorAll('[data-table-toggle]').forEach(function(b){
+    if(b.__wired) return; b.__wired=true;
+    b.addEventListener('click',function(){
+      var t=document.getElementById(b.dataset.tableToggle), open=t.hasAttribute('hidden');
+      if(open) t.removeAttribute('hidden'); else t.setAttribute('hidden','');
+      b.setAttribute('aria-expanded',String(open));
+      b.textContent=open?(b.dataset.labelOpen||str('tableHide')):(b.dataset.labelClosed||str('tableShow'));
+    });
+  });
+}
+
+/* ── theme toggle ─────────────────────────────────────────────────────────── */
+var themeHooks=[];
+function isDark(){
+  var s=document.documentElement.getAttribute('data-theme');
+  return s?s==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+function refresh(){ readTokens(); themeHooks.forEach(function(f){ f(T); }); paintAll(); }
+var tb=document.getElementById('themeBtn');
+if(tb){
+  /* the toggle's own label is a string too — otherwise a translated report keeps
+     one English control. Markup supplies the glyph; CR_STRINGS supplies the word. */
+  tb.textContent='◐ '+str('themeToggle');
+  tb.setAttribute('aria-label', str('themeToggleAria'));
+}
+if(tb) tb.addEventListener('click',function(){
+  document.documentElement.setAttribute('data-theme', isDark()?'light':'dark');
+  setTimeout(refresh,30);
+});
+var colorSchemeMedia=window.matchMedia('(prefers-color-scheme: dark)');
+function onColorSchemeChange(){
+  if(!document.documentElement.getAttribute('data-theme')) refresh();
+}
+if(colorSchemeMedia.addEventListener) colorSchemeMedia.addEventListener('change',onColorSchemeChange);
+else if(colorSchemeMedia.addListener) colorSchemeMedia.addListener(onColorSchemeChange);
+window.addEventListener('resize',function(){ clearTimeout(window.__rz); window.__rz=setTimeout(paintAll,120); });
+
+return { data:JSON.parse(document.getElementById('report-data').textContent),
+         VIZ:VIZ, tokens:function(){return T;}, diverge:diverge, rgba:rgba, mix:mix,
+         nf:nf, sg:sg, pc:pc, compact:compact, dirCls:dirCls, ticks:ticks,
+         el:el, helpDot:helpDot, wireHelp:wireHelp, wireToggles:wireToggles,
+         buildTable:buildTable, onView:onView, paintAll:paintAll, onTheme:function(f){ themeHooks.push(f); f(T); },   /* runs now and on every change:
+           a hook registered but never run leaves an HTML legend empty until the reader
+           happens to toggle the theme. Register it after the markup exists. */
+         countUp:countUp, reveal:reveal, scrolly:scrolly, shrinkMasthead:shrinkMasthead,
+         playAll:playAll,
+         rgbOf:rgbOf, motion:motion, easings:easings, reduced:function(){return RM.matches;},
+         wilson:wilson };
+})();
+</script>
+
+<script>
+/* [3] REPORT WIRING — generated by assets/build-report.py; do not edit. */
+(function(){
+'use strict';
+var R=REPORT,D=R.data,S=D.spec,rows=D.rows;
+function text(tag,cls,value){return R.el(tag,cls,value==null?'':String(value));}
+function add(parent,child){parent.appendChild(child);return child;}
+function format(value){return typeof value==='number'?R.nf(value):String(value==null?'—':value);}
+function chartConfig(chart){
+  var e=chart.encodings,base={rows:function(){return rows;},color:'s1'};
+  if(chart.type==='line')return Object.assign(base,{x:e.x,y:e.value,format:format});
+  if(chart.type==='columns')return {rows:function(){return rows;},x:e.x,series:[{name:chart.title,get:e.value,color:'s1'}],format:format};
+  if(chart.type==='divColumns')return Object.assign(base,{x:e.label,y:e.value,format:format});
+  if(chart.type==='hbars'||chart.type==='lollipop')return Object.assign(base,{label:e.label,value:e.value,format:format});
+  if(chart.type==='bubbles')return Object.assign(base,{label:e.label,x:e.x,y:e.y,size:e.size});
+  if(chart.type==='concentration')return Object.assign(base,{label:e.label,value:e.value,format:format});
+  throw new Error('unsupported validated chart type: '+chart.type);
+}
+document.documentElement.lang=S.metadata.locale;
+document.title=S.metadata.title;
+document.getElementById('hEyebrow').textContent=S.metadata.eyebrow;
+document.getElementById('hTitle').textContent=S.metadata.title;
+document.getElementById('hSub').textContent=S.metadata.subtitle;
+document.getElementById('hMeta').replaceChildren(text('span',null,'Grain: '+S.grain));
+var heroFigure=document.getElementById('hFig');if(heroFigure)heroFigure.textContent='';
+var main=document.getElementById('main');main.replaceChildren();
+if(S.insights.length){
+  var summary=add(main,text('section','reveal','')),list=add(summary,text('div','insights',''));
+  S.insights.forEach(function(insight){var card=add(list,text('article','insight',''));add(card,text('h3',null,insight.claim));add(card,text('p',null,insight.limitation));});
+}
+var sections={};
+S.sections.forEach(function(section,index){
+  var node=add(main,text('section','reveal',''));node.id=section.id;
+  var head=add(node,text('div','sec-head',''));add(head,text('p','sec-num',String(index+1).padStart(2,'0')));add(head,text('h2',null,section.title));add(head,text('p','lede',section.lede));
+  sections[section.id]=node;
+});
+S.charts.forEach(function(chart){
+  var section=sections[chart.section_id],card=add(section,text('div','card','')),head=add(card,text('div','card-head','')),title=add(head,text('h3',null,chart.title));title.id='title-'+chart.id;
+  title.appendChild(R.helpDot(chart.title,chart.help));
+  var button=add(head,text('button','btn','Table'));button.type='button';button.setAttribute('data-table-toggle','tablewrap-'+chart.id);button.setAttribute('aria-expanded','false');
+  add(card,text('p','card-note',chart.note));var chartWrap=add(card,text('div','chart','')),canvas=add(chartWrap,document.createElement('canvas'));
+  canvas.id=chart.id;canvas.height=chart.height||240;canvas.setAttribute('role','img');canvas.setAttribute('aria-label',chart.aria_label);canvas.dataset.motionEnabled=String(chart.motion.enabled);canvas.dataset.motionReason=chart.motion.reason;
+  var tableWrap=add(card,text('div','tablewrap',''));tableWrap.id='tablewrap-'+chart.id;tableWrap.hidden=true;var table=add(tableWrap,document.createElement('table'));table.id='table-'+chart.id;
+  var factory=R.VIZ[chart.type];if(typeof factory!=='function')throw new Error('runtime lacks '+chart.type);factory(canvas,chartConfig(chart));
+  R.buildTable(table,chart.table.columns.map(function(field){return {name:field,value:function(row){return format(row[field]);},num:false};}),rows,{caption:chart.title+' data'});
+});
+var method=add(main,text('section','reveal',''));method.id='methodology';var mh=add(method,text('div','sec-head',''));add(mh,text('p','sec-num','Method'));add(mh,text('h2',null,'Basis, formulas, and limits'));var mc=add(method,text('div','card method',''));
+[['Basis',S.methodology.basis],['Formulas',S.methodology.formulas],['Limits',S.methodology.limitations]].forEach(function(group){var block=add(mc,text('div',null,''));add(block,text('h3',null,group[0]));group[1].forEach(function(item){add(block,text('p',null,item));});});
+R.wireHelp();R.wireToggles();R.reveal();R.paintAll();R.playAll(700);
+})();
+</script>
+</body>
+</html>
