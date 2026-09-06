@@ -48,11 +48,16 @@ trace types snap, and you can animate data *or* layout but not both at once.
 
 ## B. Motion engines
 
+> **Worked examples live in [`../lab/motion-engines/`](../lab/motion-engines/).** Each engine has
+> one runnable page and one doc, all animating the same dataset, with the runtimes vendored and
+> pinned. Read this section for the verdict; go there when the verdict is "yes, close the skill".
+
 All three are excellent, all three are a network request or a build step, and **all three solve a
 problem this skill does not have.** They animate a document. This skill animates a canvas, where
 `c.t` is one number that every factory already reads.
 
 ### [GSAP](https://gsap.com/) — now free for everyone
+*(lab: [`01-gsap.html`](../lab/motion-engines/01-gsap.html) · [`docs/gsap.md`](../lab/motion-engines/docs/gsap.md))*
 
 **Good at:** choreography. Timelines that nest, and a plugin ecosystem nothing else matches —
 ScrollTrigger, MorphSVG, MotionPath, DrawSVG, SplitText, Draggable. If you need to sequence
@@ -62,6 +67,7 @@ thirty things against a scrollbar, GSAP is the answer and it is not close.
 retype in twenty lines, and this skill now ships one (see below).
 
 ### [Motion](https://motion.dev/) — MIT, formerly Framer Motion
+*(lab: [`02-motion.html`](../lab/motion-engines/02-motion.html) · [`docs/motion.md`](../lab/motion-engines/docs/motion.md))*
 
 **Good at:** a hybrid engine that hands transforms, `backgroundColor` and SVG to hardware-accelerated
 browser APIs, and **real spring physics** that react to input velocity rather than replaying a
@@ -73,6 +79,7 @@ helper already drives the Web Animations API directly rather than tweening style
 which is Motion's core insight, minus the library.
 
 ### [anime.js](https://animejs.com/) — 24.5 KB core, modular
+*(lab: [`03-anime.html`](../lab/motion-engines/03-anime.html) · [`docs/anime.md`](../lab/motion-engines/docs/anime.md))*
 
 **Good at:** breadth per byte. Timeline, keyframes, an SVG toolset (morphing, line drawing, motion
 path), a Draggable API with spring physics, a Scope API for responsive animation, and the most
@@ -88,6 +95,8 @@ an engine.
 ## C. Runtime-dependent animation formats
 
 ### [Lottie / LottieFiles](https://lottiefiles.com/) · [Rive](https://rive.app/)
+*(lab: [`04-lottie.html`](../lab/motion-engines/04-lottie.html) · [`05-rive.html`](../lab/motion-engines/05-rive.html) ·
+[`docs/lottie.md`](../lab/motion-engines/docs/lottie.md) · [`docs/rive.md`](../lab/motion-engines/docs/rive.md))*
 
 **Lottie** is an After Effects animation exported to JSON by Bodymovin and replayed by a player
 library — `lottie-web`, or the newer dotLottie player, which is a **Rust + WASM core** (ThorVG)
@@ -176,3 +185,12 @@ Be honest about the boundary. Reach for the real tools when:
 
 A single self-contained file is a constraint chosen for a reason. When the reason stops applying,
 stop applying the constraint.
+
+**When you do stop applying it**, [`../lab/motion-engines/`](../lab/motion-engines/) is the worked
+version of this page: five runnable pages, one per engine, on the same data and the same layout so
+only the engine differs; the runtimes vendored and SHA-pinned; one doc each covering the minimum
+call, what only that engine can do, and what you must add yourself. The lab's own finding is worth
+carrying back — **none of these engines guarantees a final state.** When rAF stops (background tab,
+headless capture, low-power mode) they freeze mid-frame, and a late frame will overwrite a value you
+painted afterwards. The shell handles both with a timer and a token inside `anim()`; there, it is
+your job.

@@ -1,0 +1,30 @@
+/* Shared lab styling. The five pages must look identical so only the engine differs. */
+*{box-sizing:border-box}
+:root{color-scheme:light dark;
+  --bg:#faf9f7; --fg:#14120f; --dim:#6b6560; --line:#dcd7d0; --card:#fff; --bar:#b5451b; --bar2:#1f6f8b}
+@media(prefers-color-scheme:dark){:root{--bg:#111} }
+@media(prefers-color-scheme:dark){:root{--bg:#100f0e; --fg:#f2efe9; --dim:#9a938c; --line:#2a2724; --card:#171513; --bar:#e2653a; --bar2:#4fa3bf}}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.6 ui-sans-serif,system-ui,sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:34px 22px 80px}
+.eyebrow{font:600 11.5px/1 ui-monospace,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0 0 10px}
+h1{font-size:clamp(23px,4vw,31px);margin:0 0 6px;letter-spacing:-.02em}
+.sub{color:var(--dim);margin:0 0 4px}
+.warn{margin:18px 0 26px;padding:12px 14px;border:1px solid var(--line);border-left:3px solid var(--bar);
+  background:var(--card);border-radius:8px;font-size:13.5px;color:var(--dim)}
+.warn b{color:var(--fg)}
+.stage{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px}
+.fig{font-size:clamp(34px,7vw,52px);font-weight:700;letter-spacing:-.03em;margin:0 0 18px;
+  font-variant-numeric:tabular-nums}
+.row{display:grid;grid-template-columns:170px 1fr 92px;gap:10px;align-items:center;margin:9px 0;font-size:13.5px}
+.row .name{color:var(--dim)}
+.track{background:color-mix(in oklab,var(--line) 60%,transparent);border-radius:5px;height:19px;overflow:hidden}
+.bar{height:100%;width:0;background:var(--bar);border-radius:5px;transform-origin:left center}
+.val{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.btn{margin-top:20px;border:1px solid var(--line);background:var(--card);color:var(--fg);
+  font:600 13px ui-sans-serif,system-ui,sans-serif;padding:8px 15px;border-radius:8px;cursor:pointer}
+.btn:hover{border-color:var(--dim)}
+.meta{margin-top:26px;font-size:12.5px;color:var(--dim);border-top:1px solid var(--line);padding-top:14px}
+.meta code{font-family:ui-monospace,monospace;font-size:12px}
+.holder{height:230px;display:grid;place-items:center;border:1px dashed var(--line);border-radius:10px}
+.empty{max-width:46ch;text-align:center;color:var(--dim);font-size:13px;padding:16px}
+@media(prefers-reduced-motion:reduce){.bar{transition:none!important}}

@@ -1,0 +1,70 @@
+<!doctype html>
+<!-- canvas-report LAB · NOT a report. This page breaks the skill's output contract
+     (zero network requests) on purpose. Engine: anime.js 3.2.2 · vendored: anime-3.2.2.min.js -->
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>anime.js — features per byte — canvas-report lab</title>
+<link rel="stylesheet" href="lab.css"></head><body><div class="wrap">
+<p class="eyebrow">CANVAS-REPORT LAB · MOTION ENGINE 3/5</p>
+<h1>anime.js — features per byte, and the banned stagger</h1>
+<p class="sub" id="sub"></p>
+<div class="warn"><b>This is not a report.</b> canvas-report ships one HTML file with
+<b>zero network requests</b>; this page loads <code>vendor/anime-3.2.2.min.js</code>(17 KB) instead. It is the worked example for
+<code>references/external-tools.md</code> § When to close this skill.
+Usage: <code>docs/anime.md</code>.</div>
+<div class="stage">
+  <p class="fig" id="fig">₩0</p>
+  <div id="rows"></div>
+  <button class="btn" id="replay" type="button">▷ Replay</button>
+</div>
+<p class="meta">anime.js 3.2.2 · MIT · <b>17 KB</b> — the smallest of the five. Its signature is
+<code>anime.stagger()</code>, which distributes delay by time, by value, or by grid position.
+canvas-report <b>bans</b> that effect (<code>references/motion.md</code>: six cards rising in
+sequence delays reading six times). This page shows you the banned thing on purpose.</p>
+</div>
+<script src="lab-data.js"></script>
+<script src="vendor/anime-3.2.2.min.js"></script>
+<script>
+var D=window.LAB_DATA, mx=Math.max.apply(null,D.svc.map(function(s){return s.v;}));
+document.getElementById('sub').textContent=D.title+' · '+D.note;
+var rows=document.getElementById('rows');
+D.svc.forEach(function(s,i){
+  rows.insertAdjacentHTML('beforeend',
+    '<div class="row"><span class="name">'+s.k+'</span><div class="track">'+
+    '<div class="bar" data-w="'+(s.v/mx*100)+'"></div></div><span class="val">₩0</span></div>');
+});
+var won=function(n){return '₩'+Math.round(n).toLocaleString('ko-KR');};
+var bars=document.querySelectorAll('.bar'), vals=document.querySelectorAll('.val');
+var RM=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function paintFinal(){
+  document.getElementById('fig').textContent=won(D.total);
+  D.svc.forEach(function(s,i){ bars[i].style.width=(s.v/mx*100)+'%'; vals[i].textContent=won(s.v); });
+}
+var RUN=[];
+function stopAll(){ anime.remove('.bar'); RUN.forEach(function(a){ a.pause(); }); RUN.length=0; }
+function play(){
+  bars.forEach(function(b){ b.style.width='0%'; });
+  /* stagger: no hand-computed delays. This one line is anime.js's signature, and it is
+     also exactly the effect canvas-report forbids in a report. */
+  RUN.push(anime({targets:'.bar', width:function(el){return el.dataset.w+'%';},
+         duration:750, easing:'easeOutCubic', delay:anime.stagger(90)}));
+  D.svc.forEach(function(s,i){
+    var o={t:0};
+    RUN.push(anime({targets:o, t:s.v, duration:700, easing:'easeOutCubic', delay:i*90,
+           update:function(){ vals[i].textContent=won(o.t); }}));
+  });
+  var g={t:0};
+  RUN.push(anime({targets:g, t:D.total, duration:900, easing:'easeOutCubic',
+         update:function(){ document.getElementById('fig').textContent=won(g.t); }}));
+}
+if(RM){ paintFinal(); }
+else { play(); document.getElementById('replay').addEventListener('click',play);
+/* ── safety timer + stop ───────────────────────────────────────────────────
+   When rAF stops (background tab, headless capture, low-power mode) these engines
+   freeze mid-frame. Painting the final value is not enough on its own — this page is
+   where that was actually observed: four of five bars snapped back to 0%. Remove the
+   running animations first (anime.remove), then paint. The shell blocks the same race
+   with a token inside anim(). */
+setTimeout(function(){ stopAll(); paintFinal(); }, 2600);
+}
+</script></body></html>

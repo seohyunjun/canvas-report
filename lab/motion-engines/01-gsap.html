@@ -1,0 +1,70 @@
+<!doctype html>
+<!-- canvas-report LAB · NOT a report. This page breaks the skill's output contract
+     (zero network requests) on purpose. Engine: GSAP 3.12.5 · vendored: gsap-3.12.5.min.js -->
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GSAP — timelines and choreography — canvas-report lab</title>
+<link rel="stylesheet" href="lab.css"></head><body><div class="wrap">
+<p class="eyebrow">CANVAS-REPORT LAB · MOTION ENGINE 1/5</p>
+<h1>GSAP — timelines and choreography</h1>
+<p class="sub" id="sub"></p>
+<div class="warn"><b>This is not a report.</b> canvas-report ships one HTML file with
+<b>zero network requests</b>; this page loads <code>vendor/gsap-3.12.5.min.js</code>(72 KB) instead. It is the worked example for
+<code>references/external-tools.md</code> § When to close this skill.
+Usage: <code>docs/gsap.md</code>.</div>
+<div class="stage">
+  <p class="fig" id="fig">₩0</p>
+  <div id="rows"></div>
+  <button class="btn" id="replay" type="button">▷ Replay</button>
+</div>
+<p class="meta">GSAP 3.12.5 · free licence · 72 KB minified, before gzip. This page uses exactly one
+feature, <code>gsap.timeline()</code>; no plugins (ScrollTrigger, MorphSVG …) are vendored.
+What the shell's <code>chart.play()</code> cannot reproduce is <b>placing unlike things against one
+shared time axis</b>.</p>
+</div>
+<script src="lab-data.js"></script>
+<script src="vendor/gsap-3.12.5.min.js"></script>
+<script>
+var D=window.LAB_DATA, mx=Math.max.apply(null,D.svc.map(function(s){return s.v;}));
+document.getElementById('sub').textContent=D.title+' · '+D.note;
+var rows=document.getElementById('rows');
+D.svc.forEach(function(s,i){
+  rows.insertAdjacentHTML('beforeend',
+    '<div class="row"><span class="name">'+s.k+'</span><div class="track">'+
+    '<div class="bar" id="b'+i+'"></div></div><span class="val" id="v'+i+'">₩0</span></div>');
+});
+var won=function(n){return '₩'+Math.round(n).toLocaleString('ko-KR');};
+var RUN=[];
+function stopAll(){ RUN.forEach(function(t){t.kill();}); RUN.length=0; }
+function play(){
+  /* GSAP's point is not easing, it is the timeline — bars, per-row numbers and the total
+     placed on one axis, positioned relative to each other (-=0.35). That is the one
+     capability the shell does not have. */
+  var tl=gsap.timeline({defaults:{duration:.75,ease:'power3.out'}});
+  var box={t:0};
+  tl.to(box,{t:D.total,onUpdate:function(){document.getElementById('fig').textContent=won(box.t);},duration:.9},0);
+  D.svc.forEach(function(s,i){
+    var o={t:0};
+    tl.to('#b'+i,{width:(s.v/mx*100)+'%'}, i*0.09)
+      .to(o,{t:s.v,duration:.6,onUpdate:function(){
+          document.getElementById('v'+i).textContent=won(o.t);}}, i*0.09);
+  });
+  RUN.push(tl); return tl;
+}
+function paintFinal(){
+  document.getElementById('fig').textContent=won(D.total);
+  D.svc.forEach(function(s,i){
+    document.getElementById('b'+i).style.width=(s.v/mx*100)+'%';
+    document.getElementById('v'+i).textContent=won(s.v); });
+}
+if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){ paintFinal(); }
+else { play(); document.getElementById('replay').addEventListener('click',play);
+/* ── safety timer + stop ───────────────────────────────────────────────────
+   When rAF stops (background tab, headless capture, low-power mode) these engines
+   freeze mid-frame. Painting the final value is not enough on its own — a frame that
+   wakes up late will write over it. The canvas-report shell blocks that race with a
+   token inside anim() (c.__token). Here you hold the running handles, kill them first,
+   then paint. This is work you have to do yourself. */
+setTimeout(function(){ stopAll(); paintFinal(); }, 2600);
+}
+</script></body></html>

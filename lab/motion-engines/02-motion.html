@@ -1,0 +1,74 @@
+<!doctype html>
+<!-- canvas-report LAB · NOT a report. This page breaks the skill's output contract
+     (zero network requests) on purpose. Engine: Motion 11.11.17 · vendored: motion-11.11.17.js -->
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Motion — handing animation to the browser — canvas-report lab</title>
+<link rel="stylesheet" href="lab.css"></head><body><div class="wrap">
+<p class="eyebrow">CANVAS-REPORT LAB · MOTION ENGINE 2/5</p>
+<h1>Motion — handing animation to the browser</h1>
+<p class="sub" id="sub"></p>
+<div class="warn"><b>This is not a report.</b> canvas-report ships one HTML file with
+<b>zero network requests</b>; this page loads <code>vendor/motion-11.11.17.js</code>(63 KB) instead. It is the worked example for
+<code>references/external-tools.md</code> § When to close this skill.
+Usage: <code>docs/motion.md</code>.</div>
+<div class="stage">
+  <p class="fig" id="fig">₩0</p>
+  <div id="rows"></div>
+  <button class="btn" id="replay" type="button">▷ Replay</button>
+</div>
+<p class="meta">Motion 11.11.17 · MIT · 63 KB. Two things matter: <code>animate()</code> hands
+transform and opacity <b>to the Web Animations API</b>, so they leave the main thread; and
+<code>type:'spring'</code> is <b>physics</b>, not a fixed curve. The shell's <code>R.motion()</code>
+is the first half of that, implemented by hand.</p>
+</div>
+<script src="lab-data.js"></script>
+<script src="vendor/motion-11.11.17.js"></script>
+<script>
+var D=window.LAB_DATA, mx=Math.max.apply(null,D.svc.map(function(s){return s.v;}));
+var animate=window.Motion.animate;
+document.getElementById('sub').textContent=D.title+' · '+D.note;
+var rows=document.getElementById('rows');
+D.svc.forEach(function(s,i){
+  rows.insertAdjacentHTML('beforeend',
+    '<div class="row"><span class="name">'+s.k+'</span><div class="track">'+
+    '<div class="bar" id="b'+i+'" style="width:100%;transform:scaleX(0)"></div></div>'+
+    '<span class="val" id="v'+i+'">₩0</span></div>');
+});
+var won=function(n){return '₩'+Math.round(n).toLocaleString('ko-KR');};
+var RM=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function paintFinal(){
+  document.getElementById('fig').textContent=won(D.total);
+  D.svc.forEach(function(s,i){
+    document.getElementById('b'+i).style.transform='scaleX('+(s.v/mx)+')';
+    document.getElementById('v'+i).textContent=won(s.v); });
+}
+var RUN=[];
+function stopAll(){ RUN.forEach(function(a){ try{a.stop();}catch(e){} }); RUN.length=0; }
+function play(){
+  /* Motion 11 has two shapes:
+       animate(element, keyframes, opts)  -> transform goes to WAAPI, off the main thread
+       animate(from, to, {onUpdate})      -> a number. Nothing is scaled to an axis, so
+                                             spring is safe here.
+     The easing key is `ease`, not `easing`. scaleX is used rather than width because it
+     does not force layout — that is half of what this engine sells. */
+  D.svc.forEach(function(s,i){
+    RUN.push(animate('#b'+i, {scaleX:[0, s.v/mx]},
+            {duration:.8, delay:i*0.07, type:'spring', stiffness:120, damping:18}));
+    RUN.push(animate(0, s.v, {duration:.7, delay:i*0.07, ease:[.22,.61,.36,1],
+            onUpdate:function(v){ document.getElementById('v'+i).textContent=won(v); }}));
+  });
+  RUN.push(animate(0, D.total, {duration:.95, ease:[.22,.61,.36,1],
+          onUpdate:function(v){ document.getElementById('fig').textContent=won(v); }}));
+}
+if(RM){ paintFinal(); }
+else { play(); document.getElementById('replay').addEventListener('click',play);
+/* ── safety timer + stop ───────────────────────────────────────────────────
+   When rAF stops (background tab, headless capture, low-power mode) these engines
+   freeze mid-frame. Painting the final value is not enough on its own — a frame that
+   wakes up late will write over it. The canvas-report shell blocks that race with a
+   token inside anim() (c.__token). Here you hold the running handles, stop them first,
+   then paint. This is work you have to do yourself. */
+setTimeout(function(){ stopAll(); paintFinal(); }, 2600);
+}
+</script></body></html>

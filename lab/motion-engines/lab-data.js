@@ -1,0 +1,1 @@
+window.LAB_DATA={"title": "insure-detect · GCP spend, July 2026", "note": "The five parts sum to the total. All five pages animate this same data.", "svc": [{"k": "Cloud SQL · standing", "v": 46553}, {"k": "BigQuery · scan", "v": 14486}, {"k": "BigQuery · storage", "v": 277}, {"k": "Secret Manager", "v": 4783}, {"k": "7 other services", "v": 48.1}], "total": 66147};

@@ -1,0 +1,45 @@
+<!doctype html>
+<!-- canvas-report LAB · NOT a report. This page breaks the skill's output contract
+     (zero network requests) on purpose. Engine: lottie-web 5.12.2 · vendored: lottie-5.12.2.min.js -->
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lottie — replaying a designed clip — canvas-report lab</title>
+<link rel="stylesheet" href="lab.css"></head><body><div class="wrap">
+<p class="eyebrow">CANVAS-REPORT LAB · MOTION ENGINE 4/5</p>
+<h1>Lottie — replaying a clip a designer made</h1>
+<p class="sub" id="sub"></p>
+<div class="warn"><b>This is not a report.</b> canvas-report ships one HTML file with
+<b>zero network requests</b>; this page loads <code>vendor/lottie-5.12.2.min.js</code>(306 KB) instead. It is the worked example for
+<code>references/external-tools.md</code> § When to close this skill.
+Usage: <code>docs/lottie.md</code>.</div>
+<div class="stage">
+  <div class="holder"><div id="lot" style="width:100%;max-width:420px"></div></div>
+  <div id="rows" style="margin-top:18px"></div>
+  <button class="btn" id="replay" type="button">▷ Replay</button>
+</div>
+<p class="meta">lottie-web 5.12.2 · MIT · <b>306 KB</b> — the largest of the five. The animation above
+is <code>assets/july.json</code> (3 KB), generated from the real July figures by
+<code>make-lottie.py</code>. <b>Here is the point:</b> those bar lengths are <b>baked at export
+time</b>. Change the numbers in the table below and the picture above does not move — the animation
+has to be rebuilt. The format fits onboarding, mascots and empty states; it does not fit an analysis
+someone has to reason from.</p>
+</div>
+<script src="lab-data.js"></script>
+<script src="vendor/lottie-5.12.2.min.js"></script>
+<script>
+var D=window.LAB_DATA, mx=Math.max.apply(null,D.svc.map(function(s){return s.v;}));
+document.getElementById('sub').textContent=D.title+' · '+D.note;
+var won=function(n){return '₩'+Math.round(n).toLocaleString('ko-KR');};
+var rows=document.getElementById('rows');
+D.svc.forEach(function(s){
+  rows.insertAdjacentHTML('beforeend',
+    '<div class="row"><span class="name">'+s.k+'</span>'+
+    '<div class="track"><div class="bar" style="width:'+(s.v/mx*100)+'%"></div></div>'+
+    '<span class="val">'+won(s.v)+'</span></div>');
+});
+var RM=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+var anim=lottie.loadAnimation({container:document.getElementById('lot'),
+  renderer:'svg', loop:false, autoplay:!RM, path:'assets/july.json'});
+if(RM) anim.addEventListener('DOMLoaded',function(){ anim.goToAndStop(anim.totalFrames-1,true); });
+document.getElementById('replay').addEventListener('click',function(){ anim.goToAndPlay(0,true); });
+</script></body></html>
