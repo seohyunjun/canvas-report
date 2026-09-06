@@ -1009,6 +1009,12 @@ VIZ.divColumns=function(cvs,cfg){
 /* horizontal bars (one series): ranking and magnitude */
 VIZ.hbars=function(cvs,cfg){
   var L=fld(cfg.label), V=fld(cfg.value), fmt=cfg.format||compact;
+  /* cfg.key gives a row a stable identity across re-sorts. With it, play() makes a
+     mark TRAVEL from the row it held to the row it now belongs in, instead of
+     regrowing from zero — object constancy, ported from D3's keyed join without the
+     runtime (references/external-tools.md § What was actually adopted).
+     Without cfg.key nothing changes: the bar grows from zero as it always did. */
+  var K=cfg.key?fld(cfg.key):null;
   return mk(cvs,function(ctx,W,H,c){
     var rows=usable(cfg.rows(),[V]), pad={t:14,b:12};
     if(!rows.length) return;
@@ -1016,20 +1022,31 @@ VIZ.hbars=function(cvs,cfg){
     var PW=W-labelW-(cfg.valueW||64), rowH=(H-pad.t-pad.b)/rows.length;
     /* cfg.max pins the scale for side-by-side comparison (see macro 09) */
     var mx=finiteNumber(cfg.max) || Math.max.apply(null,rows.map(function(r){return Math.abs(V(r));})) || 1;
+    var prev=K&&c.__prev, moving=!!(prev&&c.t<1), snap=K?Object.create(null):null;
     ctx.font='600 11.5px system-ui, sans-serif';
     rows.forEach(function(r,i){
-      var cy=pad.t+rowH*i+rowH/2, bh=Math.min(cfg.barH||18,rowH-5);
+      var k=K?String(K(r)):null, p=(moving&&prev[k])?prev[k]:null;
+      /* a row that was not on screen before has nowhere to travel from: it grows
+         in place, and fades in so the arrival is not mistaken for a jump */
+      var pos = p ? p.i+(i-p.i)*c.t : i;
+      var val = p ? p.v+(Math.abs(V(r))-p.v)*c.t : Math.abs(V(r))*c.t;
+      var alpha = (moving&&!p) ? c.t : 1;
+      var cy=pad.t+rowH*pos+rowH/2, bh=Math.min(cfg.barH||18,rowH-5);
+      ctx.save(); if(alpha<1) ctx.globalAlpha=alpha;
       ctx.font='600 11.5px system-ui, sans-serif';
       txt(ctx, ell(ctx,L(r),labelW-12), labelW-10, cy, 'right', T.text2,'600',11.5);
-      var bw=(PW*Math.abs(V(r))/mx)*c.t;
+      var bw=PW*val/mx;
       ctx.fillStyle=cfg.colorOf?cfg.colorOf(r,i):colorOf(cfg.color);
       barH(ctx,labelW,cy-bh/2,Math.max(2,bw),bh,4);
       if(c.t>=1){ ctx.save(); ctx.font='650 11.5px system-ui, sans-serif';
         var lx=clampLabel(ctx,fmt(V(r)),labelW+bw+8,'left',labelW+4,W-4); ctx.restore();
         txt(ctx,fmt(V(r)),lx,cy,'left',T.text2,'650',11.5); }
+      ctx.restore();
+      if(snap) snap[k]={i:i, v:Math.abs(V(r))};
       var d=cfg.tip?cfg.tip(r,i,rows):{title:String(L(r)),rows:[{name:cfg.seriesName||str('value'),val:fmt(V(r))}]};
       c.hits.push({x:0,y:cy-rowH/2,w:W,h:rowH,title:d.title,rows:d.rows,note:d.note,click:cfg.onSelect&&function(){cfg.onSelect(r);}});
     });
+    if(snap&&c.t>=1) c.__prev=snap;
     dropNote(ctx,W,H,rows);
   });
 };
@@ -1266,6 +1283,7 @@ VIZ.slope=function(cvs,cfg){
 /* lollipop: ranking, drawn as a stem from the baseline to the value. */
 VIZ.lollipop=function(cvs,cfg){
   var L=fld(cfg.label), V=fld(cfg.value), fmt=cfg.format||compact;
+  var K=cfg.key?fld(cfg.key):null;      /* keyed re-sort — see VIZ.hbars */
   return mk(cvs,function(ctx,W,H,c){
     var rows=typeof cfg.rows==='function'?cfg.rows():cfg.rows||[];
     if(!rows.length){ chartMessage(ctx,W,H); return; }
@@ -1279,9 +1297,18 @@ VIZ.lollipop=function(cvs,cfg){
     var min=Math.min.apply(null,vals), max=Math.max.apply(null,vals), maxP=Math.max(0,max)||1, maxN=Math.abs(Math.min(0,min))||1;
     var zero=labelW+(min<0?PW*maxN/(maxN+maxP):0);
     ctx.save();ctx.strokeStyle=T.line;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(Math.round(zero)+.5,pad.t);ctx.lineTo(Math.round(zero)+.5,H-pad.b);ctx.stroke();ctx.restore();
+    var prev=K&&c.__prev, moving=!!(prev&&c.t<1), snap=K?Object.create(null):null;
     rows.forEach(function(r,i){
-      var v=vals[i],cy=pad.t+rowH*(i+.5), fullX=v<0?zero+(labelW-zero)*Math.abs(v)/maxN:zero+(W-valueW-zero)*v/maxP;
-      var x=zero+(fullX-zero)*c.t, col=colorOf(r.color,cfg.color||(v<0?T.neg:T.s1));
+      var k=K?String(K(r)):null, p=(moving&&prev[k])?prev[k]:null;
+      var pos = p ? p.i+(i-p.i)*c.t : i;
+      var v=vals[i], vv = p ? p.v+(v-p.v)*c.t : v;
+      var alpha = (moving&&!p) ? c.t : 1;
+      var cy=pad.t+rowH*(pos+.5), fullX=vv<0?zero+(labelW-zero)*Math.abs(vv)/maxN:zero+(W-valueW-zero)*vv/maxP;
+      /* with a key the dot slides between rows and between values; without one it
+         still sweeps out from zero exactly as before */
+      var x=p?fullX:zero+(fullX-zero)*c.t, col=colorOf(r.color,cfg.color||(v<0?T.neg:T.s1));
+      if(snap) snap[k]={i:i, v:v};
+      if(alpha<1){ ctx.save(); ctx.globalAlpha=alpha; }
       /* ell() measures with whatever font is currently set. If that differs from the one
          txt() draws with, a label it judged to fit is drawn wider and runs off the left
          edge — a hard clip with no ellipsis. Set the drawing font immediately before
@@ -1296,9 +1323,11 @@ VIZ.lollipop=function(cvs,cfg){
         var lx=clampLabel(ctx,fmt(v),x+(v>=0?8:-8),al,2,W-2); ctx.restore();
         txt(ctx,fmt(v),lx,cy,al,T.text2,'650',11);
       }
+      if(alpha<1) ctx.restore();
       var tip=cfg.tip?cfg.tip(r,i,rows):{title:String(L(r)),rows:[{name:cfg.seriesName||str('value'),val:fmt(v),color:col}]};
       c.hits.push({x:0,y:cy-rowH/2,w:W,h:rowH,title:tip.title,rows:tip.rows,note:tip.note});
     });
+    if(snap&&c.t>=1) c.__prev=snap;
   });
 };
 

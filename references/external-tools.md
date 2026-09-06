@@ -173,6 +173,17 @@ gallery of everything drawable.
   caveat on the canvas: only the bottom band and the total share a flat baseline, so a middle band
   cannot be compared by eye. If a middle band is the subject, use `panels`.
 
+**One behaviour**, taken from D3's keyed join:
+
+- **`cfg.key` on `VIZ.hbars` and `VIZ.lollipop`.** Give a row a stable identity and `chart.play()`
+  after a re-sort makes each mark travel from the row it held to the row it now belongs in, rather
+  than regrowing from zero. That is object constancy, and it is the one thing in this file the
+  shell could not do at all: a canvas repainted from scratch has no element whose identity could be
+  kept, so the identity has to live in the factory instead. The port is about twenty lines — a
+  previous-position map, a lerp, and a fade for rows that were not there before. Without a key
+  nothing changes. The bound is in [`motion.md`](motion.md) § The fourth place: a re-sort only,
+  never a filter, because a mark that travels claims to be the same thing somewhere else.
+
 **An easing vocabulary** — the portable half of GSAP, Motion and anime.js:
 
 | Value-safe (legal on a bar or an area) | Overshoot (opacity and position only) |

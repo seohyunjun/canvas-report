@@ -55,6 +55,16 @@ assume non-negative magnitudes; a negative inverts the axis and produces nonsens
 **One data point cannot make a line.** `(v.length - 1)` divides by zero.
 → `spark` duplicates the single point; `line` never advances past `rows.length`.
 
+**A re-sort key that is not stable.** `cfg.key` on `hbars` / `lollipop` decides which mark is
+"the same thing" across a sort. Hand it an array index, or a string that reformats when the value
+changes, and marks swap identities mid-flight — the animation then asserts that A became B.
+→ Key on the entity, never on position or on anything derived from the value. If no stable
+identity exists, omit `cfg.key`: growing from zero is the honest default.
+
+**Animating a filter as if it were a sort.** With `cfg.key` set, `play()` after rows have been
+added or removed slides the survivors into place, which implies a continuity the data does not
+have. → `R.paintAll()` on a filter change (0ms, `motion.md`), `play()` only on a re-sort.
+
 **Canvas height set in CSS.** The shell's `fit()` reads the `<canvas height="...">` **attribute**
 and overwrites `style.height` itself. A height given in CSS is silently ignored.
 → Height always comes from the attribute. CSS owns width only (`width:100%`).
