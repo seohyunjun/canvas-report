@@ -30,8 +30,44 @@ Metric names, industry, currency and language all come from the input.
 
 ```
 canvas-report · macro: 05 Broadsheet · theme: newsprint · masthead: M3 · lenses: trend,comparison,outliers
+read:
+  analysis-lenses  "Past 25 periods, default the view to the most recent 12–13"  -> 31-day series kept, deviation recorded in the methodology
+  motion           "| redraw after a filter change | **0ms** |"                    -> tab switch repaints instead of playing
 critique: P4 H5 E4 S5 R4 V5 D5
 ```
+
+**The `read:` block is a quote block, not a checklist.** One line per reference file you opened
+while building *this* report, and each line carries three things:
+
+```
+  <file>[ §<section>]  "<a verbatim fragment from it>"  -> <the decision that fragment made>
+```
+
+A file name alone does not count. The fragment must be **copied from the open file**, long enough
+to be found in it with a plain string search, and it must be the passage that actually changed
+what you did — not the first sentence of the document. The decision after the arrow must be
+visible in the report.
+
+This is the point: **a quote cannot be produced from memory of having read something.** Listing a
+file you did not open now requires fabricating text that a `grep -F` against the repo will not
+find, which is a different and much more obvious kind of wrong. Before you ship, run that check on
+your own stamp.
+
+A file you opened and took nothing from is not listed. If none of the always-read five produced a
+decision worth quoting, that is the signal you skimmed rather than read — go back.
+
+**A file this skill binds to more than one step needs one entry per section, named.** A single
+quote proves you opened the file; it says nothing about *which part*. `external-tools.md` is the
+case that exists today — its form map and "when to close" belong to step 0 and its adopted forms
+and easing vocabulary to step 6, so it takes **two** entries:
+
+```
+  external-tools §gallery  "<fragment from the form map or when-to-close>"  -> <step 0 decision>
+  external-tools §adopted  "<fragment from What was actually adopted>"      -> <step 6 decision>
+```
+
+Missing the second entry is the same failure as missing the file: you chose a form and a curve
+without reading the page that lists what this skill added and which curves are legal on a mark.
 
 ## Absolute rules
 
@@ -52,9 +88,9 @@ critique: P4 H5 E4 S5 R4 V5 D5
 
 ## Procedure
 
-### Reading order — four files in full, and part of a fifth
+### Reading order — five files, every report, and you write down that you read them
 
-The reference map at the bottom of this file is an index, not a menu. **Four of those files are
+The reference map at the bottom of this file is an index, not a menu. **Five of those files are
 read in full on every report**, at the step that needs them, before you write the code for that step:
 
 | Read it | At | Because skipping it costs you |
@@ -63,20 +99,31 @@ read in full on every report**, at the step that needs them, before you write th
 | [`references/pitfalls.md`](references/pitfalls.md) | step 5, before the wiring | you re-step a mine the shell already fixed — canvas height, cached tokens, an unchecked key |
 | [`references/motion.md`](references/motion.md) | step 6 | you animate somewhere motion does not belong, or pick an easing that draws past the axis |
 | [`references/tooltip-help.md`](references/tooltip-help.md) | step 7 | help copy that names the chart type and forgets the formula |
+| [`references/external-tools.md`](references/external-tools.md) | step 0, with the lens table | you draw a form this skill refuses, miss the two forms it adopted, or keep writing a report the data says should be a different document |
 
-**A fifth is read in part, at step 0.** [`references/external-tools.md`](references/external-tools.md)
-is filed under "when tempted by D3, Plotly, GSAP…", which is right for its library assessments and
-wrong for two of its sections. **§ The D3 gallery, mapped onto this skill** is the chart-form
-vocabulary — which forms this skill covers, and which it deliberately refuses (hierarchies, networks,
-maps, streamgraph, violin, beeswarm, radial bars) together with the reason. **§ When to close this
-skill** tells you when the data means you should not be writing this report at all. Neither is about
-temptation; both belong beside the lens table, before a lens is picked. Read those two there.
+**external-tools.md is read whole, not skimmed for the library verdicts.** Its four working parts
+each bind a different step: **§ The D3 gallery, mapped onto this skill** is the form vocabulary and
+the refusal list (hierarchies, networks, maps, streamgraph, violin, beeswarm, radial bars) — step 0,
+beside the lens table. **§ When to close this skill** says when the data means you should be writing
+a different document — step 0, before you commit. **§ What was actually adopted** names the two
+forms this skill added because the gallery exposed them as gaps (`boxplot`, `stackedArea`) and the
+easing vocabulary — step 6, when you choose a form and a curve. Only **§§ A–C**, the library
+assessments, stay conditional.
+
+**Use what it adopted.** `VIZ.boxplot` exists because "what does the mean hide" is a question a
+histogram cannot answer across groups; if your data has a measure and a grouping with enough values
+per group, that question is usually worth one card. `chart.play()` takes nine named curves and
+defaults to `outCubic` — reach past the default only for a reason you can name, and name it in a
+comment.
 
 [`references/anti-patterns.md`](references/anti-patterns.md) stays open the whole time.
 The rest are conditional and the map says when.
 
 **If you have not read a file, do not claim its gates.** Reporting a passing slop test on
-references you never opened is the one failure this skill cannot detect for you.
+references you never opened is the one failure this skill cannot detect for you — which is why
+the stamp carries a `read:` line and the log entry carries a `"read"` list. Write each file into
+it as you open it. Content you happen to remember from another task is not a read; if it is not
+open in front of you for *this* build, it does not go on the line.
 
 ### 0. Profile the data — shape, not domain
 
@@ -96,10 +143,12 @@ Actually load or query it first and establish the following. **Do not guess; que
 not only the mapping table. Take the profile to it and **build only the lenses the shape supports.**
 A lens the data cannot carry is not included at all.
 
-Read the two form-scope sections of [`references/external-tools.md`](references/external-tools.md)
-alongside it — **§ The D3 gallery, mapped onto this skill** and **§ When to close this skill**. The
-lens table says what you *can* build from this shape; those two say what this skill has decided *not*
-to draw, and when the honest answer is a different document rather than a worse chart.
+Read [`references/external-tools.md`](references/external-tools.md) alongside it. The lens table
+says what you *can* build from this shape; **§ The D3 gallery, mapped onto this skill** says what
+this skill has decided *not* to draw and why, **§ When to close this skill** says when the honest
+answer is a different document rather than a worse chart, and **§ What was actually adopted** says
+which two forms were added to close real gaps — check whether your shape wants one of them before
+you settle on the safe pair of bars and lines.
 
 Its judgement rules bind as hard as the mapping table does: under 6 periods is not a trend, over 25
 defaults to the most recent 12–13, cardinality over 8 folds, and **a bridge or a cohort gets its key
@@ -221,7 +270,10 @@ A filter goes on **one line directly above the group it governs**, never inside 
 **Read [`references/motion.md`](references/motion.md) now.** Motion is confined to the three places
 it names — the waterfall's flow, scroll transitions, and play-once-on-entry. Delete the rest, and
 take the easing from its value-safe column: an overshoot curve on a chart draws the mark past its
-own axis.
+own axis. The same nine curves are catalogued in
+[`references/external-tools.md`](references/external-tools.md) **§ What was actually adopted**
+together with the two adopted forms — if a section is about a distribution across groups, that is
+where `VIZ.boxplot` is supposed to come from.
 
 ### 7. Wire the help tooltips — a requirement of this skill
 
@@ -292,6 +344,20 @@ If anything in group D (data honesty, 1–12) trips, the rest is meaningless. Fi
 On passing, score the seven axes (P H E S R V D), put them in the stamp, and prepend this report
 to `.canvas-report/log.json`. Create the file if it does not exist.
 
+**Fill the stamp's `read:` block, then verify it.** Each entry needs a verbatim fragment and the
+decision it drove; copy the same entries into the log entry as `"read"`. Then check every quote
+against its file before you ship:
+
+```bash
+grep -Fq '<the quoted fragment>' references/<file>.md || echo "FABRICATED: <file>"
+```
+
+Run it for every line, and check that every multi-step file has all of its sections present — for
+`external-tools.md` that means both `§gallery` and `§adopted`. A quote that does not match is not a
+typo to patch — it means you wrote down a file you did not read, and the fix is to go and read it. Never carry an entry over because
+the file was read in an earlier session or an earlier task in the same session; the block records
+this build and nothing else.
+
 ---
 
 ## Reference map
@@ -306,11 +372,12 @@ to `.canvas-report/log.json`. Create the file if it does not exist.
 | [`references/themes.md`](references/themes.md) | step 4. Catalogue and the rotation rule |
 | [`references/components.md`](references/components.md) | steps 4 and 6. Masthead, section head, insight, card archetypes |
 | [`references/motion.md`](references/motion.md) | **always**, step 6. Where movement belongs, and the easing vocabulary |
-| [`references/external-tools.md`](references/external-tools.md) | **step 0 for two sections** — the D3-gallery form map and when to close this skill. The rest when tempted by D3, Plotly, GSAP, Motion, anime.js, Lottie or Rive |
+| [`references/external-tools.md`](references/external-tools.md) | **always**, step 0 (form map · when to close) and step 6 (the two adopted forms · the easing vocabulary). §§ A–C when tempted by D3, Plotly, GSAP, Motion, anime.js, Lottie or Rive |
 | [`references/tooltip-help.md`](references/tooltip-help.md) | **always**, step 7. Help copy and accessibility |
 | [`references/anti-patterns.md`](references/anti-patterns.md) | while generating. The named failures |
 | [`references/pitfalls.md`](references/pitfalls.md) | **always**, step 5, before the wiring. Not just for factory authors — Layout · Runtime · Numbers · Data are about the wiring |
 | [`references/slop-test.md`](references/slop-test.md) | step 10. **Only after it is built** |
+| [`lab/motion-engines/`](lab/motion-engines/) | never during a report — it breaks the output contract on purpose. Worked examples of the five motion engines for when step 0 says to close this skill |
 
 If the `dataviz` skill is available, it is the higher authority on colour. The palettes in
 `themes.css` already pass its rules.
