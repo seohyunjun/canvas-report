@@ -26,6 +26,10 @@ methodology
 - Break the line across a gap. A line drawn through missing data is invented data.
 
 ## Motion
+
+Use the Motion Decision framework with `attention-guidance` only for a deliberate one-time entry
+aid. Static is the default; do not use `data-transition`, `spatial-reordering`, or
+`narrative-transition` in this macro.
 - **Entry play only.** `R.playAll()` as everywhere else — watching a chart draw makes the axis
   register, and that is reading, not decoration. Nothing beyond it: no emphasis animation, no
   re-sort travel, no scroll transitions. A research notebook is read, not performed.

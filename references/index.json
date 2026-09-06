@@ -10,7 +10,8 @@
     {"path":"references/themes.md","class":"Conditional","lazy_trigger":"theme compatibility or explicit theme requirement"},
     {"path":"references/components.md","class":"Conditional","lazy_trigger":"selected masthead, section, card, filter, or methodology archetype"},
     {"path":"references/tooltip-help.md","class":"Conditional","lazy_trigger":"plan contains charts or computed-metric help"},
-    {"path":"references/motion.md","class":"Conditional","lazy_trigger":"at least one chart declares motion.enabled=true"},
+    {"path":"references/motion-decision.md","class":"Core","lazy_trigger":"every chart decision; static is the default"},
+    {"path":"references/motion.md","class":"Conditional","lazy_trigger":"runtime motion implementation or validation"},
     {"path":"references/pitfalls.md","class":"Conditional","lazy_trigger":"selected chart factory or interaction activates a tagged implementation constraint"},
     {"path":"references/external-tools.md","class":"Conditional","lazy_trigger":"requested form is outside the deterministic builder vocabulary"},
     {"path":"references/slop-test.md","class":"Final Validation","lazy_trigger":"builder has emitted report.html"}

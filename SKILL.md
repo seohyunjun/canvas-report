@@ -91,7 +91,7 @@ Choose a macrostructure because the profile supports it. Then choose theme and m
 
 ### 4. PLANNED: compile and validate
 
-Run `assets/validate-plan.py` against `schemas/*.schema.json`, `references/rules.json`, and `references/index.json`. It emits `report-spec.json` only when the plan is complete and compatible with profile evidence. The spec contains resolved data, chart contracts, accessible text/table requirements, methodology, selected theme, and motion contracts. Use structured diagnostics; do not silently coerce an unsupported plan.
+Run `assets/validate-plan.py` against `schemas/*.schema.json`, `references/rules.json`, and `references/index.json`. It emits `report-spec.json` only when the plan is complete and compatible with profile evidence. The spec contains resolved data, chart contracts, accessible text/table requirements, methodology, selected theme, and Motion Decision contracts (`enabled`, one compatible `intent`, `reason`, and `fallback`). Use structured diagnostics; do not silently coerce an unsupported plan.
 
 Hard rules include: no dual axes; axis ranges derive from data; **all bars have a zero baseline**; colour has a semantic role; every chart has a table twin and help; no invented numbers; and limitations remain visible. A chart is omitted when its support is absent.
 

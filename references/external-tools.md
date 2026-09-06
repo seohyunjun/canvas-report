@@ -71,6 +71,15 @@ trace types snap, and you can animate data *or* layout but not both at once.
 
 ## B. Motion engines
 
+### Choosing an engine after Motion Decision
+
+Use [`motion-decision.md`](motion-decision.md) to select the semantic intent first; the engine is
+only an implementation detail. D3 is the strongest fit for keyed `spatial-reordering`, GSAP or
+Motion for explicit `narrative-transition` sequences, and Motion or anime.js for a one-shot
+`attention-guidance` cue. These engines belong in the lab or an application, not in generated
+reports: vendor and pin them when needed, preserve the static fallback, and cancel active loops
+before painting the final state.
+
 > **Worked examples live in [`../lab/motion-engines/`](../lab/motion-engines/).** Each engine has
 > one runnable page and one doc, all animating the same dataset, with the runtimes vendored and
 > pinned. Read this section for the verdict; go there when the verdict is "yes, close the skill".

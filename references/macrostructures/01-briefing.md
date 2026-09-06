@@ -27,6 +27,9 @@ with no support or a chart with no conclusion.
   briefing into a dashboard.
 
 ## Motion
+
+Use the Motion Decision framework: static is the default and every exception needs one semantic
+intent and a static fallback.
 - Hero figure: `R.countUp(el, v, 900)`.
 - `.reveal` on each section; every evidence chart plays once on entry — `R.playAll()` does this
   for the whole page, and the evidence sections are where it belongs.

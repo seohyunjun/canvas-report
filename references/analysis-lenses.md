@@ -27,6 +27,13 @@ The table that decides what you can honestly show, without knowing the domain.
 
 ## Judgement rules
 
+## Motion decision
+
+Static is the default for every lens. Apply [`motion-decision.md`](motion-decision.md) after
+choosing the chart: motion is enabled only when a state transition, rank change, narrative step,
+or deliberate reading aid materially improves comprehension. Record exactly one intent, a concise
+reason, and a static fallback in `cfg.motion`; otherwise use `enabled:false, intent:null`.
+
 **Time granularity.** Fewer than 6 periods is not a trend — demote it to a bar comparison.
 Past 25 periods, default the view to the most recent 12–13 and put the full range behind a filter.
 

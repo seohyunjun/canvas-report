@@ -33,6 +33,7 @@ PROBE = r"""
   const results = canvases.map(canvas => ({
     id: canvas.id || "(unnamed)",
     enabled: canvas.getAttribute("data-motion-enabled"),
+    intent: canvas.getAttribute("data-motion-intent"),
     reason: canvas.getAttribute("data-motion-reason"),
     hasChart: !!canvas.__chart,
     wired: !!(canvas.__chart && canvas.__chart.__played),
@@ -150,6 +151,15 @@ def validate(result, path):
             diagnostics.append(diagnostic("MOTION-INTENT-003", location,
                 "The canvas has no motion rationale.",
                 'Set a nonempty data-motion-reason explaining the enabled or static decision.'))
+        if canvas["enabled"] == "true" and canvas["intent"] not in (
+                "data-transition", "spatial-reordering", "narrative-transition", "attention-guidance"):
+            diagnostics.append(diagnostic("MOTION-INTENT-004", location,
+                "Enabled motion must declare exactly one allowed semantic intent.",
+                'Set data-motion-intent to one allowed intent.'))
+        if canvas["enabled"] == "false" and canvas["intent"] not in (None, ""):
+            diagnostics.append(diagnostic("MOTION-INTENT-005", location,
+                "Disabled motion must declare no semantic intent.",
+                'Remove data-motion-intent or leave it empty.'))
         if canvas["enabled"] == "true":
             if not canvas["hasChart"]:
                 diagnostics.append(diagnostic("MOTION-WIRING-001", location,

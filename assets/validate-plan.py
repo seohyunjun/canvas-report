@@ -9,11 +9,17 @@ THEMES=(
 EXEC=("html","javascript","script","onload","onclick","onerror","eval","function")
 CHARTS={"line":("x","value"),"columns":("x","value"),"divColumns":("label","value"),
  "hbars":("label","value"),"lollipop":("label","value"),"bubbles":("label","x","y","size"),
- "concentration":("label","value")}
+ "concentration":("label","value"),"waterfall":("label","value"),"boxplot":("label","values")}
 # The runtime refuses to draw past these and prints a message instead of the data
 # (assets/report-shell.html, VIZ.lollipop). The builder hands every source row to
 # every chart, so the cap is a plan-time incompatibility, not a rendering detail.
 MAX_ROWS={"lollipop":20}
+MOTION_INTENTS={"data-transition","spatial-reordering","narrative-transition","attention-guidance"}
+MOTION_COMPAT={"line":{"data-transition","attention-guidance"},"columns":{"data-transition","attention-guidance"},
+ "divColumns":{"data-transition","attention-guidance"},"hbars":{"spatial-reordering","attention-guidance"},
+ "lollipop":{"spatial-reordering","attention-guidance"},"bubbles":{"data-transition","attention-guidance"},
+ "slope":{"spatial-reordering","data-transition"},"waterfall":{"data-transition"},
+ "boxplot":{"attention-guidance"},"table":{"spatial-reordering"}}
 class D:
  def __init__(s):s.x=[]
  def add(s,se,i,l,p,f):s.x.append({"severity":se,"id":i,"location":l,"problem":p,"suggested_fix":f})
@@ -114,7 +120,11 @@ def main():
  charts=req(plan,"charts",list,"plan",d) or []; names={x.get("name") for x in p.get("columns",[]) if isinstance(x,dict)}
  for i,x in enumerate(charts):
   l="plan.charts[%d]"%i
-  if not isinstance(x,dict) or not all(isinstance(x.get(k),str) and x[k] for k in ("id","section_id","type","title","note","aria_label","help")) or x.get("dataset")!="source" or not arr(x.get("fields")) or not isinstance(x.get("encodings"),dict) or not x["encodings"] or not isinstance(x.get("table"),dict) or not arr(x["table"].get("columns")) or not isinstance(x.get("motion"),dict) or not isinstance(x["motion"].get("enabled"),bool) or not isinstance(x["motion"].get("reason"),str) or not x["motion"].get("reason"):d.e("CHART-001",l,"Chart must be declarative with rich labels, source dataset, encodings, table columns, and explicit motion.","Complete every required chart field.");continue
+  if not isinstance(x,dict) or not all(isinstance(x.get(k),str) and x[k] for k in ("id","section_id","type","title","note","aria_label","help")) or x.get("dataset")!="source" or not arr(x.get("fields")) or not isinstance(x.get("encodings"),dict) or not x["encodings"] or not isinstance(x.get("table"),dict) or not arr(x["table"].get("columns")) or not isinstance(x.get("motion"),dict) or not isinstance(x["motion"].get("enabled"),bool) or not isinstance(x["motion"].get("reason"),str) or not x["motion"].get("reason") or not isinstance(x["motion"].get("fallback"),str) or not x["motion"].get("fallback"):d.e("CHART-001",l,"Chart must be declarative with rich labels, encodings, table columns, and an explicit Motion Decision.","Complete every required chart field.");continue
+  m=x["motion"]; intent=m.get("intent")
+  if m["enabled"] and intent not in MOTION_INTENTS:d.e("MOTION-001",l+".motion.intent","Enabled motion requires exactly one allowed semantic intent.","Choose one of: "+", ".join(sorted(MOTION_INTENTS))+".")
+  if not m["enabled"] and intent is not None:d.e("MOTION-002",l+".motion.intent","Disabled motion must use intent:null.","Set intent to null.")
+  if m["enabled"] and x["type"] in MOTION_COMPAT and intent in MOTION_INTENTS and intent not in MOTION_COMPAT[x["type"]]:d.e("MOTION-003",l+".motion.intent","Motion intent is incompatible with chart type.","Choose a compatible intent or disable motion.")
   if x["section_id"] not in sids:d.e("CHART-002",l+".section_id","Chart references no declared section.","Use a section id.")
   if x["type"] not in CHARTS:d.e("CHART-004",l+".type","Chart type is outside the deterministic builder vocabulary.","Use one of: "+", ".join(CHARTS)+".")
   else:

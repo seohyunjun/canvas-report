@@ -36,6 +36,10 @@ methodology   key definition · residual duplicate count · what each point in t
 - The total bar uses `mid` (neutral). Giving it a direction colour makes it read as growth or decline.
 
 ## Motion
+
+The waterfall may use only `data-transition`, because the bridge from opening to closing is the
+analytical claim. Record the intent and a static fallback; motion must never be needed to add up
+the totals.
 - Play the waterfall **once**. A looping animation is decoration.
 - Put a "replay" button in the card's top-right (the shell demo has one).
 - The finished state must contain all the information — confirm it in a headless capture.

@@ -27,6 +27,10 @@ methodology
 
 ## Motion
 
+This macro may use only `narrative-transition`: the pinned chart changes because the reader moves
+between sequential story steps. Record that intent and keep the completed state understandable
+without scrolling or animation.
+
 ```js
 R.scrolly(document.getElementById('story'), function(i, node){
   state.step = i;

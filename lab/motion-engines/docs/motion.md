@@ -37,3 +37,8 @@ See the `RUN` array and `stopAll()` in the lab page.
 
 ## When to reach for it
 Product UI that needs layout transitions and exit animations. Overkill for an analysis document.
+
+## Motion decision
+
+Use `attention-guidance` for a deliberate one-time reading aid, or `data-transition` when values
+meaningfully change. The final static state remains complete and reduced motion disables the aid.

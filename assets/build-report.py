@@ -118,13 +118,15 @@ function text(tag,cls,value){return R.el(tag,cls,value==null?'':String(value));}
 function add(parent,child){parent.appendChild(child);return child;}
 function format(value){return typeof value==='number'?R.nf(value):String(value==null?'—':value);}
 function chartConfig(chart){
-  var e=chart.encodings,base={rows:function(){return rows;},color:'s1'};
+  var e=chart.encodings,base={rows:function(){return rows;},color:'s1',type:chart.type,motion:chart.motion};
   if(chart.type==='line')return Object.assign(base,{x:e.x,y:e.value,format:format});
-  if(chart.type==='columns')return {rows:function(){return rows;},x:e.x,series:[{name:chart.title,get:e.value,color:'s1'}],format:format};
+  if(chart.type==='columns')return Object.assign(base,{x:e.x,series:[{name:chart.title,get:e.value,color:'s1'}],format:format});
   if(chart.type==='divColumns')return Object.assign(base,{x:e.label,y:e.value,format:format});
   if(chart.type==='hbars'||chart.type==='lollipop')return Object.assign(base,{label:e.label,value:e.value,format:format});
   if(chart.type==='bubbles')return Object.assign(base,{label:e.label,x:e.x,y:e.y,size:e.size});
   if(chart.type==='concentration')return Object.assign(base,{label:e.label,value:e.value,format:format});
+  if(chart.type==='waterfall')return Object.assign(base,{label:e.label,value:e.value,format:format});
+  if(chart.type==='boxplot')return Object.assign(base,{label:e.label,values:e.values,format:format});
   throw new Error('unsupported validated chart type: '+chart.type);
 }
 document.documentElement.lang=S.metadata.locale;
@@ -150,7 +152,7 @@ S.charts.forEach(function(chart){
   title.appendChild(R.helpDot(chart.title,chart.help));
   var button=add(head,text('button','btn','Table'));button.type='button';button.setAttribute('data-table-toggle','tablewrap-'+chart.id);button.setAttribute('aria-expanded','false');
   add(card,text('p','card-note',chart.note));var chartWrap=add(card,text('div','chart','')),canvas=add(chartWrap,document.createElement('canvas'));
-  canvas.id=chart.id;canvas.height=chart.height||240;canvas.setAttribute('role','img');canvas.setAttribute('aria-label',chart.aria_label);canvas.dataset.motionEnabled=String(chart.motion.enabled);canvas.dataset.motionReason=chart.motion.reason;
+  canvas.id=chart.id;canvas.height=chart.height||240;canvas.setAttribute('role','img');canvas.setAttribute('aria-label',chart.aria_label);canvas.dataset.motionEnabled=String(chart.motion.enabled);canvas.dataset.motionIntent=chart.motion.intent||'';canvas.dataset.motionReason=chart.motion.reason;
   var tableWrap=add(card,text('div','tablewrap',''));tableWrap.id='tablewrap-'+chart.id;tableWrap.hidden=true;var table=add(tableWrap,document.createElement('table'));table.id='table-'+chart.id;
   var factory=R.VIZ[chart.type];if(typeof factory!=='function')throw new Error('runtime lacks '+chart.type);factory(canvas,chartConfig(chart));
   R.buildTable(table,chart.table.columns.map(function(field){return {name:field,value:function(row){return format(row[field]);},num:false};}),rows,{caption:chart.title+' data'});

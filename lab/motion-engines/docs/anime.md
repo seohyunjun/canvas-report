@@ -45,3 +45,8 @@ back to 0%. Call `anime.remove(targets)` first, then paint. The shell blocks the
 ## When to reach for it
 Product UI on a tight byte budget. If you would not use stagger, most of the reason to reach for
 it disappears too.
+
+## Motion decision
+
+Use only a validated `data-transition`, `narrative-transition`, or one-time `attention-guidance`
+intent. Staggering is not an intent; when it adds no analytical meaning, use the static fallback.
