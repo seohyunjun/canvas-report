@@ -33,6 +33,12 @@ changed.
 
 - `references/rules.json` and `references/index.json` make the rules machine-readable, and the
   rule IDs recorded in profile, spec and validator results are what proves a rule ran.
+- Every diagnostic anywhere in the pipeline carries a Rule ID in one format — uppercase segments
+  and a three-digit number, `AREA-001` or `AREA-DETAIL-001`. `schemas/diagnostic.schema.json`
+  enforces it, and `validate-report.py` reports a validator that emits anything else. Where a
+  finding *is* a registry rule the registry ID is what gets reported, so a runtime external
+  request and a static one both come back as `ZERO-NETWORK-001`, and an overflowing layout as
+  `RESPONSIVE-001`, whichever gate caught it.
 - 2.1.0 added `assets/check-quotes.py` after a stamp quoted `motion.md`'s "Play once on entry"
   verbatim and recorded the opposite decision; the answer then was to verify the quote. 3.0.0
   stops treating quotation as evidence at all — a correctly copied fragment can still be stale,
@@ -52,7 +58,7 @@ declared `{static:true}`. Where the declaration was simply omitted, "forgot to a
   required either way — a static chart has to say why it is static.
 - `assets/check-motion.py` is rewritten around that contract: it gates only the charts that claim
   to move (wired, animating, landing on `t=1`), requires the others to be visually unchanged
-  across the probe, and emits structured diagnostics with `--json`.
+  across the probe, and emits Rule-ID diagnostics with `--json`.
 - The shell and the published example now declare their intent, which is why their diffs are
   attribute-only.
 
