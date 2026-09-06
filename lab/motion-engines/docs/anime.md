@@ -7,7 +7,7 @@ Lab page: [`../03-anime.html`](../03-anime.html) · vendored: `vendor/anime-3.2.
 |---|---|---|
 | `anime-3.2.2.min.js` | **17 KB** | cdnjs `animejs/3.2.2/anime.min.js` |
 
-The smallest of the five: a quarter of GSAP, a eighteenth of Lottie, an eighty-third of Rive.
+The smallest of the three motion engines: roughly a quarter of the pinned GSAP bundle.
 
 ## Minimum usage
 ```html

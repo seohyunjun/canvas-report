@@ -1,12 +1,15 @@
 ---
 name: canvas-report
-description: Builds a self-contained, accessible canvas analysis report through deterministic profile, plan, build, and validation artifacts.
-version: 3.0.0
+description: Builds visually directed analysis reports with D3/Plotly-informed charts and separately selected GSAP, Motion, or anime.js motion, delivered as an accessible offline canvas HTML artifact.
 ---
 
 # Canvas Report
 
-Turn supplied data into one self-contained HTML report a reader can inspect: canvas charts, table twins, help tooltips, methodology, and no network requests. Analytical honesty and a distinct visual face are both requirements; visual rotation never justifies an unsupported claim.
+Turn supplied data into a visually authored report system. Use `references/external-tools.md` to
+select the smallest effective chart and motion toolchain, then ship one self-contained HTML report
+with canvas charts, table twins, help tooltips, methodology, and no network requests. Analytical
+honesty and a distinct visual face are both requirements; visual ambition never justifies an
+unsupported claim.
 
 ## Artifact ownership and run state
 
@@ -67,12 +70,22 @@ The labels mean: `VALIDATED` is the state in which a submitted `plan.json` has p
 
 ### 1. INIT: establish requirements and compatibility
 
-Use the supplied data, not a description of it. Capture language, output location, requested macro/theme/motion, and constraints. After profiling, run `assets/select-candidates.py` to produce the compatible lens, macrostructure, and theme set before the Agent chooses. **User requirements outrank rotation only after compatibility is established.** An incompatible requested structure, chart, theme use, or motion treatment is rejected with a diagnostic and an evidence-based alternative. External fonts are never an exception: reports remain offline and use the shipped system-font stacks.
+Use the supplied data, not a description of it. Capture language, output location, requested
+macro/theme/motion, desired interaction depth, and constraints. After profiling,
+run `assets/select-candidates.py` to produce the compatible lens, macrostructure, and theme set
+before the Agent chooses. **User requirements outrank rotation only after compatibility is
+established.** An incompatible requested structure, chart, theme use, or motion treatment is
+rejected with a diagnostic and an evidence-based alternative. External fonts are never an
+exception: reports remain offline and use the shipped system-font stacks.
 
 Load references lazily:
 
-- **Core:** the compact `references/rules.json` registry, `references/analysis-lenses.md`, and `references/anti-patterns.md`.
-- **Conditional:** `uncertainty.md` for comparisons/estimates, the selected macrostructure file, `themes.md`, `components.md`, `tooltip-help.md`, factory-relevant parts of `pitfalls.md`, `motion.md` only when a chart enables motion, and relevant parts of `external-tools.md`.
+- **Core:** the compact `references/rules.json` registry, `references/analysis-lenses.md`,
+  `references/anti-patterns.md`, and the selection table in `references/external-tools.md`.
+- **Conditional:** `uncertainty.md` for comparisons/estimates, the selected macrostructure file,
+  `themes.md`, `components.md`, `tooltip-help.md`, factory-relevant parts of `pitfalls.md`, the
+  selected tool sections and lab docs from `external-tools.md`, and `motion.md` whenever charts
+  exist.
 - **Final:** `references/slop-test.md` and validator guidance only after a build exists.
 
 Reference provenance is Rule-ID based. `references/rules.json` and `references/index.json` record the rule IDs applied to profile, plan, spec, and validator results. Optional quotations may explain a decision, but are non-authoritative and are not proof that a rule ran. Do not use a `read:` quote stamp as a gate or source of authority.
@@ -83,9 +96,28 @@ Run `assets/profile-data.py` to produce `profile.json`; do not guess. It must es
 
 Draft an evidence-driven set of falsifiable insights, **typically 2–6**, rather than a fixed 4–6 floor. Each claim names its observed value, comparison basis where applicable, and limitation. Use `references/uncertainty.md` for comparisons and estimates.
 
-### 3. VALIDATED: Agent writes the plan
+### 3. VALIDATED: select the toolchain, then write the plan
 
-The Agent writes **only** `plan.json`, based on `profile.json`, requirements, and rotation history. It identifies supported insights, macrostructure, theme, masthead, charts, data mappings, tables, help, methodology, per-chart motion decision, and Rule-ID provenance. It cannot edit the shell or use runtime code as an authoring surface.
+Read the selection table in `references/external-tools.md`, then read only the sections and lab
+docs for the selected tools. Choose at least one chart/state source and at most one primary motion
+source. A strong default is D3 gallery/D3 for chart vocabulary, scales, and object constancy plus
+Motion for simple entry transitions. Use Plotly's named-frame model for stateful stories, GSAP for
+genuinely sequenced scrollytelling, and anime.js for compact SVG choreography. Do not select tools
+merely to increase the tool count.
+
+The offline builder normally adopts a selected tool's portable pattern through the shipped
+runtime. If the request truly requires an actual third-party runtime, the supported narrow path is
+GSAP 3.12.5, Motion 11.11.17, or anime.js 3.2.2 as a `vendored-runtime` motion engine. The builder
+verifies and inlines the selected pinned local copy under `lab/motion-engines/vendor/`, records
+version/hash/licence, and the motion gate checks that the named engine actually drove chart
+progress. D3 and Plotly may inform visualization or state, but may not be declared as the primary
+motion engine. Never add a CDN or silently hand-edit generated HTML.
+
+The Agent writes **only** `plan.json`, based on `profile.json`, requirements, rotation history, and
+the visual direction. It identifies supported insights, macrostructure, theme, masthead, charts,
+data mappings, tables, help, methodology, `creative_direction.external_tools`, a report-level
+motion story, per-chart motion contracts, and Rule-ID provenance. It cannot edit the shell or use
+runtime code as an authoring surface.
 
 Choose a macrostructure because the profile supports it. Then choose theme and masthead. Rotation considers compatible choices first; the theme must be at least **distance 2** from the previous theme, unless the user explicitly requests a compatible override. A compatible explicit user override is recorded in the plan. Macrostructure and masthead rotate where compatible alternatives exist.
 
@@ -99,7 +131,13 @@ Hard rules include: no dual axes; axis ranges derive from data; **all bars have 
 
 Run `assets/build-report.py` from `report-spec.json`. It emits the single builder-owned HTML file with embedded JSON, canvas 2D charts, no external assets, table twins, keyboard/touch help, and a basis/formulas/limits section. Use the shipped runtime as-is. The Agent does not modify shell, resize, tooltip, `VIZ`, or motion engines.
 
-Motion is optional, not decorative, and is declared per chart. Add it only when it meaningfully communicates a waterfall flow, scrollytelling transition, keyed re-sort, or an intentional one-time entry reading aid. Static charts are valid. Filters redraw immediately rather than implying continuity. Reduced motion omits animation and the final state always retains all information.
+Motion is planned for the whole reading sequence and declared per chart. Prefer a restrained,
+play-once entry for eligible evidence charts so axes and marks resolve in reading order; choose a
+static chart only with a chart-specific clarity reason. The current deterministic builder supports
+`entry` on `on-view`; richer waterfall, scrollytelling, or keyed re-sort motion is valid only when
+the selected builder/runtime explicitly supports it. Every enabled contract supplies kind,
+trigger, duration, and value-safe easing. Filters redraw immediately rather than implying
+continuity. Reduced motion omits animation and the final state always retains all information.
 
 ### 6. VERIFIED: progressive gates and bounded repair
 
@@ -142,7 +180,8 @@ A run completes when required gates pass, all errors are resolved, and the final
 | `references/uncertainty.md` | earned comparisons, intervals, estimates |
 | `references/anti-patterns.md` | data and visual honesty failures |
 | `references/themes.md` | compatible rotation and theme contract |
-| `references/motion.md` | per-chart meaningful-motion contract |
+| `references/external-tools.md` | chart, state-model, and motion-tool selection with integration boundaries |
+| `references/motion.md` | report-level choreography and per-chart executable motion contract |
 | `references/slop-test.md` | final, post-build review guidance |
 
 ## When this is not the right task

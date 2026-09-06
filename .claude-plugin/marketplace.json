@@ -9,7 +9,7 @@
     {
       "name": "canvas-report",
       "source": "./",
-      "description": "Turns supplied data into one self-contained interactive HTML analysis report drawn on canvas. Profile evidence constrains the plan, a compiler validates the plan, a deterministic builder owns the HTML, and progressive gates decide whether the report ships.",
+      "description": "Builds external-tool-informed, motion-aware analysis reports and a deterministic, accessible offline canvas HTML artifact.",
       "category": "data",
       "keywords": [
         "report",

@@ -4,7 +4,11 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 ![Network requests: 0](https://img.shields.io/badge/network%20requests-0-brightgreen)
 
-`canvas-report` turns supplied data into one self-contained interactive HTML analysis report. Charts draw on `<canvas>`, data is embedded, table twins and help are available to readers, and no external scripts, images, or fonts are fetched.
+`canvas-report` turns supplied data into a visually authored report system. It keeps tool roles
+explicit: D3 and Plotly inform chart form and state, while GSAP, Motion, or anime.js supplies chart
+motion. The canonical deliverable remains one self-contained interactive HTML analysis report. Charts draw
+on `<canvas>`, data is embedded, table twins and help are available to readers, and no external
+scripts, images, or fonts are fetched.
 
 It is an artifact pipeline, not a prompt-to-HTML shortcut: profile evidence constrains the plan, a compiler validates the plan, a deterministic builder owns HTML, and progressive validators decide whether the report ships.
 
@@ -92,7 +96,10 @@ The runtime shell, resize/layout code, tooltip system, `VIZ` factories, and moti
 
 1. Run `assets/profile-data.py` on actual data. The profile covers types, nulls and sentinels, measures/dimensions, cardinality, time grain, candidate-key checks, and comparable periods.
 2. Draft evidence-driven, falsifiable insights — **typically 2–6**, not a fixed quota. Unsupported claims and lenses are dropped or rewritten.
-3. Run `assets/select-candidates.py`, then the Agent writes only `plan.json`: insights, supported charts, macrostructure, theme, masthead, table/help/methodology requirements, and per-chart motion decisions.
+3. Run `assets/select-candidates.py`, then use `references/external-tools.md` to select one
+   chart/state source and at most one primary motion source. The Agent writes only `plan.json`:
+   insights, creative direction, external-tool strategy, supported charts, macrostructure, theme,
+   masthead, table/help/methodology requirements, and per-chart motion contracts.
 4. Run `assets/validate-plan.py` against `schemas/*.schema.json`, `references/rules.json`, and `references/index.json`. It emits `report-spec.json` only for a compatible plan.
 5. Run `assets/build-report.py`; it deterministically produces one offline HTML file.
 6. Run `assets/validate-report.py` to persist progressive build, render, and declared-motion gates in `validation.json`.
@@ -108,7 +115,11 @@ Theme selection first filters to compatible choices. The selected theme must be 
 
 The report never fetches external fonts. It uses the shipped system-font stacks. Bars always use a zero baseline. There are no dual axes; axes derive from data; every chart has a table twin and accessible help; and basis, formulas, and limits stay visible.
 
-Motion is optional and explicit **per chart**. Use it only when it conveys a waterfall flow, scrollytelling transition, keyed re-sort, or deliberate one-time entry reading aid. Static charts are valid. Filters redraw immediately, reduced motion omits animation, and the final state contains all information.
+Motion is designed first as one report-level reading sequence and then made explicit **per chart**.
+The deterministic builder supports restrained `entry` motion triggered once on view, with a
+declared duration and value-safe easing. Prefer it for eligible evidence charts; keep a chart
+static when a chart-specific clarity reason warrants it. Filters redraw immediately, reduced
+motion omits animation, and the final state contains all information.
 
 ## Rule provenance and lazy references
 
@@ -117,7 +128,9 @@ Motion is optional and explicit **per chart**. Use it only when it conveys a wat
 Reference loading is lazy:
 
 - **Core:** `references/rules.json`, `references/analysis-lenses.md`, and `references/anti-patterns.md`.
-- **Conditional:** `uncertainty.md` for comparisons/estimates, the selected macrostructure, `themes.md`, `components.md`, `tooltip-help.md`, factory-relevant `pitfalls.md`, `motion.md` when enabled, and relevant `external-tools.md` sections.
+- **Conditional:** `uncertainty.md` for comparisons/estimates, the selected macrostructure,
+  `themes.md`, `components.md`, `tooltip-help.md`, factory-relevant `pitfalls.md`, selected tool and
+  lab sections from `external-tools.md`, and `motion.md` whenever charts exist.
 - **Final:** `references/slop-test.md` and validator guidance after a build exists.
 
 ## Layout

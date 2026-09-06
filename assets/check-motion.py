@@ -17,6 +17,13 @@ import tempfile
 import urllib.request
 
 
+RUNTIMES = {
+    "gsap": {"runtime": "gsap@3.12.5", "version": "3.12.5", "sha256": "28033e449a31ebcc396e5be8b13b63152bf03094288fb5867034321927bce087"},
+    "motion": {"runtime": "motion@11.11.17", "version": "11.11.17", "sha256": "61b3a38dabf65a31778bc7fa9e71936bfa36ec2f567e50de261b958a3037e84e"},
+    "anime": {"runtime": "anime@3.2.2", "version": "3.2.2", "sha256": "bceef94f964481f7680d95e7fbbe5a8c20d3945a926a754874898a578db7c7ab"},
+}
+
+
 PROBE = r"""
 (async () => {
   const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -34,6 +41,13 @@ PROBE = r"""
     id: canvas.id || "(unnamed)",
     enabled: canvas.getAttribute("data-motion-enabled"),
     reason: canvas.getAttribute("data-motion-reason"),
+    kind: canvas.getAttribute("data-motion-kind"),
+    trigger: canvas.getAttribute("data-motion-trigger"),
+    duration: canvas.getAttribute("data-motion-duration"),
+    easing: canvas.getAttribute("data-motion-easing"),
+    source: canvas.getAttribute("data-motion-source"),
+    integration: canvas.getAttribute("data-motion-integration"),
+    runtime: canvas.__chart && canvas.__chart.__motionRuntime || null,
     hasChart: !!canvas.__chart,
     wired: !!(canvas.__chart && canvas.__chart.__played),
     before: snap(canvas),
@@ -42,8 +56,9 @@ PROBE = r"""
   }));
   const seen = results.map(() => new Set());
   canvases.forEach((canvas, index) => {
-    if (results[index].enabled === "true" && canvas.__chart &&
-        typeof canvas.__chart.play === "function") canvas.__chart.play(700);
+    if (results[index].enabled === "true" && typeof canvas.__reportReplay === "function") canvas.__reportReplay();
+    else if (results[index].enabled === "true" && canvas.__chart &&
+             typeof canvas.__chart.play === "function") canvas.__chart.play(700);
   });
   for (let i = 0; i < 22; i++) {
     canvases.forEach((canvas, index) => {
@@ -56,8 +71,10 @@ PROBE = r"""
     result.after = snap(canvases[index]);
     result.steps = seen[index].size;
     result.final = chart ? Math.round(chart.t * 1000) / 1000 : null;
+    result.runtime = chart && chart.__motionRuntime || result.runtime;
   });
   return JSON.stringify({ raf, reduced: matchMedia("(prefers-reduced-motion: reduce)").matches,
+                          runtimes: [...document.querySelectorAll('script[data-canvas-report-runtime]')].map(node => ({tool:node.dataset.canvasReportRuntime,version:node.dataset.version,sha256:node.dataset.sha256})),
                           canvases: results });
 })()
 """
@@ -71,7 +88,7 @@ def diagnostic(identifier, location, problem, suggested_fix):
 async def probe(url, port):
     import websockets
     profile = tempfile.mkdtemp(prefix="cr-motion-")
-    chrome = shutil.which("google-chrome") or shutil.which("chromium") or "google-chrome"
+    chrome = os.environ.get("CR_CHROME") or shutil.which("google-chrome") or shutil.which("chromium") or "google-chrome"
     process = subprocess.Popen(
         [chrome, "--headless=new", "--no-sandbox", "--disable-gpu", "--hide-scrollbars",
          "--force-device-scale-factor=1", "--window-size=1240,2400",
@@ -151,6 +168,37 @@ def validate(result, path):
                 "The canvas has no motion rationale.",
                 'Set a nonempty data-motion-reason explaining the enabled or static decision.'))
         if canvas["enabled"] == "true":
+            if canvas["kind"] != "entry" or canvas["trigger"] != "on-view":
+                diagnostics.append(diagnostic("MOTION-CONTRACT-002", location,
+                    "Enabled motion is not the supported entry/on-view contract.",
+                    "Rebuild from a plan using kind entry and trigger on-view."))
+            try:
+                duration = int(canvas["duration"])
+            except (TypeError, ValueError):
+                duration = 0
+            if not 180 <= duration <= 1200:
+                diagnostics.append(diagnostic("MOTION-CONTRACT-004", location,
+                    "Enabled motion has no valid bounded duration.",
+                    "Set duration_ms from 180 to 1200 and rebuild."))
+            if canvas["easing"] not in ("linear", "outCubic", "inOutCubic", "outQuint", "outExpo", "outCirc", "inOutQuint"):
+                diagnostics.append(diagnostic("MOTION-CONTRACT-005", location,
+                    "Enabled motion does not declare a value-safe easing.",
+                    "Use a non-overshooting easing from references/motion.md."))
+            if canvas["source"] not in ("gsap", "motion", "anime"):
+                diagnostics.append(diagnostic("MOTION-CONTRACT-006", location,
+                    "Enabled motion does not identify a dedicated motion engine.",
+                    "Set source_tool to GSAP, Motion, or anime.js; D3 and Plotly are visualization/state tools."))
+            if canvas["integration"] == "vendored-runtime":
+                expected = RUNTIMES.get(canvas["source"])
+                marker = next((item for item in result.get("runtimes", []) if item.get("tool") == canvas["source"]), None)
+                if not expected or canvas["runtime"] != expected["runtime"]:
+                    diagnostics.append(diagnostic("MOTION-RUNTIME-001", location,
+                        "Vendored motion was declared but the selected runtime did not drive the chart.",
+                        "Inline the selected pinned motion engine and wire it to chart progress."))
+                if not expected or not marker or marker.get("version") != expected["version"] or marker.get("sha256") != expected["sha256"]:
+                    diagnostics.append(diagnostic("MOTION-RUNTIME-002", location,
+                        "The vendored motion runtime marker is missing or does not match its pinned version and SHA-256.",
+                        "Rebuild with the verified runtime recorded in lab/motion-engines/vendor/SHA256SUMS."))
             if not canvas["hasChart"]:
                 diagnostics.append(diagnostic("MOTION-WIRING-001", location,
                     "An enabled canvas has no chart animation engine.",

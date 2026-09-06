@@ -1,12 +1,40 @@
-# External tools — what to borrow, what to refuse
+# External tools — select a small, purposeful toolchain
 
-This skill ships one HTML file with **zero network requests**. That is not a stylistic
-preference: it is what makes a report survive being emailed, opened offline, archived, and
-re-opened in five years. Every library on this page is therefore **unusable as a dependency here**.
+This skill ships one HTML file with **zero network requests**. External tools are actively used in
+one of two honest ways:
 
-That does not make them useless. Each one is a body of craft, and the craft is portable even when
-the code is not. This page records what each tool is actually good at, what this skill took from
-it, and — just as important — when you should close this skill and reach for the real thing.
+- **Portable pattern** — use the tool's chart vocabulary, scale math, state model, easing, or
+  choreography pattern through the shipped runtime. This is the default report path.
+- **Vendored runtime** — use a pinned local runtime, inline it during the build, record its version,
+  SHA-256, and licence, then run the same zero-network and final-state gates. Use this only with a
+  builder that explicitly supports the selected runtime.
+
+Do not add a CDN, improvise a third integration mode, or list a tool that had no observable effect
+on the plan or output. `creative_direction.external_tools` records every selection.
+
+## Selection table — read this on every run
+
+Choose one chart/state source and at most one primary motion source. Keep those roles explicit:
+D3 and Plotly are visualization/state tools, not primary motion engines. For chart entry motion,
+the supported engines are GSAP, Motion, and anime.js. Read only the chosen sections and their
+linked lab docs.
+
+| Need | Prefer | Use from it | Do not use when |
+|---|---|---|---|
+| chart-form discovery, scales, shapes | D3 gallery + D3 | form vocabulary, scale/array math | a shipped `VIZ` factory already answers the question directly |
+| stable identity across a re-sort | D3 | keyed join/object constancy | rows appear or disappear under a filter |
+| named analytical states | Plotly frame model | state names separated from transitions | the report has only one state |
+| simple entry, transform, opacity | Motion | browser-native animation and compact API | native `R.motion` already expresses the same transition |
+| multi-part scroll choreography | GSAP | one bounded timeline | transitions are independent or purely decorative |
+| compact SVG sequence | anime.js | small timeline/keyframe surface | stagger merely delays reading |
+
+Record `tool`, `role`, `integration`, and `reason`. Prefer `portable-pattern`. A
+`vendored-runtime` selection requires a supported builder and the pinned files under
+`lab/motion-engines/vendor/`. The deterministic builder supports three deliberately narrow vendored
+paths for `entry` motion: GSAP 3.12.5, Motion 11.11.17, and anime.js 3.2.2. It verifies the pinned
+SHA-256, inlines the chosen runtime, uses that engine to drive canvas progress, and records version,
+hash, and licence in the build manifest. Select only one of them per report. D3 and Plotly are not
+accepted as `motion.source_tool` for chart entry.
 
 ---
 
@@ -115,31 +143,6 @@ an engine.
 
 ---
 
-## C. Runtime-dependent animation formats
-
-### [Lottie / LottieFiles](https://lottiefiles.com/) · [Rive](https://rive.app/)
-*(lab: [`04-lottie.html`](../lab/motion-engines/04-lottie.html) · [`05-rive.html`](../lab/motion-engines/05-rive.html) ·
-[`docs/lottie.md`](../lab/motion-engines/docs/lottie.md) · [`docs/rive.md`](../lab/motion-engines/docs/rive.md))*
-
-**Lottie** is an After Effects animation exported to JSON by Bodymovin and replayed by a player
-library — `lottie-web`, or the newer dotLottie player, which is a **Rust + WASM core** (ThorVG)
-with software, WebGL2 and WebGPU backends.
-
-**Rive** is a vector animation format with a **State Machine**, played by a GPU-accelerated runtime.
-Its state machine is a genuinely good idea: designers author interactive states rather than handing
-developers a linear clip.
-
-**Verdict for this skill: no, and not "no, unless".** Both need a runtime download measured in
-hundreds of kilobytes plus an asset file. Inlining a WASM runtime as base64 inside a data report
-would be absurd, and the pay-off would be a decorative animation — the exact thing
-[`anti-patterns.md`](anti-patterns.md) calls out. If a report needs a designed illustration,
-draw it in the canvas or leave it out.
-
-**Where they are the right answer:** a marketing page, an onboarding flow, an empty state, a
-product tour. Not an analysis anyone has to reason about.
-
----
-
 ## The D3 gallery, mapped onto this skill
 
 | Gallery category | Status here |
@@ -212,8 +215,6 @@ Be honest about the boundary. Reach for the real tools when:
   inside your framework, GSAP or Motion for the choreography;
 - **someone must brush, zoom and re-query interactively** — that is a tool, and
   [`04-workbench.md`](macrostructures/04-workbench.md) is only the document-shaped end of it;
-- **the artefact is a designed animation** — an illustration, a mascot, an onboarding sequence →
-  Lottie or Rive, and neither belongs in an analysis;
 - **the data is geographic, hierarchical or a network** — the exclusions above are real; a
   different document type is the answer, not a worse chart.
 
@@ -221,7 +222,7 @@ A single self-contained file is a constraint chosen for a reason. When the reaso
 stop applying the constraint.
 
 **When you do stop applying it**, [`../lab/motion-engines/`](../lab/motion-engines/) is the worked
-version of this page: five runnable pages, one per engine, on the same data and the same layout so
+version of this page: four runnable pages, one per selected tool, on the same data and layout so
 only the engine differs; the runtimes vendored and SHA-pinned; one doc each covering the minimum
 call, what only that engine can do, and what you must add yourself. The lab's own finding is worth
 carrying back — **none of these engines guarantees a final state.** When rAF stops (background tab,

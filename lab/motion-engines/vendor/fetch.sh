@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Vendor the five motion runtimes external-tools.md assesses.
+# Vendor the chart and motion runtimes external-tools.md assesses.
 #
 # These are DELIBERATELY outside the canvas-report output contract: a report ships
 # one HTML with zero network requests, and every file below is a network request or
@@ -20,14 +20,11 @@ fetch() {  # url  filename
 fetch https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js                 gsap-3.12.5.min.js
 fetch https://cdn.jsdelivr.net/npm/motion@11.11.17/dist/motion.js                    motion-11.11.17.js
 fetch https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.min.js              anime-3.2.2.min.js
-fetch https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js          lottie-5.12.2.min.js
-fetch https://cdn.jsdelivr.net/npm/@rive-app/canvas@2.21.6/rive.js                   rive-2.21.6.js
-fetch https://cdn.jsdelivr.net/npm/@rive-app/canvas@2.21.6/rive.wasm                 rive-2.21.6.wasm
 fetch https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js                     d3-7.9.0.min.js
 
 if [[ -f SHA256SUMS ]]; then
   echo "--- verifying ---"; sha256sum -c SHA256SUMS
 else
-  sha256sum *.js *.wasm > SHA256SUMS
+  sha256sum *.js > SHA256SUMS
   echo "--- SHA256SUMS written (first run) ---"; cat SHA256SUMS
 fi

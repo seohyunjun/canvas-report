@@ -4,7 +4,7 @@
 [`anti-patterns.md`](anti-patterns.md). This file is the scorecard for a finished report.
 Anything that trips, fix and run again.
 
-48 gates in five groups. **If anything in group D trips, the rest of the score is meaningless.**
+50 gates in five groups. **If anything in group D trips, the rest of the score is meaningless.**
 
 ---
 
@@ -71,11 +71,15 @@ Anything that trips, fix and run again.
 44. Rendered and inspected at 1240 / 768 / 500px, and horizontal overflow was **measured** with
     `scrollWidth` against `innerWidth`.
 45. The stamp is at the top of the file and this report is recorded in `.canvas-report/log.json`.
-46. **Every chart plays once on entry.** `R.playAll()` is called, or each chart is wired
-    individually. A chart that does not move is declared `static:true` and the methodology says
-    why. Verified with `python3 assets/check-motion.py report.html`, not by looking.
+46. Every eligible chart plays once on entry with its declared duration and easing. A static chart
+    carries a chart-specific clarity reason. Verified with `python3 assets/check-motion.py
+    report.html`, not by looking.
 47. Every hero figure counts up (`R.countUp`), and 03 Scrollytelling calls `R.scrolly`.
 48. Any `cfg.key` on the page has a re-sort control that uses it. An unused key is dead code.
+49. The report-level motion story has one reading sequence; chart animations do not compete or
+    replay merely because the reader scrolls back.
+50. The selected external tools, purposes, and integration modes are recorded; no unused library,
+    CDN request, unpinned runtime, or unlicensed asset entered the report.
 
 ---
 

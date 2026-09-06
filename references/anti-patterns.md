@@ -101,8 +101,16 @@ fake terminal windows. → A real screenshot, or nothing.
 Label them all and you have built a table, not a chart.
 
 **Decorative animation.** Loops, staggered entrances, hover zoom, loading skeletons.
-→ Delete it. Motion is optional and declared per chart only when it communicates a waterfall
-   flow, scrollytelling transition, keyed re-sort, or deliberate one-time reading aid.
+→ Delete it. Plan one report-level reading sequence, then declare only chart motion that improves
+   acquisition, comparison, continuity, or a deliberate one-time reading aid.
+
+**Tool soup.** D3, Plotly, GSAP, Motion, and anime.js are all named or bundled to
+make the report sound sophisticated. → Select one chart/state source and at most one primary
+motion source; every selection needs a reader benefit and an integration boundary.
+
+**An unpinned runtime.** A CDN script or copied minified file enters the report without a version,
+hash, or licence record. → Use a portable pattern through the shipped runtime, or a pinned local
+vendor asset with attribution and a builder that inlines and validates it.
 
 **An inflated title.** "Deep-Dive Insights Dashboard", "Our Future, Seen Through Data".
 → The title says what it is about; the subtitle says the as-of date and the scope. That is all.

@@ -14,6 +14,10 @@ CHARTS={"line":("x","value"),"columns":("x","value"),"divColumns":("label","valu
 # (assets/report-shell.html, VIZ.lollipop). The builder hands every source row to
 # every chart, so the cap is a plan-time incompatibility, not a rendering detail.
 MAX_ROWS={"lollipop":20}
+MOTION_EASINGS={"linear","outCubic","inOutCubic","outQuint","outExpo","outCirc","inOutQuint"}
+TOOLS={"d3-gallery","d3","plotly","gsap","motion","anime"}
+TOOL_ROLES={"chart-form","data-transform","state-model","motion-engine","illustration"}
+MOTION_TOOLS={"gsap","motion","anime"}
 class D:
  def __init__(s):s.x=[]
  def add(s,se,i,l,p,f):s.x.append({"severity":se,"id":i,"location":l,"problem":p,"suggested_fix":f})
@@ -106,6 +110,36 @@ def main():
  if explicit is not None and explicit not in tm:d.e("THEME-004","plan.requirements.theme","Explicit theme requirement is not in the canonical compatible catalogue.","Choose a canonical theme or remove the override.")
  allowed_themes={x.get("id") for x in candidate_artifact.get("themes",[]) if isinstance(x,dict) and x.get("compatible") is True and x.get("rotation_excluded") is not True}
  if theme not in allowed_themes:d.e("THEME-002","plan.theme","Theme is incompatible or excluded by the authenticated candidate set.","Choose a compatible non-excluded theme or record a compatible explicit override in requirements.")
+ selected_tool_names=set();creative=plan.get("creative_direction")
+ if creative is None:
+  d.e("CREATIVE-DIRECTION-001","plan.creative_direction","No report-level creative direction was recorded.","Add concept, hierarchy, selected external tools, and a restrained motion story.")
+ elif not isinstance(creative,dict):
+  d.e("CREATIVE-DIRECTION-002","plan.creative_direction","Creative direction must be an object.","Provide concept, hierarchy, external_tools, and motion_story fields.")
+ else:
+  for k in ("concept","hierarchy"):
+   if not isinstance(creative.get(k),str) or not creative[k]:d.e("CREATIVE-DIRECTION-003","plan.creative_direction."+k,"Creative direction %s must be nonempty."%k,"Describe the report-specific visual decision.")
+  selected_tools=creative.get("external_tools")
+  if not isinstance(selected_tools,list) or not selected_tools or len(selected_tools)>3:
+   d.e("TOOL-SELECTION-001","plan.creative_direction.external_tools","Select one to three external tool influences.","Choose one chart/state source and at most one primary motion source from references/external-tools.md.")
+  else:
+   motion_sources=0;chart_sources=0
+   for i,item in enumerate(selected_tools):
+    location="plan.creative_direction.external_tools[%d]"%i
+    if not isinstance(item,dict) or item.get("tool") not in TOOLS or item.get("role") not in TOOL_ROLES or item.get("integration") not in ("portable-pattern","vendored-runtime") or not isinstance(item.get("reason"),str) or not item["reason"]:
+     d.e("TOOL-SELECTION-002",location,"Tool selection needs a known tool, role, integration mode, and reason.","Use the selection contract in references/external-tools.md.")
+     continue
+    selected_tool_names.add(item["tool"])
+    if item["role"]=="motion-engine":motion_sources+=1
+    if item["role"] in ("chart-form","data-transform","state-model"):chart_sources+=1
+    if item["role"]=="motion-engine" and item["tool"] not in MOTION_TOOLS:
+     d.e("TOOL-MOTION-001",location+".tool","A visualization or state-model tool was classified as a motion engine.","Use GSAP, Motion, or anime.js as the motion engine; keep D3 and Plotly in chart/state roles.")
+    if item["integration"]=="vendored-runtime" and not (item["tool"] in MOTION_TOOLS and item["role"]=="motion-engine"):
+     d.e("TOOL-RUNTIME-001",location+".integration","The deterministic builder only vendors dedicated motion engines for chart entry.","Use GSAP, Motion, or anime.js as the vendored motion-engine, or use portable-pattern for visualization tools.")
+   if motion_sources>1:d.e("TOOL-SELECTION-003","plan.creative_direction.external_tools","More than one primary motion source creates competing motion systems.","Keep at most one motion-engine selection.")
+   if chart_sources<1:d.e("TOOL-SELECTION-004","plan.creative_direction.external_tools","No chart or state source was selected.","Select D3 gallery, D3, or Plotly for a chart-form, data-transform, or state-model role.")
+  story=creative.get("motion_story")
+  if not isinstance(story,dict) or not all(isinstance(story.get(k),str) and story[k] for k in ("goal","restraint")) or not arr(story.get("sequence")):
+   d.e("MOTION-STORY-001","plan.creative_direction.motion_story","Motion story needs goal, nonempty sequence, and restraint.","Describe one reading sequence before assigning chart motion.")
  sections=req(plan,"sections",list,"plan",d) or []; sids=set()
  for i,x in enumerate(sections):
   if not isinstance(x,dict) or not all(isinstance(x.get(k),str) and x[k] for k in ("id","title","lede")):d.e("SECTION-001","plan.sections[%d]"%i,"Section needs id, title, and lede.","Provide rich reader-facing section content.")
@@ -126,6 +160,18 @@ def main():
    if f not in names:d.e("CHART-003",l,"Chart field %s is not profiled."%f,"Use source column names.")
   for role,f in x["encodings"].items():
    if not isinstance(f,str) or f not in names:d.e("CHART-006",l+".encodings."+role,"Encoding references an unprofiled field.","Use a field from profile.columns.")
+  motion=x["motion"]
+  if motion.get("enabled") is True:
+   missing=[k for k in ("kind","trigger","duration_ms","easing","source_tool") if k not in motion]
+   if missing:d.w("MOTION-CONTRACT-001",l+".motion","Enabled motion omits executable fields: "+", ".join(missing)+".","Set kind entry, trigger on-view, duration_ms 180–1200, a value-safe easing, and the selected source tool.")
+   if motion.get("kind","entry")!="entry":d.e("MOTION-CONTRACT-002",l+".motion.kind","The deterministic builder currently supports entry motion only.","Use entry, or switch to a builder/runtime that implements the requested motion kind.")
+   if motion.get("trigger","on-view")!="on-view":d.e("MOTION-CONTRACT-003",l+".motion.trigger","The deterministic builder currently supports on-view triggering only.","Use on-view.")
+   duration=motion.get("duration_ms",700)
+   if not isinstance(duration,int) or isinstance(duration,bool) or not 180<=duration<=1200:d.e("MOTION-CONTRACT-004",l+".motion.duration_ms","Motion duration must be an integer from 180 to 1200 ms.","Choose a bounded duration that resolves without delaying reading.")
+   if motion.get("easing","outCubic") not in MOTION_EASINGS:d.e("MOTION-CONTRACT-005",l+".motion.easing","Motion easing is not value-safe.","Use a non-overshooting easing from the plan schema.")
+   if motion.get("source_tool") is not None and motion.get("source_tool") not in MOTION_TOOLS:d.e("MOTION-CONTRACT-006",l+".motion.source_tool","Enabled chart motion cites a visualization or state-model tool as its motion engine.","Use GSAP, Motion, or anime.js as source_tool.")
+   elif selected_tool_names and motion.get("source_tool") is None:d.e("MOTION-CONTRACT-006",l+".motion.source_tool","Enabled chart motion does not identify its selected external source tool.","Set source_tool to the report-level motion source.")
+   elif motion.get("source_tool") is not None and motion["source_tool"] not in selected_tool_names:d.e("MOTION-CONTRACT-006",l+".motion.source_tool","Chart motion cites a tool absent from creative_direction.external_tools.","Select the source tool at report level or use the tool already selected there.")
  meth=req(plan,"methodology",dict,"plan",d) or {}
  for k in ("basis","formulas","limitations"):
   if not arr(meth.get(k)) or not meth[k]:d.e("METHOD-001","plan.methodology."+k,"Methodology %s must be a nonempty string array."%k,"Document it explicitly.")
@@ -133,8 +179,13 @@ def main():
  if not decisions:d.e("RULE-001","plan.rule_decisions","At least one Rule-ID decision is required.","Record applicable canonical rule decisions.")
  for i,x in enumerate(decisions):
   if not isinstance(x,dict) or x.get("rule_id") not in known or not isinstance(x.get("decision"),str) or not x["decision"]:d.e("RULE-002","plan.rule_decisions[%d]"%i,"Decision needs a canonical Rule-ID and nonempty decision.","Use references/rules.json ids.")
+ decision_ids={x.get("rule_id") for x in decisions if isinstance(x,dict)}
+ if isinstance(creative,dict) and "MOTION-STORY-001" not in decision_ids:d.e("RULE-003","plan.rule_decisions","Creative direction lacks MOTION-STORY-001 provenance.","Record how the report-level motion sequence was bounded.")
+ if isinstance(creative,dict) and "TOOL-SELECTION-001" not in decision_ids:d.e("RULE-004","plan.rule_decisions","External tool use lacks TOOL-SELECTION-001 provenance.","Record why the selected toolchain is minimal, useful, and compatible with the build boundary.")
+ if any(isinstance(x,dict) and isinstance(x.get("motion"),dict) and x["motion"].get("enabled") is True for x in charts) and "MOTION-INTENT-001" not in decision_ids:d.e("RULE-005","plan.rule_decisions","Enabled chart motion lacks MOTION-INTENT-001 provenance.","Record the reader benefit for enabled chart motion.")
  if not d.bad():
   canonical=json.dumps(plan,ensure_ascii=False,sort_keys=True,separators=(",",":"));spec={"schema_version":VERSION,"source":{"path":source["path"],"sha256":sha},"plan_sha256":hashlib.sha256(canonical.encode()).hexdigest(),"metadata":meta,"masthead":plan["masthead"],"grain":plan["grain"],"candidates":cand,"lenses":ld,"insights":insights,"macro":macro,"theme":theme,"sections":sections,"charts":charts,"methodology":meth,"rule_decisions":decisions,"retry_policy":{"max_attempts":4,"steps":list(RETRY)},"ownership":{"writable":["report content","sections","charts","methodology","rule decisions"],"immutable":["runtime engines","generated HTML","builder"]}}
+  if isinstance(creative,dict):spec["creative_direction"]=creative
   Path(a.output).write_text(json.dumps(spec,ensure_ascii=False,sort_keys=True,indent=2)+"\n",encoding="utf-8")
  print(json.dumps({"diagnostics":d.x},ensure_ascii=False,sort_keys=True));return 1 if d.bad() else 0
 if __name__=="__main__":sys.exit(main())
