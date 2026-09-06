@@ -1,7 +1,7 @@
 ---
 name: canvas-report
 description: Turns any dataset into a self-contained interactive HTML analysis report drawn on canvas. Rotates macrostructure, theme and masthead so each report has a different face; leads with the insight; and gives every chart a hover tooltip, a table twin and a help tooltip. Use for "make me a report", "dashboard", "visualise this analysis", "canvas html", "interactive report", "data visualisation page", "make it look different this time".
-version: 2.0.0
+version: 2.1.0
 ---
 
 # Canvas Report
