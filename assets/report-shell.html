@@ -666,7 +666,12 @@ function anim(c,dur,done,easingName){
   (function step(ts){
     if(c.__token!==token) return;
     if(t0==null) t0=ts;
-    var p=Math.min(1,(ts-t0)/dur);
+    /* Clamp BOTH ends. The first call comes from performance.now() and the rest from
+       rAF timestamps; when those two clocks disagree — headless capture under virtual
+       time is the reliable way to see it — ts can land before t0 and p goes negative.
+       An easing fed a negative t returns a large negative number, and every mark then
+       draws far outside its plot. Clamping low costs nothing and removes the class. */
+    var p=Math.min(1,Math.max(0,(ts-t0)/dur));
     c.t=ease(p); paint(c);
     if(p<1) requestAnimationFrame(step); else finish();
   })(performance.now());

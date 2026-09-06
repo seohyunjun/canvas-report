@@ -10,6 +10,14 @@ If `ticks(-mx*1.15, mx*1.15, 4)` returns `[-100000, 0, 100000]` and the data rea
 then setting `lo = min(ticks)` puts the bar outside the plot, drawn over the category labels.
 → **Fix the axis range from the data first, then find ticks inside that range.**
 
+**Animation progress going negative.** `anim()` seeds `t0` from `performance.now()` and then
+receives rAF timestamps. When those two clocks disagree the first frame can arrive *before* `t0`,
+so `(ts-t0)/dur` is negative — and an easing fed a negative `t` returns a large negative number.
+`outCubic(-8.3)` is `-806`. Every mark then draws hundreds of plot-heights away.
+→ Clamp progress at both ends, not just the top: `Math.min(1, Math.max(0, …))`. It was invisible
+while `t` only scaled a bar length (a negative width clamps to the 2px minimum) and became visible
+the moment `t` also drove a position, via `cfg.key`.
+
 **A mid-animation frame becomes the final state.**
 If progress lives in `c.t`, then whenever rAF stops — a background tab, a headless capture —
 the half-drawn chart is what remains.
