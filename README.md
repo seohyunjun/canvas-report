@@ -42,8 +42,6 @@ It works offline, it survives being emailed, and it renders the same in five yea
 
 ## Install
 
-Copy the folder into your skills directory:
-
 ```bash
 # personal, available in every project
 git clone https://github.com/<you>/canvas-report ~/.claude/skills/canvas-report
@@ -52,19 +50,108 @@ git clone https://github.com/<you>/canvas-report ~/.claude/skills/canvas-report
 git clone https://github.com/<you>/canvas-report .claude/skills/canvas-report
 ```
 
-Then just ask for a report. The skill triggers on phrasing like *"make me a report"*,
-*"dashboard"*, *"visualise this analysis"*, *"interactive report"*, *"make it look different
-this time"*.
+## Try it without installing anything
 
-## Try it without installing
-
-`assets/report-shell.html` is a finished runtime, not a template. Open it and a demo runs.
+`assets/report-shell.html` is a finished runtime, not a template. Open it in a browser and a demo
+report runs — every chart type, both themes, tooltips and table twins working.
 
 ```bash
-# swap the theme and open it again
-python3 assets/apply-theme.py assets/report-shell.html newsprint
-python3 assets/apply-theme.py --list
+python3 assets/apply-theme.py --list                                  # the ten themes
+python3 assets/apply-theme.py assets/report-shell.html newsprint      # swap one in
 ```
+
+## Using it
+
+Point it at data and ask. The trigger phrasing is ordinary: *"make me a report"*, *"dashboard"*,
+*"visualise this analysis"*, *"interactive report"*, *"make it look different this time"*.
+
+```
+Build a report from data/july-billing.csv
+Make a report from this query, workbench style, and put it in ./out
+Same data, different face — the last one was a broadsheet
+```
+
+**Give it the data, not a description of the data.** A path, a query, a table it can run. The
+first step of the procedure is to profile what it was actually given: column types, null rates,
+the time grain, how many distinct values each key has, whether two periods can be compared. A
+lens the shape cannot carry is dropped rather than faked, so guessing at this step poisons
+everything after it.
+
+### What happens, in order
+
+| Step | What it does | Where it is written down |
+|---|---|---|
+| 0–1 | profile the data, then fix four to six falsifiable sentences | `references/analysis-lenses.md` |
+| 2 | read `.canvas-report/log.json` for the last few reports | — |
+| 3–4 | pick a macrostructure, then a theme and masthead that all differ | `references/macrostructures.md`, `themes.md` |
+| 5 | copy the shell, apply the theme, write the wiring | `assets/`, `references/pitfalls.md` |
+| 6–8 | sections, motion, help tooltips, methodology | `motion.md`, `tooltip-help.md` |
+| 9–10 | render at three widths, then score 42 gates | `references/slop-test.md` |
+
+### Steering it
+
+You do not have to. But these all work, and the skill will say so on the page if you override it:
+
+- **A shape** — *"as a deck"*, *"workbench with filters"*, *"scrollytelling"*. It will still refuse
+  a shape the data cannot carry (a three-step scrollytelling piece is an empty scroll).
+- **A theme** — *"use the dark one"*, *"newsprint"*. Rotation still applies to the next report.
+- **A language** — the shell ships English; ask for another and it translates the one
+  `[L] CR_STRINGS` block and sets `<html lang>` so numbers format correctly.
+- **An edit** — *"change the third chart"* keeps the existing macro and theme. Rotation is for new
+  reports, not revisions.
+
+### Where things land
+
+```
+<subject>-<period>.html        the report. One file, open it anywhere
+.canvas-report/log.json        the rotation log — what shape and theme the last reports used
+```
+
+`.canvas-report/` is gitignored here, because it is state rather than source. Keep it next to your
+reports; without it the skill cannot tell what it already used, and every report starts looking
+the same again.
+
+### Reading the stamp
+
+Every report opens with a comment recording how it was made. It is meant to be read.
+
+```
+canvas-report · macro: 02 Ledger · theme: grid · masthead: M4 · lenses: index, trend, comparison
+read:
+  analysis-lenses "Below about five values per group"
+                    -> 31 values per hour, well over the floor, so a boxplot is honest
+  motion          "| redraw after a filter change | **0ms** | a control must respond instantly |"
+                    -> the tab switch repaints instead of playing
+  ...
+critique: P5 H5 E5 S5 R5 V5 D5
+```
+
+The `read:` block is a **quote block, not a checklist**: one verbatim fragment per reference file
+that was open while building, and the decision that fragment drove. A file name alone can be
+written from memory; a quotation cannot. Check one yourself:
+
+```bash
+grep -Fq 'Below about five values per group' references/analysis-lenses.md && echo real
+```
+
+If a quote does not match its file, the report claims a gate it never read.
+
+### Verifying a report yourself
+
+The skill treats this as mandatory, and you can repeat it:
+
+```bash
+# render at the three widths, with motion disabled so you do not catch a mid-animation frame
+for w in 1240 768 500; do
+  google-chrome --headless=new --force-prefers-reduced-motion \
+    --window-size=$w,4000 --screenshot=out-$w.png "file:///abs/path/report.html"
+done
+```
+
+Then look for the failures a screenshot shows and a validator does not: colliding labels, marks
+outside the plot, clipped text, blank canvases, an `N rows omitted` note you did not expect.
+Judge horizontal overflow by measuring `document.documentElement.scrollWidth` against
+`innerWidth` — not by looking, since headless clamps the viewport to 500px.
 
 ## The rules it will not break
 
@@ -77,7 +164,7 @@ These are enforced, not suggested:
 - **No invented numbers.** A metric you did not supply becomes `—`, or the section is dropped.
 - **Nothing is dropped silently.** Rows that cannot be plotted are counted on the canvas.
 - **The animation always ends**, even if the browser stops rendering. The final frame holds all
-  the information.
+  the information, and movement is confined to four places that carry meaning.
 - **The limits section is mandatory** — including what the data cannot see.
 
 A finished report is scored against 42 gates in `references/slop-test.md` before it ships.
@@ -96,13 +183,16 @@ references/
   macrostructures.md         index; read one file from macrostructures/
   themes.md                  catalogue, rotation rule, contrast contract
   components.md              masthead / section head / insight / card archetypes
-  motion.md                  the three places movement is allowed
+  motion.md                  the four places movement is allowed, and its bounds
   tooltip-help.md            help copy and the accessibility contract
   anti-patterns.md           read while generating
   pitfalls.md                read before touching the runtime
   slop-test.md               read only when it is built
   external-tools.md          D3, Plotly, GSAP, Motion, anime.js, Lottie, Rive —
                              what to borrow from each and what to refuse
+lab/motion-engines/          worked examples for when the answer is "use the real tool":
+                             six runnable pages, one per runtime, vendored and SHA-pinned.
+                             Deliberately outside the output contract — not reports
 docs/themes.png              the contact sheet above
 ```
 
