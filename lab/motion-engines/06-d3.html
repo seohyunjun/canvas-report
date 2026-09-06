@@ -1,0 +1,151 @@
+<!doctype html>
+<!-- canvas-report LAB · NOT a report. This page breaks the skill's output contract
+     (zero network requests) on purpose. Engine: D3 7.9.0 · vendored: d3-7.9.0.min.js -->
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>D3 — the keyed join, and why marks travel — canvas-report lab</title>
+<link rel="stylesheet" href="lab.css">
+<style>
+  .ctl{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin-bottom:16px}
+  .ctl .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .ctl .seg button{border:0;background:var(--card);color:var(--dim);font:600 12.5px ui-sans-serif,system-ui,sans-serif;
+    padding:7px 12px;cursor:pointer}
+  .ctl .seg button[aria-pressed="true"]{background:var(--bar);color:#fff}
+  .ctl label.sw{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--dim);cursor:pointer}
+  svg{display:block;width:100%;height:250px;overflow:visible}
+  svg .name{font:600 12px ui-sans-serif,system-ui,sans-serif;fill:var(--dim)}
+  svg .val {font:650 12px ui-sans-serif,system-ui,sans-serif;fill:var(--fg)}
+  svg rect{fill:var(--bar)}
+  svg rect.alt{fill:var(--bar2)}
+</style></head><body><div class="wrap">
+<p class="eyebrow">CANVAS-REPORT LAB · CHART-FORM VOCABULARY 6/6</p>
+<h1>D3 — the keyed join, and why marks travel</h1>
+<p class="sub" id="sub"></p>
+<div class="warn"><b>This is not a report.</b> canvas-report ships one HTML file with
+<b>zero network requests</b>; this page loads <code>vendor/d3-7.9.0.min.js</code> (280 KB) instead.
+It also owns the DOM — these are SVG elements, not canvas. It is the worked example for
+<code>references/external-tools.md</code> § A. Usage: <code>docs/d3.md</code>.</div>
+
+<div class="stage">
+  <div class="ctl">
+    <div class="seg" role="group" aria-label="Order">
+      <button type="button" data-sort="value" aria-pressed="true">By value</button>
+      <button type="button" data-sort="name" aria-pressed="false">By name</button>
+      <button type="button" data-sort="shuffle" aria-pressed="false">Shuffle</button>
+    </div>
+    <label class="sw"><input type="checkbox" id="keyed" checked> keyed join <b>(object constancy)</b></label>
+    <label class="sw"><input type="checkbox" id="drop"> drop the two smallest</label>
+  </div>
+  <svg id="chart" role="img" aria-label="Horizontal bars of July GCP spend, reorderable"></svg>
+  <p class="meta" id="status" style="margin-top:14px;border:0;padding:0"></p>
+</div>
+
+<p class="meta">D3 7.9.0 · ISC · 280 KB. The controls above are the whole point. Turn the checkbox
+<b>off</b> and reorder: the bars stay put and only their labels and lengths change, because the join
+falls back to array index — the animation then describes nothing. Turn it <b>on</b> and the same
+reorder makes each bar <b>travel to its new row</b>, because the join is keyed on the series name.
+That is <b>object constancy</b>, and it is the reason D3 has transitions at all.<br><br>
+GSAP animates elements you already have. D3 animates <b>the relationship between data and
+elements</b> — including the elements that must appear and disappear, which is what
+<code>enter</code> and <code>exit</code> are. Neither the canvas-report shell nor any of the three
+motion engines in this lab has an equivalent: the shell repaints a canvas from scratch, so there is
+no element to keep constant.</p>
+</div>
+
+<script src="lab-data.js"></script>
+<script src="vendor/d3-7.9.0.min.js"></script>
+<script>
+var D=window.LAB_DATA;
+document.getElementById('sub').textContent=D.title+' · '+D.note;
+var RM=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+var DUR=RM?0:800, EXIT=RM?0:450;
+var won=function(n){ return '₩'+Math.round(n).toLocaleString('en-US'); };
+
+var svg=d3.select('#chart'), NAME=170, VAL=88, ROW=44, PADT=10;
+var state={sort:'value', keyed:true, drop:false, prev:{}};
+
+function rows(){
+  var a=D.svc.slice();
+  if(state.drop) a=a.slice().sort(function(x,y){return y.v-x.v;}).slice(0,3);
+  if(state.sort==='value') a.sort(function(x,y){return y.v-x.v;});
+  else if(state.sort==='name') a.sort(function(x,y){return x.k<y.k?-1:1;});
+  else a.sort(function(){return Math.random()-0.5;});
+  return a;
+}
+function render(){
+  var data=rows(), W=svg.node().clientWidth||620;
+  var x=d3.scaleLinear().domain([0, d3.max(D.svc,function(d){return d.v;})]).range([0, Math.max(40,W-NAME-VAL)]);
+  svg.attr('height', PADT*2+ROW*data.length);
+
+  /* The key is the whole argument. With it, D3 matches a datum to the element that
+     already represents it, so a reorder becomes movement. Without it the join falls
+     back to index and the same transition describes nothing. */
+  var sel=svg.selectAll('g.bar').data(data, state.keyed ? function(d){return d.k;} : function(d,i){return i;});
+
+  /* Two D3 traps, both hit while verifying this page:
+     (1) .interrupt() cancels a transition WITHOUT running its .remove(), so an
+         interrupted exit leaves the element in the DOM forever;
+     (2) .duration(0) is still a transition — it needs a frame to apply. With rAF
+         stopped, nothing lands at all.
+     So when the duration is zero, do not use a transition: write the attributes. */
+  if(EXIT>0) sel.exit().transition().duration(EXIT)
+       .style('opacity',0).attr('transform','translate(-24,'+(PADT+ROW*data.length)+')').remove();
+  else sel.exit().remove();
+
+  var ent=sel.enter().append('g').attr('class','bar')
+     .attr('transform',function(d,i){ return 'translate(0,'+(PADT+ROW*i)+')'; })
+     .style('opacity',DUR>0?0:1);
+  ent.append('text').attr('class','name').attr('x',NAME-12).attr('y',20).attr('text-anchor','end');
+  ent.append('rect').attr('x',NAME).attr('y',7).attr('height',19).attr('rx',5).attr('width',0);
+  ent.append('text').attr('class','val').attr('y',20);
+
+  var all=ent.merge(sel);
+  all.select('text.name').text(function(d){ return d.k; });
+  all.select('rect').classed('alt', function(d){ return d.k.indexOf('BigQuery')===0; });
+
+  var pos=function(d,i){ return 'translate(0,'+(PADT+ROW*i)+')'; };
+  var wid=function(d){ return Math.max(2,x(d.v)); };
+  var lx =function(d){ return NAME+Math.max(2,x(d.v))+8; };
+
+  if(DUR>0){
+    var t=svg.transition().duration(DUR).ease(d3.easeCubicOut);
+    all.transition(t).style('opacity',1).attr('transform',pos);
+    all.select('rect').transition(t).attr('width',wid);
+    all.select('text.val').transition(t).attr('x',lx)
+       /* d3-interpolate drives the number too — a value that is not a mark on an axis */
+       .tween('num', function(d){
+          var from=state.prev[d.k]!=null?state.prev[d.k]:0, node=this;
+          var i=d3.interpolateNumber(from, d.v);
+          return function(k){ node.textContent=won(i(k)); }; });
+  } else {
+    all.style('opacity',1).attr('transform',pos);
+    all.select('rect').attr('width',wid);
+    all.select('text.val').attr('x',lx).text(function(d){ return won(d.v); });
+  }
+
+  data.forEach(function(d){ state.prev[d.k]=d.v; });
+  document.getElementById('status').textContent=
+    data.length+' of '+D.svc.length+' series · order: '+state.sort+
+    ' · join: '+(state.keyed?'keyed on series name':'array index (no constancy)')+
+    (RM?' · reduced motion: transitions disabled':'');
+}
+function paintFinal(){ stopAll(); DUR=0; EXIT=0; render(); }
+function stopAll(){ svg.selectAll('*').interrupt(); }
+
+document.querySelectorAll('.seg button').forEach(function(b){
+  b.addEventListener('click',function(){
+    document.querySelectorAll('.seg button').forEach(function(x){ x.setAttribute('aria-pressed', String(x===b)); });
+    state.sort=b.dataset.sort; render(); });
+});
+document.getElementById('keyed').addEventListener('change',function(e){ state.keyed=e.target.checked; render(); });
+document.getElementById('drop').addEventListener('change',function(e){ state.drop=e.target.checked; render(); });
+window.addEventListener('resize',function(){ var d=DUR; DUR=0; render(); DUR=d; });
+render();
+
+/* ── safety timer + stop ───────────────────────────────────────────────────
+   d3.transition runs on rAF like the rest. When rAF stops it freezes mid-frame,
+   and a frame that wakes up late writes over anything painted afterwards. D3 has
+   the right primitive for this — selection.interrupt() — but it does not call it
+   for you. The canvas-report shell blocks the same race with a token inside anim(). */
+setTimeout(function(){ stopAll(); paintFinal(); }, 2600);
+</script></body></html>

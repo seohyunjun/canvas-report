@@ -11,6 +11,12 @@ How they are fetched and verified: [`fetch.sh`](fetch.sh) and [`SHA256SUMS`](SHA
 | `anime-3.2.2.min.js` | animejs | 3.2.2 | MIT | <https://animejs.com> |
 | `lottie-5.12.2.min.js` | lottie-web | 5.12.2 | MIT | <https://github.com/airbnb/lottie-web> |
 | `rive-2.21.6.js` · `rive-2.21.6.wasm` | @rive-app/canvas | 2.21.6 | MIT | <https://rive.app> |
+| `d3-7.9.0.min.js` | d3 | 7.9.0 | **ISC** | <https://d3js.org> |
+
+## Two licences that are not MIT
+
+**GSAP** is under GreenSock's own terms, and **D3** is ISC (a permissive licence equivalent to
+MIT in effect, but a different text — keep D3's own copyright notice with the file).
 
 ## GSAP is the exception
 

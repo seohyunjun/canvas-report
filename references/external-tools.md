@@ -28,6 +28,29 @@ scale/shape/array maths, which is a few dozen lines when you only need the parts
 
 **What this skill refuses:** the dependency, and about half the gallery. See the coverage map below.
 
+### [D3.js](https://d3js.org/) — the library, not the gallery
+*(lab: [`06-d3.html`](../lab/motion-engines/06-d3.html) · [`docs/d3.md`](../lab/motion-engines/docs/d3.md))*
+
+The entry above is about D3's *catalogue*. This one is about the runtime, which is a different
+question with a different answer.
+
+**What it is good at:** the **keyed data join**. D3 does not animate elements you hand it; it
+animates the relationship between data and elements. Give `selection.data()` a key function and a
+reorder becomes *movement* — each mark travels to its new position and the eye follows one series
+through the change. Drop the key and the identical transition describes nothing. That property is
+called object constancy, and `enter` / `exit` are the same idea extended to marks that must appear
+and disappear. Nothing else in this file has an equivalent.
+
+**What this skill takes:** the scale, shape and array maths, reimplemented — `ticks()`, the
+linear mapping every factory does, the quartile arithmetic in `boxplot`. A few dozen lines once you
+only need the parts you use.
+
+**What this skill refuses:** the 280 KB, and DOM ownership. The shell repaints a canvas from
+scratch every frame, so there is no element whose identity could be kept — which is fine, because
+**a report has nothing to be constant through.** It is read once and archived; the data does not
+change under the reader. The moment it does, that is an application, and § When to close this skill
+applies.
+
 ### [Plotly.js animations](https://plotly.com/javascript/animations/)
 
 **What it is good at:** a genuinely well-designed animation *model*. Named `frames` added with

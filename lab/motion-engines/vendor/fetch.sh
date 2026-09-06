@@ -23,6 +23,7 @@ fetch https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.min.js         
 fetch https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js          lottie-5.12.2.min.js
 fetch https://cdn.jsdelivr.net/npm/@rive-app/canvas@2.21.6/rive.js                   rive-2.21.6.js
 fetch https://cdn.jsdelivr.net/npm/@rive-app/canvas@2.21.6/rive.wasm                 rive-2.21.6.wasm
+fetch https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js                     d3-7.9.0.min.js
 
 if [[ -f SHA256SUMS ]]; then
   echo "--- verifying ---"; sha256sum -c SHA256SUMS

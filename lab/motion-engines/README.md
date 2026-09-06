@@ -16,7 +16,7 @@ contract **on purpose**. Do not mistake them for reports and do not add them to
 | Weight | 100 KB, everything included | see the table below |
 | Final state guaranteed | yes — timer + token inside `anim()` | **you have to add it** |
 
-## The five pages
+## The six pages
 
 | # | Page | Engine | Vendored | One line |
 |---|---|---|---|---|
@@ -25,8 +25,13 @@ contract **on purpose**. Do not mistake them for reports and do not add them to
 | 3 | [03-anime.html](03-anime.html) | anime.js 3.2.2 | **17 KB** | stagger — the exact effect this skill bans |
 | 4 | [04-lottie.html](04-lottie.html) | lottie-web 5.12.2 | 306 KB | replays a baked clip; takes no data at runtime |
 | 5 | [05-rive.html](05-rive.html) | @rive-app/canvas 2.21.6 | 219 KB + **1.2 MB wasm** | state machines; the asset only comes from the editor |
+| 6 | [06-d3.html](06-d3.html) | D3 7.9.0 | 280 KB | the keyed join — marks travel instead of being relabelled |
 
-One doc per engine in [`docs/`](docs/). All five pages animate **the same data**
+Page 6 is the odd one: D3 is a **chart-form vocabulary** (`external-tools.md` § A), not a motion
+engine. It sits here because the thing worth showing about D3 *is* its transitions, and because
+this is where vendored runtimes live.
+
+One doc per tool in [`docs/`](docs/). All six pages animate **the same data**
 (`lab-data.js` — the five parts of ₩66,147 of GCP spend, July 2026) in **the same layout**, so
 that only the engine differs.
 
@@ -47,14 +52,15 @@ Serving the directory (`python3 -m http.server`) avoids the issue.
 
 ## What the lab actually taught
 
-**None of the three engines guarantees a final state.** When rAF stops — background tab, headless
+**None of the four runtimes with a JS animation loop guarantees a final state.** When rAF stops — background tab, headless
 capture, low-power mode — they freeze mid-frame. This was reproduced during headless verification.
 Worse: **painting the final value is not enough**, because a frame that wakes up late writes over
 it. On the anime.js page four of five bars snapped back to 0%.
 
 The shell blocks both with `setTimeout(finish, dur+260)` and `c.__token` inside `anim()`.
-These engines do not. The `stopAll()` + `paintFinal()` pattern in all five pages is the minimum
-you have to write yourself.
+These engines do not. The `stopAll()` + `paintFinal()` pattern in every page is the minimum you
+have to write yourself. D3 adds two of its own: `.interrupt()` cancels a transition **without**
+running its `.remove()`, and `.duration(0)` is still a transition that needs a frame to land.
 
 ## When you cross over
 
@@ -62,4 +68,4 @@ Straight from `references/external-tools.md` § When to close this skill:
 the deliverable is an **application**, not a document · someone must brush, zoom and re-query ·
 the artefact is a **designed animation** · the data is geographic, hierarchical or a network.
 
-If none of those four is true, the 1.8 MB in here is decoration.
+If none of those four is true, the 2.1 MB in here is decoration.
