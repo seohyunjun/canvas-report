@@ -1270,7 +1270,10 @@ VIZ.lollipop=function(cvs,cfg){
     var rows=typeof cfg.rows==='function'?cfg.rows():cfg.rows||[];
     if(!rows.length){ chartMessage(ctx,W,H); return; }
     if(rows.length>20){ chartMessage(ctx,W,H,str('lollipopMax')); return; }
-    var pad={t:14,b:12}, labelW=Math.min(cfg.labelW||170,Math.max(82,W*.28)), valueW=58;
+    /* valueW is the room reserved on the right for the value label. Open it to cfg the
+       way hbars does — 58 is not enough for a currency string like '₩39,018'. */
+    var pad={t:14,b:12}, labelW=Math.min(cfg.labelW||170,Math.max(82,W*.28)),
+        valueW=finiteNumber(cfg.valueW)||58;
     var PW=W-labelW-valueW, rowH=(H-pad.t-pad.b)/rows.length, vals=rows.map(function(r){return finiteNumber(V(r));});
     if(vals.some(function(v){return v==null;})){ chartMessage(ctx,W,H,str('needsNumbers')); return; }
     var min=Math.min.apply(null,vals), max=Math.max.apply(null,vals), maxP=Math.max(0,max)||1, maxN=Math.abs(Math.min(0,min))||1;
@@ -1279,10 +1282,20 @@ VIZ.lollipop=function(cvs,cfg){
     rows.forEach(function(r,i){
       var v=vals[i],cy=pad.t+rowH*(i+.5), fullX=v<0?zero+(labelW-zero)*Math.abs(v)/maxN:zero+(W-valueW-zero)*v/maxP;
       var x=zero+(fullX-zero)*c.t, col=colorOf(r.color,cfg.color||(v<0?T.neg:T.s1));
+      /* ell() measures with whatever font is currently set. If that differs from the one
+         txt() draws with, a label it judged to fit is drawn wider and runs off the left
+         edge — a hard clip with no ellipsis. Set the drawing font immediately before
+         measuring, on every row (same treatment as hbars, divHbars and panels). */
+      ctx.font='600 11px system-ui, sans-serif';
       txt(ctx,ell(ctx,L(r),labelW-10),labelW-8,cy,'right',T.text2,'600',11);
       ctx.save();ctx.strokeStyle=col;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(zero,cy);ctx.lineTo(x,cy);ctx.stroke();
       ctx.fillStyle=col;ctx.beginPath();ctx.arc(x,cy,Math.min(6,Math.max(3,rowH*.24)),0,7);ctx.fill();ctx.restore();
-      if(c.t>=1) txt(ctx,fmt(v),x+(v>=0?8:-8),cy,v>=0?'left':'right',T.text2,'650',11);
+      if(c.t>=1){                       /* keep the value label inside the plot (as hbars does) */
+        ctx.save(); ctx.font='650 11px system-ui, sans-serif';
+        var al=v>=0?'left':'right';
+        var lx=clampLabel(ctx,fmt(v),x+(v>=0?8:-8),al,2,W-2); ctx.restore();
+        txt(ctx,fmt(v),lx,cy,al,T.text2,'650',11);
+      }
       var tip=cfg.tip?cfg.tip(r,i,rows):{title:String(L(r)),rows:[{name:cfg.seriesName||str('value'),val:fmt(v),color:col}]};
       c.hits.push({x:0,y:cy-rowH/2,w:W,h:rowH,title:tip.title,rows:tip.rows,note:tip.note});
     });

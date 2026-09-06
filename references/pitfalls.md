@@ -33,7 +33,10 @@ Widen the gutter and right-align the max label to its own panel.
 The symptom is not an ellipsis — it is a **hard clip with no ellipsis**. `ell()` measures with a
 narrower font, decides the label fits, and `txt()` then draws it wider, off the left edge.
 Set `ctx.font` immediately before `ell()` measures, on every row.
-This was live in `divHbars`, `panels` and `hbars`; all three are fixed.
+This was live in `divHbars`, `panels`, `hbars` and `lollipop`; all four are fixed.
+`lollipop` was missed in the first sweep and surfaced again in a real report, where SKU names
+ran off the left edge of the plot with no ellipsis. Any new factory that draws a row label
+inherits this trap.
 `divHbars`'s label width was also a hard 64px cap that non-Latin and long labels overflowed;
 it is now `cfg.labelW` (default 96) and `cfg.labelRatio` (default .28).
 
