@@ -126,49 +126,49 @@ def parse_args(argv):
 def validate(result, path):
     diagnostics = []
     if result["reduced"]:
-        diagnostics.append(diagnostic("motion.reduced-mode", path,
+        diagnostics.append(diagnostic("MOTION-TOOL-001", path,
             "Chrome reported reduced-motion mode, so animation cannot be measured.",
             "Run without a reduced-motion Chrome flag."))
     if result["raf"] < 10:
-        diagnostics.append(diagnostic("motion.raf-unavailable", path,
+        diagnostics.append(diagnostic("MOTION-TOOL-002", path,
             "requestAnimationFrame did not advance (%d frames)." % result["raf"],
             "Disable virtual time before running this validator."))
     if not result["canvases"]:
-        diagnostics.append(diagnostic("motion.no-canvas", path, "The page has no canvas elements.",
+        diagnostics.append(diagnostic("MOTION-CANVAS-001", path, "The page has no canvas elements.",
             "Add declared report canvases or remove this motion validation from the report workflow."))
     for canvas in result["canvases"]:
         location = "%s canvas#%s" % (path, canvas["id"])
         if canvas["enabled"] not in ("true", "false"):
-            diagnostics.append(diagnostic("motion.declaration-missing", location,
+            diagnostics.append(diagnostic("MOTION-INTENT-001", location,
                 "data-motion-enabled must be exactly true or false.",
                 'Set data-motion-enabled="true" for animated charts, otherwise "false".'))
         if canvas["reason"] is None:
-            diagnostics.append(diagnostic("motion.reason-missing", location,
+            diagnostics.append(diagnostic("MOTION-INTENT-002", location,
                 "data-motion-reason is missing.",
                 'Add data-motion-reason describing why this canvas animates or is static.'))
         elif not canvas["reason"].strip():
-            diagnostics.append(diagnostic("motion.reason-empty", location,
+            diagnostics.append(diagnostic("MOTION-INTENT-003", location,
                 "The canvas has no motion rationale.",
                 'Set a nonempty data-motion-reason explaining the enabled or static decision.'))
         if canvas["enabled"] == "true":
             if not canvas["hasChart"]:
-                diagnostics.append(diagnostic("motion.engine-missing", location,
+                diagnostics.append(diagnostic("MOTION-WIRING-001", location,
                     "An enabled canvas has no chart animation engine.",
                     'Attach the chart engine or declare data-motion-enabled="false" with a reason.'))
             elif not canvas["wired"]:
-                diagnostics.append(diagnostic("motion.entry-not-wired", location,
+                diagnostics.append(diagnostic("MOTION-WIRING-002", location,
                     "The chart was not played while the reader traversed the page.",
                     "Wire chart.play() to the report's entry/reveal behavior."))
             if canvas["steps"] <= 2:
-                diagnostics.append(diagnostic("motion.never-moves", location,
+                diagnostics.append(diagnostic("MOTION-WIRING-003", location,
                     "The enabled chart did not produce multiple animation states.",
                     "Make chart.play() advance chart.t over time."))
             elif canvas["final"] != 1:
-                diagnostics.append(diagnostic("motion.does-not-finish", location,
+                diagnostics.append(diagnostic("MOTION-FINAL-STATE-001", location,
                     "The enabled chart ended at %s instead of 1." % canvas["final"],
                     "Ensure chart.play() lands at its final state (t === 1)."))
         elif canvas["enabled"] == "false" and canvas["before"] != canvas["after"]:
-            diagnostics.append(diagnostic("motion.static-changed", location,
+            diagnostics.append(diagnostic("MOTION-STATIC-001", location,
                 "A canvas declared static changed while the page was observed.",
                 'Stop its animation or declare data-motion-enabled="true".'))
     return diagnostics
@@ -183,7 +183,7 @@ def main():
         result = asyncio.run(probe("file://" + path, int(os.environ.get("CR_CDP_PORT", "9412"))))
         diagnostics = validate(result, path)
     except (OSError, RuntimeError, ValueError) as error:
-        diagnostics = [diagnostic("motion.validator-failed", "check-motion.py", str(error),
+        diagnostics = [diagnostic("MOTION-TOOL-003", "check-motion.py", str(error),
                                   "Install Chrome and the websockets dependency, then rerun.")]
         json_output = "--json" in sys.argv[1:]
     if json_output:

@@ -26,8 +26,14 @@ The runtime shell, resize/layout code, tooltip system, `VIZ` factories, and moti
 Diagnostics always use:
 
 ```json
-{"severity":"error","id":"RULE_ID","location":"plan.sections[1]","problem":"...","suggested_fix":"..."}
+{"severity":"error","id":"MOTION-INTENT-001","location":"plan.sections[1]","problem":"...","suggested_fix":"..."}
 ```
+
+A diagnostic `id` is a Rule ID in the registry's own format: uppercase segments and a
+three-digit number, `AREA-001` or `AREA-DETAIL-001`. `schemas/diagnostic.schema.json` enforces
+it. An ID that names a rule in `references/rules.json` — `ZERO-NETWORK-001`, `RESPONSIVE-001`,
+`MOTION-FINAL-STATE-001` — reports that registry rule wherever it is detected; the rest are
+validator codes in the same shape, and the `problem` field carries the specifics.
 
 ## State machine
 

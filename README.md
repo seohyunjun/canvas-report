@@ -48,7 +48,7 @@ flowchart LR
 Changing an upstream artifact invalidates all downstream artifacts. Validators report but never repair. Diagnostics have this stable shape:
 
 ```json
-{"severity":"error","id":"RULE_ID","location":"sections[1]","problem":"...","suggested_fix":"..."}
+{"severity":"error","id":"ZERO-NETWORK-001","location":"sections[1]","problem":"...","suggested_fix":"..."}
 ```
 
 ## Ownership

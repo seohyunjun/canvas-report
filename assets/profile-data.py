@@ -32,7 +32,7 @@ class ProfileError(Exception):
 
 class Parser(argparse.ArgumentParser):
     def error(self, message: str) -> None:
-        raise ProfileError("invalid_arguments", "command line", message, "Run with --help and provide an input file and --output path.")
+        raise ProfileError("PROFILE-ARGS-001", "command line", message, "Run with --help and provide an input file and --output path.")
 
 
 def fail(identifier: str, location: str, problem: str, suggested_fix: str) -> None:
@@ -44,20 +44,20 @@ def read_csv(path: Path) -> tuple[list[str], list[dict[str, Any]]]:
         with path.open("r", encoding="utf-8-sig", newline="") as handle:
             reader = csv.DictReader(handle)
             if reader.fieldnames is None:
-                fail("missing_csv_header", str(path), "CSV input has no header row.", "Add a header row with unique column names.")
+                fail("PROFILE-CSV-001", str(path), "CSV input has no header row.", "Add a header row with unique column names.")
             columns = list(reader.fieldnames)
             if any(name is None or name == "" for name in columns) or len(set(columns)) != len(columns):
-                fail("invalid_csv_header", str(path), "CSV header names must be non-empty and unique.", "Rename empty or duplicate header fields.")
+                fail("PROFILE-CSV-002", str(path), "CSV header names must be non-empty and unique.", "Rename empty or duplicate header fields.")
             records: list[dict[str, Any]] = []
             for row_number, row in enumerate(reader, start=2):
                 if None in row:
-                    fail("csv_extra_fields", f"{path}:{row_number}", "A CSV row has more fields than the header.", "Make each row contain the same number of fields as the header.")
+                    fail("PROFILE-CSV-003", f"{path}:{row_number}", "A CSV row has more fields than the header.", "Make each row contain the same number of fields as the header.")
                 records.append({name: parse_csv_scalar(row[name]) for name in columns})
             return columns, records
     except UnicodeDecodeError as exc:
-        fail("invalid_encoding", str(path), f"Input is not valid UTF-8: {exc}.", "Save the input as UTF-8 text.")
+        fail("PROFILE-INPUT-003", str(path), f"Input is not valid UTF-8: {exc}.", "Save the input as UTF-8 text.")
     except csv.Error as exc:
-        fail("invalid_csv", str(path), f"CSV could not be parsed: {exc}.", "Fix CSV quoting and delimiters.")
+        fail("PROFILE-CSV-004", str(path), f"CSV could not be parsed: {exc}.", "Fix CSV quoting and delimiters.")
 
 
 def parse_csv_scalar(value: str) -> Any:
@@ -83,10 +83,10 @@ def columns_and_records(records: list[Any], location: str) -> tuple[list[str], l
     normalized: list[dict[str, Any]] = []
     for index, record in enumerate(records, start=1):
         if not isinstance(record, dict):
-            fail("invalid_record", f"{location}:{index}", "Every record must be a JSON object.", "Use an array, object-of-records, or JSONL file containing objects.")
+            fail("PROFILE-RECORD-001", f"{location}:{index}", "Every record must be a JSON object.", "Use an array, object-of-records, or JSONL file containing objects.")
         for key in record:
             if not isinstance(key, str):
-                fail("invalid_column_name", f"{location}:{index}", "Column names must be strings.", "Use string property names in each JSON record.")
+                fail("PROFILE-RECORD-002", f"{location}:{index}", "Column names must be strings.", "Use string property names in each JSON record.")
             if key not in columns:
                 columns.append(key)
         normalized.append(record)
@@ -98,21 +98,21 @@ def read_json(path: Path) -> tuple[list[str], list[dict[str, Any]]]:
         value = json.loads(
             path.read_text(encoding="utf-8"),
             parse_constant=lambda token: fail(
-                "invalid_json_number",
+                "PROFILE-JSON-004",
                 str(path),
                 f"JSON contains unsupported numeric constant {token}.",
                 "Use only finite JSON numbers.",
             ),
         )
     except UnicodeDecodeError as exc:
-        fail("invalid_encoding", str(path), f"Input is not valid UTF-8: {exc}.", "Save the input as UTF-8 text.")
+        fail("PROFILE-INPUT-003", str(path), f"Input is not valid UTF-8: {exc}.", "Save the input as UTF-8 text.")
     except json.JSONDecodeError as exc:
-        fail("invalid_json", f"{path}:{exc.lineno}:{exc.colno}", exc.msg + ".", "Fix the JSON syntax.")
+        fail("PROFILE-JSON-001", f"{path}:{exc.lineno}:{exc.colno}", exc.msg + ".", "Fix the JSON syntax.")
     if isinstance(value, list):
         return columns_and_records(value, str(path))
     if isinstance(value, dict):
         return columns_and_records(list(value.values()), str(path))
-    fail("invalid_json_root", str(path), "JSON input must be an array of records or an object whose values are records.", "Use a JSON array/object-of-records, or use JSONL.")
+    fail("PROFILE-JSON-002", str(path), "JSON input must be an array of records or an object whose values are records.", "Use a JSON array/object-of-records, or use JSONL.")
 
 
 def read_jsonl(path: Path) -> tuple[list[str], list[dict[str, Any]]]:
@@ -127,7 +127,7 @@ def read_jsonl(path: Path) -> tuple[list[str], list[dict[str, Any]]]:
                         json.loads(
                             line,
                             parse_constant=lambda token: fail(
-                                "invalid_json_number",
+                                "PROFILE-JSON-004",
                                 f"{path}:{number}",
                                 f"JSON contains unsupported numeric constant {token}.",
                                 "Use only finite JSON numbers.",
@@ -135,9 +135,9 @@ def read_jsonl(path: Path) -> tuple[list[str], list[dict[str, Any]]]:
                         )
                     )
                 except json.JSONDecodeError as exc:
-                    fail("invalid_jsonl", f"{path}:{number}:{exc.colno}", exc.msg + ".", "Put one valid JSON object on each non-empty line.")
+                    fail("PROFILE-JSON-003", f"{path}:{number}:{exc.colno}", exc.msg + ".", "Put one valid JSON object on each non-empty line.")
     except UnicodeDecodeError as exc:
-        fail("invalid_encoding", str(path), f"Input is not valid UTF-8: {exc}.", "Save the input as UTF-8 text.")
+        fail("PROFILE-INPUT-003", str(path), f"Input is not valid UTF-8: {exc}.", "Save the input as UTF-8 text.")
     return columns_and_records(records, str(path))
 
 
@@ -149,7 +149,7 @@ def input_format(path: Path) -> str:
         return "jsonl"
     if extension == ".json":
         return "json"
-    fail("unsupported_format", str(path), "Input format is not recognized.", "Use a .csv, .json, .jsonl, or .ndjson file.")
+    fail("PROFILE-INPUT-002", str(path), "Input format is not recognized.", "Use a .csv, .json, .jsonl, or .ndjson file.")
 
 
 def value_type(value: Any) -> str:
@@ -211,7 +211,7 @@ def profile_column(name: str, values: list[Any]) -> dict[str, Any]:
 
 def build_profile(path: Path) -> dict[str, Any]:
     if not path.is_file():
-        fail("missing_input", str(path), "Input file does not exist or is not a regular file.", "Provide the path to an existing data file.")
+        fail("PROFILE-INPUT-001", str(path), "Input file does not exist or is not a regular file.", "Provide the path to an existing data file.")
     format_name = input_format(path)
     if format_name == "csv":
         columns, records = read_csv(path)
@@ -271,7 +271,7 @@ def main() -> int:
         print(json.dumps({"severity": "error", "id": exc.identifier, "location": exc.location, "problem": exc.problem, "suggested_fix": exc.suggested_fix}, ensure_ascii=False, sort_keys=True), file=sys.stderr)
         return 1
     except OSError as exc:
-        print(json.dumps({"severity": "error", "id": "io_error", "location": str(getattr(exc, "filename", "filesystem")), "problem": str(exc), "suggested_fix": "Check file paths and read/write permissions."}, ensure_ascii=False, sort_keys=True), file=sys.stderr)
+        print(json.dumps({"severity": "error", "id": "PROFILE-IO-001", "location": str(getattr(exc, "filename", "filesystem")), "problem": str(exc), "suggested_fix": "Check file paths and read/write permissions."}, ensure_ascii=False, sort_keys=True), file=sys.stderr)
         return 1
 
 

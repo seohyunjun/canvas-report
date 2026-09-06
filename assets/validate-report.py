@@ -12,11 +12,19 @@ from pathlib import Path
 
 VERSION = "1.0"
 ROOT = Path(__file__).resolve().parent.parent
+# schemas/diagnostic.schema.json: a diagnostic id is a Rule ID, never a free-form code.
+RULE_ID = re.compile(r"^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)*-[0-9]{3}$")
 
 
 def diagnostic(identifier: str, location: str, problem: str, fix: str) -> dict[str, str]:
     return {"severity": "error", "id": identifier, "location": location,
             "problem": problem, "suggested_fix": fix}
+
+
+def conforms(item: object) -> bool:
+    """A diagnostic carries a Rule ID, so a malformed one is itself a finding."""
+    return (isinstance(item, dict) and isinstance(item.get("id"), str)
+            and RULE_ID.fullmatch(item["id"]) is not None)
 
 
 def run_json(script: str, html: Path) -> tuple[list[dict], int]:
@@ -30,6 +38,14 @@ def run_json(script: str, html: Path) -> tuple[list[dict], int]:
     except (json.JSONDecodeError, ValueError) as exc:
         diagnostics = [diagnostic("FINAL-TOOL-001", script, f"Validator returned invalid JSON: {exc}.",
                                   "Run the validator directly and fix its environment or output contract.")]
+    malformed = sorted({repr(item.get("id")) if isinstance(item, dict) else repr(item)
+                        for item in diagnostics if not conforms(item)})
+    if malformed:
+        diagnostics.append(diagnostic(
+            "FINAL-TOOL-003", script,
+            "Validator emitted diagnostics whose id is not a Rule ID: %s." % ", ".join(malformed),
+            "Use the AREA-001 / AREA-DETAIL-001 form that schemas/diagnostic.schema.json requires.",
+        ))
     if process.returncode != 0 and not diagnostics:
         diagnostics = [diagnostic(
             "FINAL-TOOL-002", script,

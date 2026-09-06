@@ -146,31 +146,31 @@ async def inspect(path, port):
 def validate(path, rendered, baseline, dpr_two, dpr_two_repeat, cdp):
     diagnostics = []
     for text in cdp.exceptions:
-        diagnostics.append(diag("render.runtime-exception", path, "Page JavaScript exception: " + text,
+        diagnostics.append(diag("RENDER-RUNTIME-001", path, "Page JavaScript exception: " + text,
                                 "Fix the reported JavaScript exception before publishing."))
     for text in cdp.log_errors:
-        diagnostics.append(diag("render.browser-log", path, "Browser error: " + text,
+        diagnostics.append(diag("RENDER-RUNTIME-002", path, "Browser error: " + text,
                                 "Fix the browser error; do not ship console errors."))
     for text in cdp.failed_requests:
-        diagnostics.append(diag("render.request-failed", path, "A resource request failed: " + text,
+        diagnostics.append(diag("RENDER-REQUEST-001", path, "A resource request failed: " + text,
                                 "Bundle the resource in the report or correct its URL."))
     for url in sorted(set(cdp.external_requests)):
-        diagnostics.append(diag("render.external-request", path, "Report requested an external URL: " + url,
+        diagnostics.append(diag("ZERO-NETWORK-001", path, "Report requested an external URL: " + url,
                                 "Inline or locally bundle this resource; generated reports make zero external requests."))
     for (theme, width, _), surface in rendered.items():
         view = surface["viewport"]
         location = "%s %s theme at %dpx" % (path, theme, width)
         if view["scrollWidth"] > view["width"] + 1:
-            diagnostics.append(diag("render.horizontal-overflow", location,
+            diagnostics.append(diag("RESPONSIVE-001", location,
                 "Document scroll width is %dpx but viewport is %dpx." % (view["scrollWidth"], view["width"]),
                 "Make report content responsive so it does not overflow horizontally."))
         for canvas in surface["canvases"]:
             canvas_location = "%s canvas#%s" % (location, canvas["id"])
             if canvas["logicalWidth"] <= 0 or canvas["logicalHeight"] <= 0:
-                diagnostics.append(diag("render.canvas-empty", canvas_location, "Canvas has zero visible bounds.",
+                diagnostics.append(diag("RENDER-CANVAS-001", canvas_location, "Canvas has zero visible bounds.",
                                         "Give the canvas a positive rendered width and height."))
             if canvas["left"] < -1 or canvas["right"] > view["width"] + 1:
-                diagnostics.append(diag("render.canvas-out-of-bounds", canvas_location,
+                diagnostics.append(diag("RENDER-CANVAS-002", canvas_location,
                     "Canvas horizontal bounds %.1f..%.1f exceed the viewport." % (canvas["left"], canvas["right"]),
                     "Constrain the canvas to its responsive container."))
     first = {item["id"]: item for item in baseline["canvases"]}
@@ -181,14 +181,14 @@ def validate(path, rendered, baseline, dpr_two, dpr_two_repeat, cdp):
         again = repeated.get(identifier)
         location = "%s canvas#%s at DPR 2" % (path, identifier)
         if not two or not again:
-            diagnostics.append(diag("render.canvas-dpr-missing", location, "Canvas disappeared after DPR changed.",
+            diagnostics.append(diag("RENDER-DPR-001", location, "Canvas disappeared after DPR changed.",
                                     "Keep canvas elements stable during resize handling."))
             continue
         if abs(one["logicalWidth"] - two["logicalWidth"]) > 1 or abs(one["logicalHeight"] - two["logicalHeight"]) > 1:
-            diagnostics.append(diag("render.canvas-logical-unstable", location,
+            diagnostics.append(diag("RENDER-DPR-002", location,
                 "Canvas logical size changed when DPR changed.", "Keep CSS canvas dimensions independent of device pixel ratio."))
         if two["backingWidth"] <= 0 or two["backingHeight"] <= 0 or two["backingWidth"] != again["backingWidth"] or two["backingHeight"] != again["backingHeight"]:
-            diagnostics.append(diag("render.canvas-backing-unstable", location,
+            diagnostics.append(diag("RENDER-DPR-003", location,
                 "Canvas backing dimensions are invalid or changed between stable DPR 2 samples.",
                 "Resize the backing store once from the current logical size and DPR."))
     return diagnostics
@@ -206,7 +206,7 @@ def main():
         rendered, baseline, dpr_two, repeated, cdp = asyncio.run(inspect(path, int(os.environ.get("CR_CDP_PORT", "9413"))))
         diagnostics = validate(path, rendered, baseline, dpr_two, repeated, cdp)
     except (OSError, RuntimeError, ValueError) as error:
-        diagnostics = [diag("render.validator-failed", "check-render.py", str(error),
+        diagnostics = [diag("RENDER-TOOL-001", "check-render.py", str(error),
                             "Install Chrome and the websockets dependency, then rerun.")]
     if json_output:
         print(json.dumps({"diagnostics": diagnostics}, indent=2))
