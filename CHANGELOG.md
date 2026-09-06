@@ -2,6 +2,87 @@
 
 Versions are the `version:` field in `SKILL.md`. Dates are the day the work landed on `main`.
 
+## 3.0.0 — 2026-09-06
+
+A break at the level of who is allowed to write what. Through 2.1.3 the skill was prose: `SKILL.md`
+described a report and the Agent wrote the HTML. Every guarantee — an honest number, a table twin,
+a reason for motion — rested on whoever was reading the instructions that day, and afterwards
+nothing could say which requirement had been dropped. A report built against 2.1.3's checklist
+does not pass 3.0.0's gates, and several of the mechanisms it relied on are gone rather than
+changed.
+
+### The run is a state machine over artifacts
+
+- `INIT → PROFILED → VALIDATED → PLANNED → BUILT → VERIFIED → COMPLETE`. `assets/report-state.py`
+  binds each state to the SHA-256 of its inputs and rejects a skipped transition. A changed
+  upstream artifact invalidates everything downstream, so a report can no longer stand on a
+  profile that no longer holds.
+- **One writer per artifact.** `assets/profile-data.py` owns `profile.json`; the Agent owns
+  `plan.json` *and nothing else*; `assets/validate-plan.py` owns `report-spec.json`;
+  `assets/build-report.py` owns the HTML. The shell, the `VIZ` factories and the motion engines
+  are read-only to a run, and validators report without repairing.
+- Hand-editing a generated report is now a named anti-pattern rather than a shortcut: a plausible
+  patch can contradict the profile it claims to come from and has no reproducible source.
+- `schemas/` ships the contracts — `plan`, `profile`, `report-spec`, `diagnostic` — and every
+  diagnostic anywhere in the pipeline carries `{severity, id, location, problem, suggested_fix}`.
+- A failed gate follows a bounded ladder: **Local Fix → Component Rebuild → Simplify → Drop
+  Unsupported Section**, recorded by `report-state.py retry`. The fifth attempt is rejected. No
+  step in it edits generated HTML or downgrades an error to a warning.
+
+### Rule IDs are the provenance; a quotation is not
+
+- `references/rules.json` and `references/index.json` make the rules machine-readable, and the
+  rule IDs recorded in profile, spec and validator results are what proves a rule ran.
+- 2.1.0 added `assets/check-quotes.py` after a stamp quoted `motion.md`'s "Play once on entry"
+  verbatim and recorded the opposite decision; the answer then was to verify the quote. 3.0.0
+  stops treating quotation as evidence at all — a correctly copied fragment can still be stale,
+  irrelevant, or misapplied. A `read:` stamp is an optional explanatory note and never a gate;
+  the checker still ships so older reports remain verifiable on their own terms.
+
+### Motion is declared per chart
+
+2.1.0 made motion opt-out: `R.playAll` wired every registered chart and a chart that must not move
+declared `{static:true}`. Where the declaration was simply omitted, "forgot to animate" and
+"deliberately static" were indistinguishable, so gate 46 could be satisfied by saying nothing.
+
+- Every canvas now carries `data-motion-enabled` and `data-motion-reason`. `mk()` reads them and
+  sets `opt.static` for a disabled chart, so intent lives on the element a validator can see.
+- `motion: {enabled, reason}` is a required field on every chart in `plan.json`, and
+  `validate-plan.py` rejects a chart that does not state its intent. A non-empty reason is
+  required either way — a static chart has to say why it is static.
+- `assets/check-motion.py` is rewritten around that contract: it gates only the charts that claim
+  to move (wired, animating, landing on `t=1`), requires the others to be visually unchanged
+  across the probe, and emits structured diagnostics with `--json`.
+- The shell and the published example now declare their intent, which is why their diffs are
+  attribute-only.
+
+### Two more gates, and one artifact for their results
+
+- `assets/check-render.py` drives the built report through the DevTools protocol and validates its
+  render and layout surface.
+- `assets/validate-report.py` runs the post-build gates progressively into one `validation.json`:
+  the HTML must carry the `spec-sha256` of the spec it claims to come from, hold exactly as many
+  canvases as the spec declares, and contain no `http(s)` script, link or image; then render; then
+  motion, and only where the spec declares motion. `--skip-motion` is itself a diagnostic when any
+  chart enables motion.
+- `assets/select-candidates.py` derives the compatible macrostructure, theme and lens sets from the
+  profile before the Agent chooses, so rotation is a filtered decision rather than an improvised one.
+
+### Rotation, insight count, and offline output
+
+- **`.canvas-report/log.json` and the HTML stamp comment are no longer where rotation history
+  lives.** It lives in run artifacts. The rule is also sharper: discard incompatible themes first,
+  then require **rotation distance ≥ 2** from the previous compatible theme. A user may request a
+  compatible nearer theme; the override and its compatibility evidence are recorded in `plan.json`,
+  and an incompatible request gets a diagnostic and an alternative.
+- **The 4–6 insight floor is gone.** An evidence-driven set, typically 2–6. Padding a report to
+  fill a quota promotes weak observations to claims, and is listed as an anti-pattern.
+- **The Google Fonts opt-out is removed** from `themes.md`. Offline output is unconditional; there
+  is no acceptable single request.
+- **A bar chart's zero baseline no longer has an escape hatch.** 2.x allowed breaking it if the
+  axis help said so; a bar's length *is* the value, so the guidance is now to use a different
+  chart.
+
 ## 2.1.3 — 2026-09-06
 
 - **A report served over HTTP fetched one thing after all** — not from the page, from the browser,
