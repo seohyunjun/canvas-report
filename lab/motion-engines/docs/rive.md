@@ -50,3 +50,8 @@ progress.
 Game UI, interactive mascots, illustrations with state. **Never for an analysis document** — if
 1.4 MB buys you one decorative animation, that is precisely what
 `references/anti-patterns.md` calls *decorative animation*.
+
+## Motion decision
+
+Use Rive only when `cfg.motion` declares one compatible semantic intent and the interaction improves
+understanding. Otherwise render the static fallback; a stateful engine is not itself a justification.

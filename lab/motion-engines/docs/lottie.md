@@ -42,3 +42,8 @@ That `make-lottie.py` has to exist at all is the evidence.
 ## When to reach for it
 Onboarding, empty states, mascots, product tours — **pictures nobody has to reason from.**
 If the numbers must be seen to change, this is the wrong tool.
+
+## Motion decision
+
+Lottie is appropriate only for a validated `narrative-transition` or `attention-guidance` intent.
+Do not use decorative loops; preserve a complete static fallback for the report.

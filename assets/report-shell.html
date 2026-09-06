@@ -590,6 +590,38 @@ function helpDot(title, body, note){
 
 /* ── canvas plumbing ──────────────────────────────────────────────────────── */
 var charts=[];
+var MOTION_INTENTS=['data-transition','spatial-reordering','narrative-transition','attention-guidance'];
+var MOTION_COMPAT={
+  line:['data-transition','attention-guidance'],
+  columns:['data-transition','attention-guidance'],
+  divColumns:['data-transition','attention-guidance'],
+  hbars:['spatial-reordering','attention-guidance'],
+  lollipop:['spatial-reordering','attention-guidance'],
+  bubbles:['data-transition','attention-guidance'],
+  slope:['spatial-reordering','data-transition'],
+  waterfall:['data-transition'],
+  boxplot:['attention-guidance'],
+  table:['spatial-reordering']
+};
+function motionDecision(cvs,cfg){
+  var m=cfg.motion, type=cfg.type||cvs.dataset.chartType, enabled=false, intent=null;
+  if(cfg.static===true) m=m||{static:true,reason:cfg.staticReason,fallback:cfg.staticFallback};
+  if(!m) return {enabled:false,intent:null,reason:'No motion decision was declared; static is the default.',fallback:'Render the completed chart.'};
+  if(typeof m.reason!=='string'||!m.reason.trim()){
+    console.error('[canvas-report] static:true or enabled motion requires a nonempty reason.');
+  } else if(typeof m.fallback!=='string'||!m.fallback.trim()){
+    console.error('[canvas-report] motion decision requires a static fallback.');
+  } else if(m.static===true || m.enabled===false){
+    if(m.intent!=null) console.error('[canvas-report] disabled motion must use intent:null.');
+    else return {enabled:false,intent:null,reason:m.reason,fallback:m.fallback};
+  } else if(m.enabled===true){
+    if(MOTION_INTENTS.indexOf(m.intent)<0) console.error('[canvas-report] invalid motion intent: '+m.intent);
+    else if(type && MOTION_COMPAT[type] && MOTION_COMPAT[type].indexOf(m.intent)<0)
+      console.error('[canvas-report] motion intent "'+m.intent+'" is incompatible with '+type+'.');
+    else { enabled=true; intent=m.intent; }
+  } else console.error('[canvas-report] motion.enabled must be true or false.');
+  return {enabled:enabled,intent:intent,reason:m.reason||'',fallback:m.fallback||'Render the completed chart.'};
+}
 function fit(cvs){
   var dpr=Math.min(2, window.devicePixelRatio||1);
   /* Setting cvs.height updates the height attribute. Keep the original logical
@@ -603,10 +635,11 @@ function fit(cvs){
 }
 function mk(cvs, draw, opt){
   var c={cvs:cvs, draw:draw, hits:[], t:1, opt:opt||{}};
-  /* Generated reports declare motion on the canvas. The builder owns these
-     attributes; report Agents never mutate chart handles or runtime code. */
-  if(cvs.dataset.motionEnabled==='false') c.opt.static=true;
-  c.motion={enabled:cvs.dataset.motionEnabled==='true', reason:cvs.dataset.motionReason||''};
+  c.motion=motionDecision(cvs,cvs.__motionConfig||{});
+  if(!c.motion.enabled) c.opt.static=true;
+  cvs.dataset.motionEnabled=String(c.motion.enabled);
+  cvs.dataset.motionIntent=c.motion.intent||'';
+  cvs.dataset.motionReason=c.motion.reason;
   charts.push(c); cvs.__chart=c;
   if(window.ResizeObserver) new ResizeObserver(function(){ paint(c); }).observe(cvs.parentElement);
   else window.addEventListener('resize', function(){ paint(c); });
@@ -927,7 +960,7 @@ var VIZ={};
 /* line: one series + area wash + crosshair. Time axis only. */
 VIZ.line=function(cvs,cfg){
   var X=fld(cfg.x), Y=fld(cfg.y), fmt=cfg.format||nf;
-  return mk(cvs,function(ctx,W,H,c){
+  cvs.__motionConfig=cfg; return mk(cvs,function(ctx,W,H,c){
     var col=colorOf(cfg.color), rows=usable(cfg.rows(),[Y]), pad={l:cfg.padLeft||58,r:22,t:16,b:26};
     if(!rows.length) return;
     var vals=rows.map(Y), mn=Math.min.apply(null,vals), mx=Math.max.apply(null,vals);
@@ -984,7 +1017,7 @@ VIZ.line=function(cvs,cfg){
 /* grouped columns: 2-3 series IN THE SAME UNIT. Different units -> VIZ.panels. */
 VIZ.columns=function(cvs,cfg){
   var X=fld(cfg.x), ser=cfg.series.map(function(s){ return {name:s.name,get:fld(s.get),color:s.color}; });
-  return mk(cvs,function(ctx,W,H,c){
+  cvs.__motionConfig=cfg; return mk(cvs,function(ctx,W,H,c){
     ser.forEach(function(s,i){ s.hex=colorOf(s.color, T.series[i%3]); });
     var rows=usable(cfg.rows(), ser.map(function(s){return s.get;})), pad={l:58,r:16,t:16,b:26};
     if(!rows.length) return;
@@ -1018,7 +1051,7 @@ VIZ.columns=function(cvs,cfg){
 /* diverging columns (histogram, deltas): colour splits on sign */
 VIZ.divColumns=function(cvs,cfg){
   var X=fld(cfg.x), Y=fld(cfg.y), fmt=cfg.format||nf;
-  return mk(cvs,function(ctx,W,H,c){
+  cvs.__motionConfig=cfg; return mk(cvs,function(ctx,W,H,c){
     /* rotated labels plus an axis note need more room underneath */
     var rows=usable(cfg.rows(),[Y]), pad={l:52,r:12,t:cfg.padTop||18,
       b:(cfg.rotate?52:30)+(cfg.axisNote?14:0)};
@@ -1068,7 +1101,7 @@ VIZ.hbars=function(cvs,cfg){
      runtime (references/external-tools.md § What was actually adopted).
      Without cfg.key nothing changes: the bar grows from zero as it always did. */
   var K=cfg.key?fld(cfg.key):null;
-  return mk(cvs,function(ctx,W,H,c){
+  cvs.__motionConfig=cfg; return mk(cvs,function(ctx,W,H,c){
     var rows=usable(cfg.rows(),[V]), pad={t:14,b:12};
     if(!rows.length) return;
     var labelW=Math.min(cfg.labelW||210, Math.max(96,W*(cfg.labelRatio||0.3)));
@@ -1107,7 +1140,7 @@ VIZ.hbars=function(cvs,cfg){
 /* diverging horizontal bars: left/right of zero. This chart owns its row labels. */
 VIZ.divHbars=function(cvs,cfg){
   var L=fld(cfg.label), V=fld(cfg.value), fmt=cfg.format||function(v){return sg(v,'');};
-  return mk(cvs,function(ctx,W,H,c){
+  cvs.__motionConfig=cfg; return mk(cvs,function(ctx,W,H,c){
     var rows=usable(cfg.rows(),[V]), pad={t:16,b:22};
     if(!rows.length) return;
     /* Measure with the font you draw with. Otherwise ell() decides the label fits
@@ -1147,7 +1180,7 @@ VIZ.divHbars=function(cvs,cfg){
    This is the replacement for a dual axis. */
 VIZ.panels=function(cvs,cfg){
   var L=fld(cfg.label);
-  return mk(cvs,function(ctx,W,H,c){
+  cvs.__motionConfig=cfg; return mk(cvs,function(ctx,W,H,c){
     var rows=usable(cfg.rows(), cfg.panels.map(function(p){return fld(p.get);})), top=26, bot=16;
     if(!rows.length) return;
     /* colours arrive as token names, same contract as every other factory */
@@ -1194,7 +1227,7 @@ VIZ.panels=function(cvs,cfg){
    colour (direction). Hit testing is nearest-point. */
 VIZ.bubbles=function(cvs,cfg){
   var X=fld(cfg.x), Y=fld(cfg.y), S=fld(cfg.size), L=fld(cfg.label), C=cfg.colorValue?fld(cfg.colorValue):null;
-  return mk(cvs,function(ctx,W,H,c){
+  cvs.__motionConfig=cfg; return mk(cvs,function(ctx,W,H,c){
     var rows=usable(cfg.rows(),[X,Y,S]), pad={l:56,r:22,t:18,b:44};
     if(!rows.length) return;
     if(needsNonNegative(ctx,W,H,rows,function(r){ return Math.min(X(r),Y(r)); },'a chart with a signed axis')) return;
@@ -1242,7 +1275,7 @@ VIZ.bubbles=function(cvs,cfg){
 /* donut: 2-5 nominal parts. All-zero input degrades to an empty ring. */
 VIZ.donut=function(cvs,cfg){
   var L=fld(cfg.label), V=fld(cfg.value), fmt=cfg.format||nf;
-  return mk(cvs,function(ctx,W,H,c){
+  cvs.__motionConfig=cfg; return mk(cvs,function(ctx,W,H,c){
     var rows=typeof cfg.rows==='function'?cfg.rows():cfg.rows||[], clean=[], invalid=false;
     if(rows.length<2){ chartMessage(ctx,W,H,str('donutMin')); return; }
     if(rows.length>5){ chartMessage(ctx,W,H,str('donutMax')); return; }
@@ -1273,7 +1306,7 @@ VIZ.donut=function(cvs,cfg){
 /* heatmap: one hue, sequential intensity, across an x/y category grid. */
 VIZ.heatmap=function(cvs,cfg){
   var X=fld(cfg.x), Y=fld(cfg.y), V=fld(cfg.value), fmt=cfg.format||nf;
-  return mk(cvs,function(ctx,W,H,c){
+  cvs.__motionConfig=cfg; return mk(cvs,function(ctx,W,H,c){
     var rows=typeof cfg.rows==='function'?cfg.rows():cfg.rows||[], xs=[], ys=[], seenX=Object.create(null),
         seenY=Object.create(null), cells=Object.create(null), invalid=false;
     if(!rows.length){ chartMessage(ctx,W,H); return; }
@@ -1305,7 +1338,7 @@ VIZ.heatmap=function(cvs,cfg){
 /* slope: two points in time joined by a line, read as rank/value movement. */
 VIZ.slope=function(cvs,cfg){
   var L=fld(cfg.label), A=fld(cfg.before), B=fld(cfg.after), fmt=cfg.format||nf;
-  return mk(cvs,function(ctx,W,H,c){
+  cvs.__motionConfig=cfg; return mk(cvs,function(ctx,W,H,c){
     var rows=typeof cfg.rows==='function'?cfg.rows():cfg.rows||[];
     if(!rows.length){ chartMessage(ctx,W,H); return; }
     if(rows.length>12){ chartMessage(ctx,W,H,str('slopeMax')); return; }
@@ -1337,7 +1370,7 @@ VIZ.slope=function(cvs,cfg){
 VIZ.lollipop=function(cvs,cfg){
   var L=fld(cfg.label), V=fld(cfg.value), fmt=cfg.format||compact;
   var K=cfg.key?fld(cfg.key):null;      /* keyed re-sort — see VIZ.hbars */
-  return mk(cvs,function(ctx,W,H,c){
+  cvs.__motionConfig=cfg; return mk(cvs,function(ctx,W,H,c){
     var rows=typeof cfg.rows==='function'?cfg.rows():cfg.rows||[];
     if(!rows.length){ chartMessage(ctx,W,H); return; }
     if(rows.length>20){ chartMessage(ctx,W,H,str('lollipopMax')); return; }
@@ -1431,7 +1464,7 @@ VIZ.waterfall=function(cvs,cfg){
 /* In a small-multiple grid (macro 06) every cell MUST share one axis, so pass
    cfg.min / cfg.max to pin the range. Omit them and each cell scales itself. */
 VIZ.spark=function(cvs,cfg){
-  return mk(cvs,function(ctx,W,H){
+  cvs.__motionConfig=cfg; return mk(cvs,function(ctx,W,H){
     var v=cfg.values().map(fin).filter(function(x){ return x!==null; }), c2=colorOf(cfg.color);
     if(!v.length) return;
     if(v.length===1) v=[v[0],v[0]];        /* one point cannot make a line — this used to divide by zero */
@@ -1464,7 +1497,7 @@ VIZ.boxplot=function(cvs,cfg){
             lo:inl.length?inl[0]:a[0], hi:inl.length?inl[inl.length-1]:a[a.length-1],
             out:a.filter(function(v){return v<loF||v>hiF;})};
   }
-  return mk(cvs,function(ctx,W,H,c){
+  cvs.__motionConfig=cfg; return mk(cvs,function(ctx,W,H,c){
     var raw=cfg.rows();
     if(!raw.length){ chartMessage(ctx,W,H); return; }
     var stats=[], drop=0;
@@ -1533,7 +1566,7 @@ VIZ.boxplot=function(cvs,cfg){
    band is the subject, use VIZ.panels or a separate chart. */
 VIZ.stackedArea=function(cvs,cfg){
   var X=fld(cfg.x), ser=cfg.series.map(function(sr){ return {name:sr.name,get:fld(sr.get),color:sr.color}; });
-  return mk(cvs,function(ctx,W,H,c){
+  cvs.__motionConfig=cfg; return mk(cvs,function(ctx,W,H,c){
     ser.forEach(function(sr,i){ sr.hex=colorOf(sr.color, T.series[i%3]); });
     var rows=usable(cfg.rows(), ser.map(function(sr){return sr.get;}));
     if(rows.length<2){ chartMessage(ctx,W,H); return; }
@@ -1589,7 +1622,7 @@ VIZ.stackedArea=function(cvs,cfg){
 VIZ.concentration=function(cvs,cfg){
   var V=fld(cfg.value), L=cfg.label?fld(cfg.label):null, fmt=cfg.format||compact;
   var MARKS=cfg.marks||[10,20,50];
-  return mk(cvs,function(ctx,W,H,c){
+  cvs.__motionConfig=cfg; return mk(cvs,function(ctx,W,H,c){
     var rows=usable(cfg.rows(),[V]).slice(), pad={l:52,r:18,t:18,b:34};
     if(rows.length<2){ chartMessage(ctx,W,H,str('concentrationMin')); return; }
     if(needsNonNegative(ctx,W,H,rows,V,'VIZ.divHbars')) return;
@@ -1657,7 +1690,7 @@ VIZ.concentration=function(cvs,cfg){
 VIZ.interval=function(cvs,cfg){
   var L=fld(cfg.label), V=fld(cfg.value), LO=fld(cfg.lo), HI=fld(cfg.hi);
   var fmt=cfg.format||compact, REF=finiteNumber(cfg.ref);
-  return mk(cvs,function(ctx,W,H,c){
+  cvs.__motionConfig=cfg; return mk(cvs,function(ctx,W,H,c){
     var rows=usable(cfg.rows(),[V,LO,HI]), pad={t:16,b:30};
     if(!rows.length){ chartMessage(ctx,W,H); return; }
     ctx.font='600 11.5px system-ui, sans-serif';

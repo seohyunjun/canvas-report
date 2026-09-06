@@ -10,6 +10,7 @@
     {"id":"HELP-TWIN-001","category":"accessibility","rule":"Every chart has help explaining measure, basis, and interaction."},
     {"id":"ZERO-NETWORK-001","category":"runtime","rule":"Generated reports make no network requests and contain no external runtime dependency."},
     {"id":"MOTION-INTENT-001","category":"motion","rule":"Each chart explicitly states whether motion is enabled and why."},
+    {"id":"MOTION-DECISION-001","category":"motion","rule":"Motion is disabled by default and enabled only with exactly one compatible semantic intent and a static fallback."},
     {"id":"MOTION-FINAL-STATE-001","category":"motion","rule":"Motion has a deterministic final state."},
     {"id":"MOTION-REDUCED-001","category":"motion","rule":"Reduced-motion preference disables nonessential motion while preserving final content."},
     {"id":"RESPONSIVE-001","category":"final","rule":"Final output remains usable at narrow and wide viewports."},

@@ -1,5 +1,8 @@
 # Motion — evidence, not a default
 
+For the decision framework and chart-by-chart policy, see
+[`motion-decision.md`](motion-decision.md). This file documents the lower-level runtime contract.
+
 Motion is optional. A chart is static unless its validated `report-spec.json` declares a specific
 reader benefit. The plan records that decision per chart, and `assets/check-motion.py` runs only for charts
 that declare motion. Motion never substitutes for a table, label, or explanation; the final static

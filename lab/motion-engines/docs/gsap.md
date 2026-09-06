@@ -47,3 +47,8 @@ late frame overwrites it.
 `references/external-tools.md` § When to close this skill — when the deliverable is an
 **application** rather than a document, or when thirty things must be choreographed against
 scroll. Not for an analysis document.
+
+## Motion decision
+
+Use only for a validated `data-transition` or `narrative-transition`. Timelines are not a reason
+to animate; if the sequence does not improve comprehension, use the static fallback.
