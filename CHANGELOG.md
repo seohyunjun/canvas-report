@@ -92,6 +92,18 @@ Found by running the pipeline end to end on a 24-month CSV before tagging this v
   did not move. `validate-plan.py` now knows the runtime's mark caps and rejects the chart at
   plan time as `CHART-007`, which is what the retry ladder's **Simplify** step is for.
 
+### Installable as a plugin
+
+- The skill was only ever installable by cloning it and pointing Claude at `SKILL.md`. This
+  repository is now also a Claude Code plugin and the marketplace that lists it:
+  `/plugin marketplace add seohyunjun/canvas-report`, then
+  `/plugin install canvas-report@seohyunjun`. Nothing moved to make that work — a plugin with no
+  `skills/` directory loads its root `SKILL.md` as a single skill, and the invocation name comes
+  from that file's frontmatter. Requires Claude Code v2.1.142 or later.
+- `.claude-plugin/plugin.json` carries the version, so it has to be bumped alongside `SKILL.md`
+  at every release: a plugin that declares a version is pinned to it, and users are offered an
+  update only when that string changes.
+
 ### Rotation, insight count, and offline output
 
 - **`.canvas-report/log.json` and the HTML stamp comment are no longer where rotation history
