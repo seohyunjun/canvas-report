@@ -10,6 +10,30 @@ It is an artifact pipeline, not a prompt-to-HTML shortcut: profile evidence cons
 
 ![Ten themes, one runtime, identical data](docs/themes.png)
 
+## Install
+
+This repository is both a Claude Code plugin and the marketplace that lists it.
+
+```shell
+/plugin marketplace add seohyunjun/canvas-report
+/plugin install canvas-report@seohyunjun
+```
+
+The skill then runs as `/canvas-report:canvas-report`, and Claude invokes it on its own when a
+request calls for a report. Claude Code v2.1.142 or later is required: the plugin has no `skills/`
+directory, so the root `SKILL.md` is loaded as the single skill it declares.
+
+Installing copies the whole directory, `lab/` included — `references/external-tools.md` links into
+it for the motion-engine worked examples. To follow a branch instead of the default one, add the
+marketplace with a ref:
+
+```shell
+/plugin marketplace add seohyunjun/canvas-report@<branch-or-tag>
+```
+
+Without the plugin, the skill also works as a plain directory: clone the repository somewhere
+Claude can read and point it at `SKILL.md`.
+
 ## Contract
 
 A run defaults to:
@@ -99,6 +123,7 @@ Reference loading is lazy:
 ## Layout
 
 ```text
+.claude-plugin/          plugin manifest and marketplace catalogue
 SKILL.md                 state-machine guidance and ownership
 assets/profile-data.py   deterministic profile → profile.json
 assets/select-candidates.py compatible lens/macro/theme candidates

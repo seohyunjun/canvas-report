@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "seohyunjun",
+  "owner": {
+    "name": "seohyunjun"
+  },
+  "description": "Plugins published by seohyunjun.",
+  "plugins": [
+    {
+      "name": "canvas-report",
+      "source": "./",
+      "description": "Turns supplied data into one self-contained interactive HTML analysis report drawn on canvas. Profile evidence constrains the plan, a compiler validates the plan, a deterministic builder owns the HTML, and progressive gates decide whether the report ships.",
+      "category": "data",
+      "keywords": [
+        "report",
+        "dashboard",
+        "data-visualisation",
+        "canvas",
+        "html",
+        "accessibility",
+        "offline"
+      ]
+    }
+  ]
+}
