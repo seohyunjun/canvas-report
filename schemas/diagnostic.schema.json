@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://canvas-report.dev/schemas/diagnostic.schema.json",
+  "title": "canvas-report diagnostic",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["severity", "id", "location", "problem", "suggested_fix"],
+  "properties": {
+    "severity": {"type": "string", "enum": ["error", "warning", "info"]},
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$"},
+    "location": {"type": "string", "minLength": 1},
+    "problem": {"type": "string", "minLength": 1},
+    "suggested_fix": {"type": "string", "minLength": 1}
+  }
+}

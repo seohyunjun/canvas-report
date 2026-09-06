@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "profile.schema.json",
+  "title": "Canvas Report Data Profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "source",
+    "row_count",
+    "column_count",
+    "columns",
+    "candidate_keys",
+    "date_columns",
+    "numeric_columns",
+    "dimension_columns",
+    "time_grains",
+    "comparable_periods"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "format"],
+      "properties": {
+        "path": {"type": "string"},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "format": {"enum": ["csv", "json", "jsonl"]}
+      }
+    },
+    "row_count": {"type": "integer", "minimum": 0},
+    "column_count": {"type": "integer", "minimum": 0},
+    "columns": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/column"}
+    },
+    "candidate_keys": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "date_columns": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "numeric_columns": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "dimension_columns": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "time_grains": {
+      "type": "object",
+      "additionalProperties": {"enum": ["day", "month", "quarter", "year", "datetime"]}
+    },
+    "comparable_periods": {
+      "type": "boolean"
+    }
+  },
+  "$defs": {
+    "column": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "type", "null_count", "null_rate", "distinct_count", "candidate_key", "sentinel_candidates"],
+      "properties": {
+        "name": {"type": "string"},
+        "type": {
+          "enum": ["null", "boolean", "integer", "number", "date", "datetime", "string", "mixed"]
+        },
+        "null_count": {"type": "integer", "minimum": 0},
+        "null_rate": {"type": "number", "minimum": 0, "maximum": 1},
+        "distinct_count": {"type": "integer", "minimum": 0},
+        "candidate_key": {"type": "boolean"},
+        "sentinel_candidates": {
+          "type": "object",
+          "additionalProperties": {"type": "integer", "minimum": 1}
+        },
+        "min": {"type": ["number", "string"]},
+        "max": {"type": ["number", "string"]}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"type": {"enum": ["integer", "number", "date", "datetime"]}}},
+          "then": {"required": ["min", "max"]},
+          "else": {"not": {"anyOf": [{"required": ["min"]}, {"required": ["max"]}]}}
+        }
+      ]
+    }
+  }
+}

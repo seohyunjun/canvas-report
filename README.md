@@ -4,270 +4,123 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 ![Network requests: 0](https://img.shields.io/badge/network%20requests-0-brightgreen)
 
-A skill that turns a dataset into **one self-contained HTML file a reader can explore** — every
-chart drawn directly on `<canvas>`, no libraries fetched, no network requests at all.
+`canvas-report` turns supplied data into one self-contained interactive HTML analysis report. Charts draw on `<canvas>`, data is embedded, table twins and help are available to readers, and no external scripts, images, or fonts are fetched.
 
-It also refuses to make the same report twice.
+It is an artifact pipeline, not a prompt-to-HTML shortcut: profile evidence constrains the plan, a compiler validates the plan, a deterministic builder owns HTML, and progressive validators decide whether the report ships.
 
 ![Ten themes, one runtime, identical data](docs/themes.png)
 
-*The same demo data and the same runtime, under all ten themes.*
+## Contract
 
----
+A run defaults to:
 
-## An example
-
-**[평균의 평균은 평균이 아니다](https://seohyunjun.github.io/canvas-report/examples/dart-2025-payroll-average.html)**
-— DART 2025 filings for 446 companies. The mean of company means is ₩83.5M a year; total payroll
-divided by total headcount is ₩99.7M. The ₩16.2M gap comes only from the choice of denominator.
-
-One file, five charts, no network requests. [More in `examples/`](examples/).
-
-## Why
-
-Most report generators are accurate and forgettable. They produce a hero figure, three cards, a
-chart grid and a footer, forever, regardless of what the data is. The analysis may be sound, but
-nobody reads the second one.
-
-So this skill makes two decisions before it makes a chart:
-
-1. **Pick the page shape from the data** — one of ten macrostructures, chosen because the data
-   supports it, not because it was the default.
-2. **Rotate the look** — theme and masthead must differ from the previous report on recorded axes.
-
-The analytical discipline is not traded away for it. Every chart still owes the reader a table
-twin, a help tooltip and a methodology section that says what the data cannot do.
-
-## What you get
-
-**A single `.html` file.** Data embedded as JSON, charts drawn on canvas, zero external requests.
-It works offline, it survives being emailed, and it renders the same in five years.
-
-- **15 chart factories** — `line` `columns` `divColumns` `hbars` `divHbars` `panels` `bubbles`
-  `waterfall` `spark` `donut` `heatmap` `slope` `lollipop` `boxplot` `stackedArea`
-- **10 themes** × day/night drops, generated to a contrast contract
-- **10 macrostructures** — Briefing · Ledger · Scrollytelling · Workbench · Broadsheet ·
-  Poster/Almanac · Deck · Bridge · Comparison spread · Field notes
-- **Archetypes** for masthead, section head, insight, chart card, filter bar and methodology
-- Hover tooltips, keyboard-and-touch help tooltips, sortable table twins, a light/dark toggle,
-  and motion that always finishes
-
-## Install
-
-```bash
-# personal, available in every project
-git clone https://github.com/<you>/canvas-report ~/.claude/skills/canvas-report
-
-# or per project
-git clone https://github.com/<you>/canvas-report .claude/skills/canvas-report
+```text
+<output-dir>/.canvas-report/runs/<run-id>/
 ```
 
-## Try it without installing anything
+All artifacts use `schema_version: "1.0"`. The state path is:
 
-`assets/report-shell.html` is a finished runtime, not a template. Open it in a browser and a demo
-report runs — every chart type, both themes, tooltips and table twins working.
-
-```bash
-python3 assets/apply-theme.py --list                                  # the ten themes
-python3 assets/apply-theme.py assets/report-shell.html newsprint      # swap one in
+```text
+INIT → PROFILED → VALIDATED → PLANNED → BUILT → VERIFIED → COMPLETE
 ```
 
-## Using it
-
-Point it at data and ask. The trigger phrasing is ordinary: *"make me a report"*, *"dashboard"*,
-*"visualise this analysis"*, *"interactive report"*, *"make it look different this time"*.
-
-```
-Build a report from data/july-billing.csv
-Make a report from this query, workbench style, and put it in ./out
-Same data, different face — the last one was a broadsheet
-```
-
-**Give it the data, not a description of the data.** A path, a query, a table it can run. The
-first step of the procedure is to profile what it was actually given: column types, null rates,
-the time grain, how many distinct values each key has, whether two periods can be compared. A
-lens the shape cannot carry is dropped rather than faked, so guessing at this step poisons
-everything after it.
-
-### What happens, in order
-
-| Step | What it does | Where it is written down |
-|---|---|---|
-| 0–1 | profile the data, then fix four to six falsifiable sentences | `references/analysis-lenses.md` |
-| 2 | read `.canvas-report/log.json` for the last few reports | — |
-| 3–4 | pick a macrostructure, then a theme and masthead that all differ | `references/macrostructures.md`, `themes.md` |
-| 5 | copy the shell, apply the theme, write the wiring | `assets/`, `references/pitfalls.md` |
-| 6–8 | sections, motion, help tooltips, methodology | `motion.md`, `tooltip-help.md` |
-| 9–10 | render at three widths, check motion on a real clock, then score 48 gates | `references/slop-test.md` |
-
-### Steering it
-
-You do not have to. But these all work, and the skill will say so on the page if you override it:
-
-- **A shape** — *"as a deck"*, *"workbench with filters"*, *"scrollytelling"*. It will still refuse
-  a shape the data cannot carry (a three-step scrollytelling piece is an empty scroll).
-- **A theme** — *"use the dark one"*, *"newsprint"*. Rotation still applies to the next report.
-- **A language** — the shell ships English; ask for another and it translates the one
-  `[L] CR_STRINGS` block and sets `<html lang>` so numbers format correctly.
-- **An edit** — *"change the third chart"* keeps the existing macro and theme. Rotation is for new
-  reports, not revisions.
-
-### Where things land
-
-```
-<subject>-<period>.html        the report. One file, open it anywhere
-.canvas-report/log.json        the rotation log — what shape and theme the last reports used
+```mermaid
+flowchart LR
+  I[INIT] --> P[PROFILED: profile.json]
+  P --> V[VALIDATED: plan.json]
+  V --> L[PLANNED: report-spec.json]
+  L --> B[BUILT: HTML]
+  B --> R[VERIFIED: validator results]
+  R --> C[COMPLETE]
+  R -. failed gate .-> B
 ```
 
-`.canvas-report/` is gitignored here, because it is state rather than source. Keep it next to your
-reports; without it the skill cannot tell what it already used, and every report starts looking
-the same again.
+| State | Input | Output | Complete when |
+|---|---|---|---|
+| INIT | data source, requirements, output directory | run manifest | the run is identified |
+| PROFILED | source data | `profile.json` | data shape and quality are evidenced |
+| VALIDATED | profile, requirements, rotation history | Agent-written `plan.json` | the plan is schema-valid and compatible |
+| PLANNED | profile, plan, `schemas/*.schema.json`, `references/rules.json`, `references/index.json` | `report-spec.json` | plan rules compile without errors |
+| BUILT | spec and read-only runtime assets | builder-owned HTML | offline report contract is emitted |
+| VERIFIED | HTML and declared validation inputs | structured results | required progressive gates pass |
+| COMPLETE | verified artifacts | final report/run record | no unresolved error diagnostics remain |
 
-### Reading the stamp
+Changing an upstream artifact invalidates all downstream artifacts. Validators report but never repair. Diagnostics have this stable shape:
 
-Every report opens with a comment recording how it was made. It is meant to be read.
-
-```
-canvas-report · macro: 02 Ledger · theme: grid · masthead: M4 · lenses: index, trend, comparison
-read:
-  analysis-lenses "Below about five values per group"
-                    -> 31 values per hour, well over the floor, so a boxplot is honest
-  motion          "| redraw after a filter change | **0ms** | a control must respond instantly |"
-                    -> the tab switch repaints instead of playing
-  ...
-critique: P5 H5 E5 S5 R5 V5 D5
+```json
+{"severity":"error","id":"RULE_ID","location":"sections[1]","problem":"...","suggested_fix":"..."}
 ```
 
-The `read:` block is a **quote block, not a checklist**: one verbatim fragment per reference file
-that was open while building, and the decision that fragment drove. A file name alone can be
-written from memory; a quotation cannot. Check one yourself:
+## Ownership
 
-```bash
-grep -Fq 'Below about five values per group' references/analysis-lenses.md && echo real
-```
+| Writer | Owns |
+|---|---|
+| Agent | `plan.json` only |
+| `assets/profile-data.py` | `profile.json` |
+| `assets/validate-plan.py` | validated `report-spec.json` |
+| `assets/build-report.py` | generated HTML |
+| `assets/report-state.py` | hash-bound `run.json` |
+| `assets/validate-report.py` | `validation.json` |
 
-If a quote does not match its file, the report claims a gate it never read.
+The runtime shell, resize/layout code, tooltip system, `VIZ` factories, and motion engines are read-only to report runs. Agents do not get runtime-edit permission; generated HTML is builder-owned.
 
-### Verifying a report yourself
+## Build flow
 
-The skill treats this as mandatory, and you can repeat it:
+1. Run `assets/profile-data.py` on actual data. The profile covers types, nulls and sentinels, measures/dimensions, cardinality, time grain, candidate-key checks, and comparable periods.
+2. Draft evidence-driven, falsifiable insights — **typically 2–6**, not a fixed quota. Unsupported claims and lenses are dropped or rewritten.
+3. Run `assets/select-candidates.py`, then the Agent writes only `plan.json`: insights, supported charts, macrostructure, theme, masthead, table/help/methodology requirements, and per-chart motion decisions.
+4. Run `assets/validate-plan.py` against `schemas/*.schema.json`, `references/rules.json`, and `references/index.json`. It emits `report-spec.json` only for a compatible plan.
+5. Run `assets/build-report.py`; it deterministically produces one offline HTML file.
+6. Run `assets/validate-report.py` to persist progressive build, render, and declared-motion gates in `validation.json`.
 
-```bash
-# render at the three widths, with motion disabled so you do not catch a mid-animation frame
-for w in 1240 768 500; do
-  google-chrome --headless=new --force-prefers-reduced-motion \
-    --window-size=$w,4000 --screenshot=out-$w.png "file:///abs/path/report.html"
-done
-```
+Use at most four repairs for a failed requirement: **Local Fix → Component Rebuild → Simplify → Drop Unsupported Section**. Every repair invalidates affected downstream artifacts and reruns their gates. Never hand-edit generated HTML or bypass a gate.
+`assets/report-state.py retry` records the attempt, invalidates downstream hashes, and rejects a fifth repair.
 
-Then look for the failures a screenshot shows and a validator does not: colliding labels, marks
-outside the plot, clipped text, blank canvases, an `N rows omitted` note you did not expect.
-Judge horizontal overflow by measuring `document.documentElement.scrollWidth` against
-`innerWidth` — not by looking, since headless clamps the viewport to 500px.
+## Requirements and conflicts
 
-That run deliberately turns motion off, so it cannot tell you whether the charts move — and
-neither can leaving the flag out, because `--virtual-time-budget` freezes
-`requestAnimationFrame` and every frame then reads the same value. Motion has its own check, on
-a real clock:
+User requirements take priority over rotation **only after compatibility** with the profile and report contract is proved. Incompatible requested charts, macrostructures, or motion yield a structured diagnostic and an evidence-based alternative.
 
-```bash
-python3 assets/check-motion.py report.html   # needs the `websockets` package
-```
+Theme selection first filters to compatible choices. The selected theme must be rotation distance **at least 2** from the previous theme, unless the user explicitly requests a compatible override; record that override in the plan. Macrostructure and masthead rotate when compatible alternatives exist.
 
-It drives Chrome over the DevTools protocol, scrolls the page the way a reader would, and prints
-one line per chart: whether anything played it on entry, how many distinct frames it drew, and
-whether it landed on its final state. It exits non-zero if a chart never moves.
+The report never fetches external fonts. It uses the shipped system-font stacks. Bars always use a zero baseline. There are no dual axes; axes derive from data; every chart has a table twin and accessible help; and basis, formulas, and limits stay visible.
 
-The stamp has a checker too. Every quote in the `read:` block must still appear verbatim in the
-file it cites, which catches both an invented quote and a reference edited after the fact:
+Motion is optional and explicit **per chart**. Use it only when it conveys a waterfall flow, scrollytelling transition, keyed re-sort, or deliberate one-time entry reading aid. Static charts are valid. Filters redraw immediately, reduced motion omits animation, and the final state contains all information.
 
-```bash
-python3 assets/check-quotes.py report.html
-```
+## Rule provenance and lazy references
 
-## The rules it will not break
+`references/rules.json` and `references/index.json` provide authoritative Rule-ID provenance. Profile, plan, spec, and validator artifacts identify the rules they applied. Quotations may be retained as explanatory notes but are optional and non-authoritative; quote stamps are not validation evidence.
 
-These are enforced, not suggested:
+Reference loading is lazy:
 
-- **No dual axes.** Two metrics in different units never share a chart.
-- **The axis range comes from the data**, never back-computed from the tick list.
-- **Colour is used by role** — identity, magnitude, direction. No rainbows, no hex on the canvas.
-- **Every chart owes a table twin.** A tooltip supplements; it is never the only route.
-- **No invented numbers.** A metric you did not supply becomes `—`, or the section is dropped.
-- **Nothing is dropped silently.** Rows that cannot be plotted are counted on the canvas.
-- **The animation always ends**, even if the browser stops rendering. The final frame holds all
-  the information, and movement is confined to four places that carry meaning.
-- **The limits section is mandatory** — including what the data cannot see.
-
-A finished report is scored against 48 gates in `references/slop-test.md` before it ships.
-If anything in the data-honesty group trips, the rest of the score is void.
+- **Core:** `references/rules.json`, `references/analysis-lenses.md`, and `references/anti-patterns.md`.
+- **Conditional:** `uncertainty.md` for comparisons/estimates, the selected macrostructure, `themes.md`, `components.md`, `tooltip-help.md`, factory-relevant `pitfalls.md`, `motion.md` when enabled, and relevant `external-tools.md` sections.
+- **Final:** `references/slop-test.md` and validator guidance after a build exists.
 
 ## Layout
 
-```
-SKILL.md                     the procedure: profile → insights → shape → theme → wire → verify
-assets/
-  report-shell.html          the runtime. Open it; a demo runs
-  themes.css                 10 themes × day/night, hex-frozen from OKLCH
-  apply-theme.py             swaps a theme without breaking the shell's marks
-references/
-  analysis-lenses.md         data shape → lens → chart
-  macrostructures.md         index; read one file from macrostructures/
-  themes.md                  catalogue, rotation rule, contrast contract
-  components.md              masthead / section head / insight / card archetypes
-  motion.md                  the four places movement is allowed, and its bounds
-  tooltip-help.md            help copy and the accessibility contract
-  anti-patterns.md           read while generating
-  pitfalls.md                read before touching the runtime
-  slop-test.md               read only when it is built
-  external-tools.md          D3, Plotly, GSAP, Motion, anime.js, Lottie, Rive —
-                             what to borrow from each and what to refuse
-lab/motion-engines/          worked examples for when the answer is "use the real tool":
-                             six runnable pages, one per runtime, vendored and SHA-pinned.
-                             Deliberately outside the output contract — not reports
-docs/themes.png              the contact sheet above
+```text
+SKILL.md                 state-machine guidance and ownership
+assets/profile-data.py   deterministic profile → profile.json
+assets/select-candidates.py compatible lens/macro/theme candidates
+assets/validate-plan.py  rules compiler → report-spec.json
+assets/build-report.py   deterministic builder → HTML
+assets/report-state.py   ordered state transitions and artifact hashes
+assets/validate-report.py progressive gates → validation.json
+assets/check-render.py   render/layout gate
+assets/check-motion.py   declared-motion gate
+schemas/*.schema.json    artifact contracts
+references/rules.json,
+references/index.json    authoritative Rule-ID provenance
+assets/report-shell.html read-only report runtime
+references/              analytical, design, and final-review guidance
 ```
 
-## Requirements
+## Report principles
 
-- A modern browser for the report itself (OKLCH is only used at authoring time; shipped tokens
-  are hex, so the output is broadly compatible).
-- Python 3 for `apply-theme.py` — standard library only.
-- Headless Chrome if you want the verification step, which the skill treats as mandatory:
+- Use actual supplied data; never invent a metric or comparison.
+- Select only lenses the profile supports; disclose exclusions and uncertainty.
+- Keep charts inspectable through table twins, accessible help, and methodology.
+- Use colour semantically, never as decoration.
+- Preserve an offline, reproducible artifact trail from profile through validation.
 
-```bash
-google-chrome --headless=new --force-prefers-reduced-motion \
-  --window-size=1240,8000 --screenshot=out.png "file:///absolute/path.html"
-```
-
-`--force-prefers-reduced-motion` is required — without it you capture a mid-animation frame and
-misdiagnose it as a broken chart.
-
-## Localisation
-
-The shell ships in English. Every string a reader sees lives in one `[L] CR_STRINGS` block —
-translate that, not the code, and set `<html lang="…">` so `Intl` formats numbers and magnitudes
-for the locale.
-
-Theme font stacks name Latin faces and then fall through to `system-ui` / `ui-serif` /
-`ui-monospace`, so any script the named faces do not cover is resolved by the operating system.
-Note the consequence: in a non-Latin report the difference between themes is carried by spacing,
-scale, rules and colour rather than by the typeface, which is exactly why the macrostructure
-matters more than the theme.
-
-## Attribution
-
-Merged from two predecessors:
-
-- **canvas-data-report** — the canvas runtime, the analysis lenses, table twins, help tooltips
-  and the methodology discipline.
-- **[Hallmark](https://www.usehallmark.com) (MIT)** — macrostructure-first selection, three-axis theme
-  rotation, component archetypes and the anti-slop gates. The theme palettes here were derived
-  from Hallmark's OKLCH token values and recomputed against a contrast contract.
-
-Hallmark is MIT licensed; its copyright notice is reproduced in full in [`NOTICE`](NOTICE), which
-must travel with any redistribution of this repository.
-
-## Licence
-
-MIT — see [`LICENSE`](LICENSE). Third-party notices are in [`NOTICE`](NOTICE).
+For a single chart, use a chart factory without this report pipeline. For no data, request data rather than generate a mock report.

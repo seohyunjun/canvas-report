@@ -17,8 +17,8 @@ can manufacture whatever correlation you wanted. → Separate charts, or `VIZ.pa
 puts data outside the plot. → Fix the range from the data, then find ticks inside it.
 
 **A bar chart not starting at zero.** A line may do this; a bar may not, because its length *is*
-the value. A truncated bar makes a 2× difference look like 10×. → Bars start at zero. If you
-genuinely must break that, say so in the axis help tooltip.
+the value. A truncated bar makes a 2× difference look like 10×. → Bars always start at zero;
+use a different chart when that scale is not useful.
 
 **Small multiples with a per-cell axis.** The grid exists to compare; if each cell scales itself,
 the comparison is an illusion. → A shared axis. If they cannot share one, do not build a grid.
@@ -60,6 +60,18 @@ either hid what you found or never looked.
 **Dropping rows silently.** A `null` or `NaN` reaching a coordinate deletes a mark with no error.
 → The shell's factories filter at the door and print `N rows omitted`. Never suppress that.
 
+**Hand-editing a generated report.** A plausible HTML patch can disagree with the profile, plan,
+or validator result and has no reproducible source. → The Agent writes only `plan.json`; change
+the plan/spec and rebuild builder-owned HTML.
+
+**Treating a quotation as validation.** A copied reference fragment can be irrelevant, stale, or
+misapplied. → Rule IDs from `references/rules.json` and `references/index.json` in
+profile/spec/results are authoritative. Quotations
+are optional explanatory notes, never gate evidence.
+
+**A fixed insight quota.** Padding a report to four cards promotes weak observations to claims.
+→ Use an evidence-driven set, typically 2–6 falsifiable insights; drop unsupported ones.
+
 ---
 
 ## B. How a screen gives away that it was generated
@@ -89,9 +101,8 @@ fake terminal windows. → A real screenshot, or nothing.
 Label them all and you have built a table, not a chart.
 
 **Decorative animation.** Loops, staggered entrances, hover zoom, loading skeletons.
-→ Delete anything outside the four places in [`motion.md`](motion.md). Deleting is only half of
-   it: the motion that belongs there must actually be wired, and `motion.md` § What must actually
-   be wired says what that means.
+→ Delete it. Motion is optional and declared per chart only when it communicates a waterfall
+   flow, scrollytelling transition, keyed re-sort, or deliberate one-time reading aid.
 
 **An inflated title.** "Deep-Dive Insights Dashboard", "Our Future, Seen Through Data".
 → The title says what it is about; the subtitle says the as-of date and the scope. That is all.
@@ -105,8 +116,10 @@ grid wide via `min-width:auto`. → `.grid > * { min-width:0 }` (already in the 
 **A click target that wraps to two lines.** Buttons, anchors and tabs wrapping on mobile are hard
 to hit and look careless. → Shorten the label or widen the container.
 
-**The same theme two reports running.** If two of the three axes match, a reader reads them as the
-same thing. → The rotation rule in [`themes.md`](themes.md).
+**A near-repeat theme without an explicit compatible override.** Choosing a theme fewer than two
+axes away from the previous theme makes reports read as the same template. → Filter for
+compatibility, then require rotation distance at least 2. A compatible explicit user override is
+recorded in `plan.json`.
 
 **Leaning on the display font to differentiate.** In scripts the named Latin faces do not cover,
 every theme resolves to the same system font. → Difference must also come from spacing, scale,

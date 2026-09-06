@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "files": [
+    {"path":"references/rules.json","class":"Core","lazy_trigger":"all runs; machine-readable rule registry"},
+    {"path":"references/analysis-lenses.md","class":"Core","lazy_trigger":"after profile generation; select supported lenses"},
+    {"path":"references/anti-patterns.md","class":"Core","lazy_trigger":"while writing evidence-backed plan decisions"},
+    {"path":"references/uncertainty.md","class":"Conditional","lazy_trigger":"plan contains a comparison, estimate, ratio, or interval"},
+    {"path":"references/macrostructures.md","class":"Conditional","lazy_trigger":"candidate filtering; read the index only"},
+    {"path":"references/macrostructures/<selected>.md","class":"Conditional","lazy_trigger":"after a compatible macro is selected"},
+    {"path":"references/themes.md","class":"Conditional","lazy_trigger":"theme compatibility or explicit theme requirement"},
+    {"path":"references/components.md","class":"Conditional","lazy_trigger":"selected masthead, section, card, filter, or methodology archetype"},
+    {"path":"references/tooltip-help.md","class":"Conditional","lazy_trigger":"plan contains charts or computed-metric help"},
+    {"path":"references/motion.md","class":"Conditional","lazy_trigger":"at least one chart declares motion.enabled=true"},
+    {"path":"references/pitfalls.md","class":"Conditional","lazy_trigger":"selected chart factory or interaction activates a tagged implementation constraint"},
+    {"path":"references/external-tools.md","class":"Conditional","lazy_trigger":"requested form is outside the deterministic builder vocabulary"},
+    {"path":"references/slop-test.md","class":"Final Validation","lazy_trigger":"builder has emitted report.html"}
+  ]
+}
