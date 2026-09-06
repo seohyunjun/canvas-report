@@ -2,7 +2,7 @@
 
 Versions are the `version:` field in `SKILL.md`. Dates are the day the work landed on `main`.
 
-## 3.0.0 — 2026-09-06
+## 3.0.0 — 2026-09-07
 
 A break at the level of who is allowed to write what. Through 2.1.3 the skill was prose: `SKILL.md`
 described a report and the Agent wrote the HTML. Every guarantee — an honest number, a table twin,
