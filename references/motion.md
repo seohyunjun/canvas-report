@@ -1,65 +1,95 @@
-# Motion — evidence, not a default
+# Motion — choreograph the reading, preserve the evidence
 
-Motion is optional. A chart is static unless its validated `report-spec.json` declares a specific
-reader benefit. The plan records that decision per chart, and `assets/check-motion.py` runs only for charts
-that declare motion. Motion never substitutes for a table, label, or explanation; the final static
-state must contain all information.
+Motion is considered for every report and decided per chart. Start with one report-level reading
+sequence, then enable only the transitions that help the eye acquire axes, follow marks, or retain
+object identity. The final static state, table twin, labels, and methodology carry the full meaning.
 
-## Permitted meaningful cases
+## Start with a motion story
 
-| Case | What motion communicates | Contract |
-|---|---|---|
-| Waterfall flow | movement from opening to closing is the claim | one bounded sequence |
-| Scrollytelling transition | the reader follows a change on one coordinate system | transition tied to step change |
-| Keyed re-sort | the same entity moved position | stable `cfg.key`, ≤420ms |
-| Intentional entry reading aid | axes/baseline register before marks settle | play once, never required to understand the chart |
+Before assigning chart animations, write `creative_direction.motion_story`:
 
-Every other case is static unless the plan proves a distinct information benefit. Loops, hover zoom,
-colour pulses, staggered entrances, loading skeletons, and motion merely to make a report feel
-alive are decorative and prohibited.
+- `goal` names the reader benefit;
+- `sequence` orders the masthead, lead evidence, supporting evidence, and resolution;
+- `restraint` names what will not move.
 
-## Per-chart plan contract
+Avoid simultaneous motion in competing cards. A practical default is one lead transition followed
+by play-once, on-view entry for later evidence charts. Returning to a chart does not replay it.
 
-For every chart, the plan/spec says either:
+Tie every enabled chart to one dedicated motion engine selected in
+`creative_direction.external_tools` through `motion.source_tool`. Valid chart-entry sources are
+GSAP, Motion, and anime.js. D3 remains a visualization/data-join tool and Plotly remains a
+visualization/state-model tool; neither may be reported as the primary motion engine.
+
+## Current deterministic builder contract
+
+The shipped builder supports one executable chart motion. It can be driven either by the compact
+portable runtime or by one pinned vendored engine selected at report level: GSAP 3.12.5, Motion
+11.11.17, or anime.js 3.2.2.
+
+| Kind | Trigger | Use | Bounds |
+|---|---|---|---|
+| `entry` | `on-view` | axes/baseline register before marks settle into the final reading | 180–1200ms, value-safe easing, once |
+
+An eligible chart should use this reading aid unless data density, comparison speed, or cognitive
+load makes static presentation clearer. Static is not a shortcut: its reason must be specific to
+that chart.
 
 ```json
-{"motion":{"enabled":false,"reason":"Static comparison is clearer."}}
+{
+  "motion": {
+    "enabled": true,
+    "reason": "The baseline appears first so the size comparison resolves in reading order.",
+    "kind": "entry",
+    "trigger": "on-view",
+    "duration_ms": 620,
+    "easing": "outCubic",
+    "source_tool": "motion"
+  }
+}
 ```
-
-or:
 
 ```json
-{"motion":{"enabled":true,"kind":"keyed-resort","reason":"Preserves entity identity across ordering.","key":"entity_id","duration_ms":420}}
+{
+  "motion": {
+    "enabled": false,
+    "reason": "Dense labels are faster to scan without mark growth."
+  }
+}
 ```
 
-A filter is never a keyed re-sort. When rows appear or disappear, redraw at `0ms`; travelling
-survivors falsely implies continuity. A missing, positional, or formatted-changing key is not
-stable and must disable re-sort motion.
+Value-safe easing values are `linear`, `outCubic`, `inOutCubic`, `outQuint`, `outExpo`,
+`outCirc`, and `inOutQuint`. Overshoot curves temporarily assert values beyond the axis and are
+therefore invalid for data marks.
+
+## Richer motion
+
+Waterfall flow, scrollytelling transitions, and keyed re-sorts can communicate more than entry
+motion, but only use them with a selected builder/runtime that implements their state model and
+validator. The current deterministic builder does not compile those kinds from `plan.json`; do
+not declare them and hope the shell will infer the choreography.
+
+Filters always redraw at `0ms`. Rows appearing or disappearing are not a keyed re-sort. Travelling
+survivors would falsely imply continuity.
 
 ## Runtime boundaries
 
 Report runs do not edit the runtime shell, resize/layout code, tooltip engine, `VIZ` factories, or
-motion engine. The deterministic builder applies the validated motion contract to the read-only
-runtime. `R.reduced()` omits motion rather than slowing it; `R.onView` plays once; `R.paintAll()`
-repaints filters; `chart.play(duration, easing)` must always resolve to a final draw.
+motion engine. The builder applies the validated contract. `R.reduced()` omits motion rather than
+slowing it, `R.onView` plays once, and every `chart.play(duration, easing)` resolves to a final draw.
 
-Use only value-safe curves for marks whose geometry represents values. Overshoot is not valid for
-such marks because it temporarily asserts a value outside the axis. `R.countUp` and opacity/small
-translate UI effects may use their documented non-mark curves.
+Loops, stagger cascades, hover zoom, colour pulses, loading skeletons, and motion used merely to
+make a report feel alive are prohibited. Small UI affordances may move only when they clarify a
+state change and must remain usable under reduced motion.
 
 ## Validation
 
-Render screenshots with reduced motion for layout, but do not treat that as motion evidence.
-`assets/check-motion.py` validates declared motion on a real clock and reports structured Rule-ID
-diagnostics. It checks that the declared animation starts when intended, reaches final state, and
-does not require motion for comprehension. A static chart has no motion gate.
+Render screenshots with reduced motion for layout, but do not treat them as motion evidence.
+`assets/check-motion.py` uses a real clock to verify that enabled charts are wired, produce multiple
+states, finish at `t === 1`, and leave disabled charts static. When `vendored-runtime` is declared,
+it also verifies that the selected GSAP, Motion, or anime.js runtime actually drove the chart and
+that its version/SHA marker matches the pinned vendor file. Run it through
+`assets/validate-report.py` whenever any chart enables motion.
 
-The required ordering is: validate the per-chart contract in `assets/validate-plan.py`, build from
-`report-spec.json`, then run `assets/check-motion.py` only where the spec requires it. A failure follows
-the run retry ladder: Local Fix → Component Rebuild → Simplify → Drop Unsupported Section.
-
-## Legacy provenance
-
-Reports created before the declarative motion contract may cite the former rule
-“Play-once-on-entry is the default, not an extra.” That sentence is retained only so their
-historical quote stamps remain verifiable; it is superseded by explicit per-chart motion intent.
+A failure follows the retry ladder: Local Fix → Component Rebuild → Simplify → Drop Unsupported
+Section. Never turn motion off merely to silence the gate; disable it only when the revised plan
+gives a better reader-centered reason.

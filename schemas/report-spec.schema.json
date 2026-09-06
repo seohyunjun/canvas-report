@@ -1,1 +1,60 @@
-{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"Canvas report specification","type":"object","additionalProperties":false,"required":["schema_version","source","plan_sha256","metadata","masthead","grain","candidates","lenses","insights","macro","theme","sections","charts","methodology","rule_decisions","retry_policy","ownership"],"properties":{"schema_version":{"const":"1.0"},"source":{"type":"object","additionalProperties":false,"required":["path","sha256"],"properties":{"path":{"type":"string","minLength":1},"sha256":{"type":"string","pattern":"^[a-f0-9]{64}$"}}},"plan_sha256":{"type":"string","pattern":"^[a-f0-9]{64}$"},"metadata":{"type":"object"},"masthead":{"type":"string","minLength":1},"grain":{"type":"string","minLength":1},"candidates":{"type":"object","additionalProperties":false,"required":["lenses","macros","themes"],"properties":{"lenses":{"type":"array","items":{"type":"string"}},"macros":{"type":"array","items":{"type":"string"}},"themes":{"type":"array","items":{"type":"object","required":["id","paper_band","display_class","accent_hue"]}}}},"lenses":{"type":"object"},"insights":{"type":"array"},"macro":{"type":"string"},"theme":{"type":"string"},"sections":{"type":"array"},"charts":{"type":"array"},"methodology":{"type":"object"},"rule_decisions":{"type":"array"},"retry_policy":{"type":"object","additionalProperties":false,"required":["max_attempts","steps"],"properties":{"max_attempts":{"const":4},"steps":{"const":["Local Fix","Component Rebuild","Simplify","Drop Unsupported Section"]}}},"ownership":{"type":"object","additionalProperties":false,"required":["writable","immutable"],"properties":{"writable":{"type":"array","items":{"type":"string"}},"immutable":{"type":"array","items":{"type":"string"}}}}}}
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Canvas report specification",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "source", "plan_sha256", "metadata", "masthead", "grain", "candidates", "lenses", "insights", "macro", "theme", "creative_direction", "sections", "charts", "methodology", "rule_decisions", "retry_policy", "ownership"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "plan_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "metadata": {"type": "object"},
+    "masthead": {"type": "string", "minLength": 1},
+    "grain": {"type": "string", "minLength": 1},
+    "candidates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lenses", "macros", "themes"],
+      "properties": {
+        "lenses": {"type": "array", "items": {"type": "string"}},
+        "macros": {"type": "array", "items": {"type": "string"}},
+        "themes": {"type": "array", "items": {"type": "object", "required": ["id", "paper_band", "display_class", "accent_hue"]}}
+      }
+    },
+    "lenses": {"type": "object"},
+    "insights": {"type": "array"},
+    "macro": {"type": "string"},
+    "theme": {"type": "string"},
+    "creative_direction": {"type": "object"},
+    "sections": {"type": "array"},
+    "charts": {"type": "array"},
+    "methodology": {"type": "object"},
+    "rule_decisions": {"type": "array"},
+    "retry_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_attempts", "steps"],
+      "properties": {
+        "max_attempts": {"const": 4},
+        "steps": {"const": ["Local Fix", "Component Rebuild", "Simplify", "Drop Unsupported Section"]}
+      }
+    },
+    "ownership": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["writable", "immutable"],
+      "properties": {
+        "writable": {"type": "array", "items": {"type": "string"}},
+        "immutable": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  }
+}

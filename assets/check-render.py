@@ -100,7 +100,7 @@ async def connect(port):
 
 async def inspect(path, port):
     profile = tempfile.mkdtemp(prefix="cr-render-")
-    chrome = shutil.which("google-chrome") or shutil.which("chromium") or "google-chrome"
+    chrome = os.environ.get("CR_CHROME") or shutil.which("google-chrome") or shutil.which("chromium") or "google-chrome"
     process = subprocess.Popen([chrome, "--headless=new", "--no-sandbox", "--disable-gpu",
                                 "--user-data-dir=" + profile, "--remote-debugging-port=%d" % port,
                                 "about:blank"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

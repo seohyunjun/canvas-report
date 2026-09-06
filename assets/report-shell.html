@@ -1799,7 +1799,7 @@ return { data:JSON.parse(document.getElementById('report-data').textContent),
          VIZ:VIZ, tokens:function(){return T;}, diverge:diverge, rgba:rgba, mix:mix,
          nf:nf, sg:sg, pc:pc, compact:compact, dirCls:dirCls, ticks:ticks,
          el:el, helpDot:helpDot, wireHelp:wireHelp, wireToggles:wireToggles,
-         buildTable:buildTable, onView:onView, paintAll:paintAll, onTheme:function(f){ themeHooks.push(f); f(T); },   /* runs now and on every change:
+         buildTable:buildTable, onView:onView, paintAll:paintAll, paintOne:paint, onTheme:function(f){ themeHooks.push(f); f(T); },   /* runs now and on every change:
            a hook registered but never run leaves an HTML legend empty until the reader
            happens to toggle the theme. Register it after the markup exists. */
          countUp:countUp, reveal:reveal, scrolly:scrolly, shrinkMasthead:shrinkMasthead,

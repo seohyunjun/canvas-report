@@ -1,5 +1,24 @@
 # Changelog
 
+## 3.1.0 — 2026-09-07
+
+- Remove Lottie and Rive from tool selection, documentation, lab pages, generated sample assets,
+  vendored runtimes, fetch checksums, and licence inventory.
+- Separate visualization/state sources from motion engines: D3 and Plotly can no longer satisfy
+  `motion.source_tool`; only GSAP, Motion, and anime.js can.
+- Add pinned vendored-runtime build and real-clock validation paths for GSAP 3.12.5, Motion
+  11.11.17, and anime.js 3.2.2, including runtime version and SHA verification.
+- Make `references/external-tools.md` a required toolchain router for D3, Plotly, GSAP, Motion,
+  and anime.js patterns.
+- Add `creative_direction` to plan/spec contracts with external-tool selection provenance and a
+  report-level motion story.
+- Make chart motion executable per chart with declared trigger, duration, and value-safe easing;
+  the builder now honors those settings instead of applying one global animation duration.
+- Align the motion reference and final scorecard with the deterministic builder's actual `entry`
+  motion capability.
+- Let render and motion gates use `CR_CHROME` when Chrome is installed outside the executable
+  search path.
+
 Versions are the `version:` field in `SKILL.md`. Dates are the day the work landed on `main`.
 
 ## 3.0.0 — 2026-09-07
@@ -231,7 +250,7 @@ pass 2.1.0's gates.
 
 - `references/external-tools.md` gained a D3.js entry in §A and a "what was actually adopted"
   record for the keyed join.
-- `lab/motion-engines/`: one page per engine (GSAP, Motion, anime.js, Lottie, Rive, D3) with
+- `lab/motion-engines/`: one page per engine (GSAP, Motion, anime.js, D3) with
   usage notes, vendored runtimes pinned and SHA256-verified, and licences flagged. Every page
   carries an explicit final-state paint, because none of the engines guarantees one.
 - `README.md` documents how to use the skill, not only how to install it.

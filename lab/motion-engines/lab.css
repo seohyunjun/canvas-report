@@ -1,4 +1,4 @@
-/* Shared lab styling. The five pages must look identical so only the engine differs. */
+/* Shared lab styling. The four pages must look identical so only the tool differs. */
 *{box-sizing:border-box}
 :root{color-scheme:light dark;
   --bg:#faf9f7; --fg:#14120f; --dim:#6b6560; --line:#dcd7d0; --card:#fff; --bar:#b5451b; --bar2:#1f6f8b}
