@@ -159,6 +159,13 @@ Headless Chrome clamps the viewport to a minimum of 500px. Passing `--window-siz
 → Pass token names (`color:'s1'`) and resolve at draw time. Legends built in HTML get repainted
 from the `onTheme()` hook.
 
+**`VIZ.divColumns` silently ignored `cfg.color`.** It is the diverging histogram, so it coloured
+every bar by its distance from the midpoint and dropped the token it was handed — no warning, no
+error. Used as `analysis-lenses.md` prescribes it, for the distribution of a *positive* quantity,
+that paints red-to-blue across bins that have no direction at all. → It now honours a plain
+`cfg.color` as a single hue, `cfg.colorOf` for per-bar control, and diverges only when given
+neither. A factory that takes a colour and ignores it is the trap below, again.
+
 **`VIZ.panels` was the one factory that ignored colour tokens.** It assigned
 `cfg.panels[].color` straight to `fillStyle`, so `'s1'` was ignored and the canvas kept the
 previous colour. Fixed — every factory now routes colour through `colorOf()`. Keep it that way.

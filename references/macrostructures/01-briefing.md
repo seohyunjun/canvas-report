@@ -28,8 +28,11 @@ with no support or a chart with no conclusion.
 
 ## Motion
 - Hero figure: `R.countUp(el, v, 900)`.
-- `.reveal` on each section; charts play once via `R.onView`.
-- Stat-tile sparklines draw immediately, no animation — many small things moving at once is noise.
+- `.reveal` on each section; every evidence chart plays once on entry — `R.playAll()` does this
+  for the whole page, and the evidence sections are where it belongs.
+- **Stat-tile sparklines are the exception**: a dozen small things moving at once is noise, not
+  reading. Declare them `static:true` so they draw immediately, and say so in the methodology.
+  Omission is not a declaration — see [`../slop-test.md`](../slop-test.md) gate 46.
 
 ## Markup skeleton
 

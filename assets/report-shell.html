@@ -121,7 +121,7 @@ h3{font-size:15px; margin:0 0 4px; font-weight:650}
 .hero-label{font-size:13px; color:var(--text-muted); font-weight:600}
 .hero-sub{margin:10px 0 0; color:var(--text-secondary); font-size:14px}
 .tiles{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px}
-@media(min-width:520px){ .tiles{grid-template-columns:repeat(2,1fr)} }
+@media(min-width:520px){ .tiles{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))} }  /* 2 up at 520px, more as the row allows — a hard repeat(2) here killed the auto-fit above it */
 .tile{background:var(--surface-1); border:var(--rule) solid var(--line); border-radius:var(--radius); padding:14px 15px 12px}
 .tile-label{font-family:var(--font-label); font-size:11.5px; color:var(--text-muted); font-weight:600;
   letter-spacing:.06em; text-transform:var(--label-caps); display:flex; align-items:center; gap:6px}
@@ -1025,7 +1025,12 @@ VIZ.divColumns=function(cvs,cfg){
     rows.forEach(function(r,i){
       var cx=pad.l+slot*i+slot/2;
       var t01=cfg.sign?cfg.sign(r,i,rows):(i<half?-(half-i)/half:(i-half)/half);
-      var col=cfg.colorOf?cfg.colorOf(r,i,rows):diverge(t01<0?Math.min(-.35,t01):Math.max(.35,t01));
+      /* cfg.colorOf wins; a plain cfg.color token makes it a single-hue histogram
+         (a distribution of a positive quantity has no direction to encode); with
+         neither, it diverges around the midpoint as a signed histogram should. */
+      var col=cfg.colorOf?cfg.colorOf(r,i,rows)
+             :cfg.color?colorOf(cfg.color)
+             :diverge(t01<0?Math.min(-.35,t01):Math.max(.35,t01));
       var h=(PH*Y(r)/hi)*c.t;
       ctx.fillStyle=col; barV(ctx,cx-bw/2,pad.t+PH-h,bw,h,4);
       if(c.t>=1 && Y(r)/mx>0.08) txt(ctx,compact(Y(r)),cx,pad.t+PH-h-11,'center',T.text2,'650',11);

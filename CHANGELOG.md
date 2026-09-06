@@ -2,6 +2,23 @@
 
 Versions are the `version:` field in `SKILL.md`. Dates are the day the work landed on `main`.
 
+## 2.1.2 — 2026-09-06
+
+Two more found by building a report, both the same shape: a value handed to the shell that the
+shell quietly dropped.
+
+- **`VIZ.divColumns` ignored `cfg.color`.** It is the diverging histogram, so it always coloured
+  bars by distance from the midpoint. Used the way `analysis-lenses.md` prescribes it — for the
+  distribution of a *positive* quantity — it painted red-to-blue across bins that have no
+  direction, which is slop-test gate 33. It now takes a plain `cfg.color` as a single hue,
+  `cfg.colorOf` for per-bar control, and diverges only when given neither.
+- **`.tiles` was pinned to two columns on every screen above 520px**, so the `auto-fit` rule
+  above it was dead everywhere but a phone and four stat tiles stacked two-by-two down the page.
+  It now stays responsive: two up at 520px, more as the row allows.
+- **01 Briefing's motion section** told stat-tile sparklines to draw without animation but
+  predated `static:true`, so it read as an instruction to satisfy gate 46 by omission. It now
+  names the declaration.
+
 ## 2.1.1 — 2026-09-06
 
 Three defects found by building a report with 2.1.0.
