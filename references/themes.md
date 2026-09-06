@@ -30,38 +30,21 @@ python3 assets/apply-theme.py --list
 `terminal` and `lumen` are **dark-native**. Their light drops exist for print and for a projector,
 not as a default. The other eight are light-native. All ten ship both drops.
 
-## The rotation rule (mandatory)
+## Rotation and compatibility
 
-**Two consecutive reports must differ on at least one of the three axes above**
-(paper band · display class · accent hue). If two of the three match, a reader sees "same template".
+Theme selection is a validated plan decision, not a stamp-reading exercise. First discard themes
+incompatible with the profile, accessibility contract, macrostructure, or explicit requirements.
+Then calculate distance from the previous compatible theme across paper band, display class, and
+accent hue. The chosen theme must have **rotation distance at least 2**.
 
-Decide it on the page, not in your head. Write one line before you touch code:
+An explicit user requirement outranks rotation only after compatibility is proven. A user may
+explicitly request a compatible nearer theme; record the override and its compatibility evidence
+in `plan.json`. An incompatible request receives a structured Rule-ID diagnostic and an
+alternative. Macrostructure and masthead also rotate where compatible alternatives exist.
 
-> *"Previous: almanac (light · humanist-sans · cool). This one: carnival (light · display-heavy · warm) — display class and accent hue differ."*
-
-Three ways to know what the previous report was:
-
-1. the stamp comment at the top of another report HTML in the same folder
-   (`canvas-report · macro: … · theme: …`)
-2. `.canvas-report/log.json` (below)
-3. a report you produced earlier in this same session
-
-### `.canvas-report/log.json`
-
-Append one entry to the **front** of this file in the project root each time you ship a report.
-Create it if it does not exist.
-
-```json
-[
-  { "date": "2026-09-04", "macro": "05 Broadsheet", "theme": "newsprint", "masthead": "M3",
-    "lenses": ["trend", "comparison", "outliers"], "subject": "quarterly intake" },
-  { "date": "2026-08-21", "macro": "01 Briefing", "theme": "almanac", "masthead": "M2",
-    "lenses": ["trend", "flow"], "subject": "subscriber cohorts" }
-]
-```
-
-Read the last 3–5 entries and rotate **all three** of macrostructure, theme and masthead.
-Changing only one is not rotation — it produces the same skeleton in a new coat of paint.
+Rotation history and the decision live in run artifacts, not authoritative HTML comments. Optional
+report notes may describe the choice, but `references/rules.json`, `references/index.json`, and
+validator results are the source of truth.
 
 ## Series colours are used by role, never by taste
 
@@ -105,9 +88,7 @@ There is no fourth font.
 **No font files are fetched.** Each stack names Latin faces first and then falls through to
 `system-ui` / `ui-serif` / `ui-monospace`, so the *class* (serif / grotesk / mono) survives even
 when the named face is absent, and the operating system resolves any script the named faces do
-not cover. If the report will only ever be read online and one network request is acceptable,
-that is the single place to add a `<link rel="stylesheet" href="https://fonts.googleapis.com/…">` —
-it is opt-in, and if you take it, say so in the methodology.
+not cover. External-font requests are not an exception to the offline output contract.
 
 To pin a face for a specific script, insert it immediately before `system-ui` in that theme's
 stack. Otherwise expect that **in a non-Latin report the theme's difference is carried by

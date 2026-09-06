@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "rules": [
+    {"id":"DATA-HONESTY-001","category":"data_honesty","rule":"Claims and values must be traceable to supplied profile evidence; unsupported values are omitted."},
+    {"id":"LENS-ELIGIBILITY-001","category":"lens","rule":"Select only lenses compatible with the profiled grain, measures, dimensions, and keys."},
+    {"id":"MACRO-SELECTION-001","category":"macro","rule":"Select a compatible macrostructure before rotation; do not repeat the rotated prior choice when another compatible choice exists."},
+    {"id":"THEME-SELECTION-001","category":"theme","rule":"Select a compatible theme before rotation; do not repeat the rotated prior choice when another compatible choice exists."},
+    {"id":"CLAIMS-001","category":"claims","rule":"Every insight states its evidence fields and its limitations or uncertainty."},
+    {"id":"TABLE-TWIN-001","category":"accessibility","rule":"Every chart has an accessible table twin."},
+    {"id":"HELP-TWIN-001","category":"accessibility","rule":"Every chart has help explaining measure, basis, and interaction."},
+    {"id":"ZERO-NETWORK-001","category":"runtime","rule":"Generated reports make no network requests and contain no external runtime dependency."},
+    {"id":"MOTION-INTENT-001","category":"motion","rule":"Each chart explicitly states whether motion is enabled and why."},
+    {"id":"MOTION-FINAL-STATE-001","category":"motion","rule":"Motion has a deterministic final state."},
+    {"id":"MOTION-REDUCED-001","category":"motion","rule":"Reduced-motion preference disables nonessential motion while preserving final content."},
+    {"id":"RESPONSIVE-001","category":"final","rule":"Final output remains usable at narrow and wide viewports."},
+    {"id":"DARK-MODE-001","category":"final","rule":"Final output has a legible dark-mode treatment."},
+    {"id":"FINAL-CHECKS-001","category":"final","rule":"Validate generated output, chart/table/help twins, motion, and zero-network before delivery."}
+  ]
+}

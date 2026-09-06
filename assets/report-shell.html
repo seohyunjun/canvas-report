@@ -603,6 +603,10 @@ function fit(cvs){
 }
 function mk(cvs, draw, opt){
   var c={cvs:cvs, draw:draw, hits:[], t:1, opt:opt||{}};
+  /* Generated reports declare motion on the canvas. The builder owns these
+     attributes; report Agents never mutate chart handles or runtime code. */
+  if(cvs.dataset.motionEnabled==='false') c.opt.static=true;
+  c.motion={enabled:cvs.dataset.motionEnabled==='true', reason:cvs.dataset.motionReason||''};
   charts.push(c); cvs.__chart=c;
   if(window.ResizeObserver) new ResizeObserver(function(){ paint(c); }).observe(cvs.parentElement);
   else window.addEventListener('resize', function(){ paint(c); });
@@ -1830,24 +1834,24 @@ main.innerHTML =
 '<div class="grid grid-2">'+
  '<div class="card"><div class="card-head"><h3 id="t1">Total over time</h3><button class="btn" type="button" data-table-toggle="tw1" aria-expanded="false">Table view</button></div>'+
   '<p class="card-note">Only the endpoint carries a printed value; the axis and the tooltip do the rest.</p>'+
-  '<div class="chart"><canvas id="c1" height="230" role="img" aria-label="Line chart of the total by period"></canvas></div><div class="tablewrap" id="tw1" hidden><table id="tb1"></table></div></div>'+
+  '<div class="chart"><canvas id="c1" height="230" role="img" aria-label="Line chart of the total by period" data-motion-enabled="true" data-motion-reason="Entry motion reveals the trend direction once"></canvas></div><div class="tablewrap" id="tw1" hidden><table id="tb1"></table></div></div>'+
  '<div class="card"><div class="card-head"><h3 id="t2">Components</h3><button class="btn" type="button" data-table-toggle="tw2" aria-expanded="false">Table view</button></div>'+
   '<p class="card-note">Two series in the same unit, so one axis compares them directly.</p>'+
   '<div class="legend" id="lg2"></div>'+
-  '<div class="chart"><canvas id="c2" height="230" role="img" aria-label="Grouped column chart of two series by period"></canvas></div><div class="tablewrap" id="tw2" hidden><table id="tb2"></table></div></div>'+
+  '<div class="chart"><canvas id="c2" height="230" role="img" aria-label="Grouped column chart of two series by period" data-motion-enabled="true" data-motion-reason="Entry motion establishes the shared-baseline comparison once"></canvas></div><div class="tablewrap" id="tw2" hidden><table id="tb2"></table></div></div>'+
 '</div></section>'+
 '<section class="reveal"><div class="sec-head"><p class="sec-num">02 · Flow</p><h2>From opening to closing</h2>'+
 '<p class="lede">A single net figure hides what moved. This splits it into parts.</p></div>'+
 '<div class="card"><div class="card-head"><h3 id="t3">Change decomposition</h3>'+
  '<button class="btn" type="button" data-table-toggle="tw3" aria-expanded="false">Table view</button><button class="btn" type="button" id="replay">▷ Replay</button></div>'+
- '<div class="chart"><canvas id="c3" height="300" role="img" aria-label="Waterfall chart decomposing the change"></canvas></div>'+
+ '<div class="chart"><canvas id="c3" height="300" role="img" aria-label="Waterfall chart decomposing the change" data-motion-enabled="true" data-motion-reason="Sequential motion communicates the bridge flow"></canvas></div>'+
  '<div class="tablewrap" id="tw3" hidden><table id="tb3"></table></div></div></section>'+
 '<section><div class="sec-head"><p class="sec-num">03 · Comparison and distribution</p><h2>The groups split</h2></div>'+
 '<div class="grid grid-2">'+
  '<div class="card"><div class="card-head"><h3 id="t4">Group size</h3><button class="btn" type="button" data-table-toggle="tw4" aria-expanded="false">Table view</button></div>'+
-  '<div class="chart"><canvas id="c4" height="240" role="img" aria-label="Bar chart of size by group"></canvas></div><div class="tablewrap" id="tw4" hidden><table id="tb4"></table></div></div>'+
+  '<div class="chart"><canvas id="c4" height="240" role="img" aria-label="Bar chart of size by group" data-motion-enabled="true" data-motion-reason="Entry motion introduces the magnitude comparison once"></canvas></div><div class="tablewrap" id="tw4" hidden><table id="tb4"></table></div></div>'+
  '<div class="card"><div class="card-head"><h3 id="t5">Distribution of change</h3><button class="btn" type="button" data-table-toggle="tw5" aria-expanded="false">Table view</button></div>'+
-  '<div class="chart"><canvas id="c5" height="240" role="img" aria-label="Distribution of change by bucket"></canvas></div><div class="tablewrap" id="tw5" hidden><table id="tb5"></table></div></div>'+
+  '<div class="chart"><canvas id="c5" height="240" role="img" aria-label="Distribution of change by bucket" data-motion-enabled="true" data-motion-reason="Entry motion reveals the distribution shape once"></canvas></div><div class="tablewrap" id="tw5" hidden><table id="tb5"></table></div></div>'+
 '</div></section>';
 
 /* help chip beside each card title — what am I looking at · how do I read it ·

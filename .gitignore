@@ -1,6 +1,7 @@
 # agent/tool state — never belongs in the repo
 .omc/
 .canvas-report/
+.gjc/
 
 # python
 __pycache__/
