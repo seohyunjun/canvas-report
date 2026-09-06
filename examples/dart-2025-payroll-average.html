@@ -612,7 +612,9 @@ function helpDot(title, body, note){
 var charts=[];
 function fit(cvs){
   var dpr=Math.min(2, window.devicePixelRatio||1);
-  var H=+cvs.getAttribute('height')||240;
+  /* Setting cvs.height updates the height attribute. Keep the original logical
+     height so repeated DPR-scaled paints do not double the chart each time. */
+  var H=cvs.__logicalHeight||(cvs.__logicalHeight=+cvs.getAttribute('height')||240);
   cvs.style.height=H+'px';
   var W=Math.max(150, cvs.clientWidth || cvs.parentElement.clientWidth);
   cvs.width=Math.round(W*dpr); cvs.height=Math.round(H*dpr);
