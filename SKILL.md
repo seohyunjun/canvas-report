@@ -132,6 +132,17 @@ the stamp carries a `read:` line and the log entry carries a `"read"` list. Writ
 it as you open it. Content you happen to remember from another task is not a read; if it is not
 open in front of you for *this* build, it does not go on the line.
 
+**The decision must not contradict the fragment.** The quote check only proves you copied the
+text; it cannot see the arrow. A report shipped with
+
+```
+  motion   "Play once on entry"   -> only the lead chart plays; the column charts stay static
+```
+
+— verbatim quote, invented rule, two of three charts frozen. Before you write the arrow, read the
+fragment once more and ask whether the decision is an application of it or an exception to it. An
+exception is allowed, but it is stated as one, with the reason.
+
 ### 0. Profile the data — shape, not domain
 
 Actually load or query it first and establish the following. **Do not guess; query.**
@@ -283,8 +294,12 @@ section destroys the table of contents.
 
 A filter goes on **one line directly above the group it governs**, never inside a chart card.
 
-**Read [`references/motion.md`](references/motion.md) now.** Motion is confined to the three places
-it names — the waterfall's flow, scroll transitions, and play-once-on-entry. Delete the rest, and
+**Read [`references/motion.md`](references/motion.md) now.** Motion is confined to the four places
+it names — the waterfall's flow, scroll transitions, play-once-on-entry, and a keyed re-sort.
+Confined, but **required**: play-once-on-entry is every chart's default, wired in one call
+(`R.playAll(700)`), and a chart that stays still is declared `static:true` with the reason in the
+methodology. Wiring the lead chart and leaving the rest flat is the single most common defect in
+this skill's output. Delete everything outside the four places, and
 take the easing from its value-safe column: an overshoot curve on a chart draws the mark past its
 own axis. The same nine curves are catalogued in
 [`references/external-tools.md`](references/external-tools.md) **§ What was actually adopted**
@@ -313,7 +328,8 @@ R.wireHelp();   // wires hover, keyboard focus and touch tap
 - Every computed metric (a rate, an estimate, an index) gets a definition tooltip.
 - No information exists only in a tooltip — the same content is in the methodology too.
 
-Wiring order: `R.wireHelp() → R.wireToggles() → R.reveal() → R.paintAll()`.
+Wiring order: `R.wireHelp() → R.wireToggles() → R.reveal() → R.paintAll() → R.playAll(700)`.
+`R.playAll` last: it wires play-once-on-entry for every chart built above it.
 
 ### 8. Write the methodology
 
@@ -340,6 +356,16 @@ google-chrome --headless=new --no-sandbox --disable-gpu --hide-scrollbars \
 
 - `--force-prefers-reduced-motion` is **required**. Without it you capture a mid-animation frame
   and misdiagnose it as a cut-off chart.
+- **This run says nothing about motion.** The flag omits the animation, and `--virtual-time-budget`
+  freezes `requestAnimationFrame` besides, so progress reads one constant value however long you
+  sample. Motion is checked separately, on a real clock:
+
+  ```bash
+  python3 assets/check-motion.py report.html
+  ```
+
+  It reports per chart whether anything plays it on entry and whether it lands on its final state,
+  and exits non-zero if one never moves. Gates 46–48 are this command.
 - Shoot 1240 / 768 / 500. For the dark drop, temporarily set `data-theme="dark"` on `<html>`
   (never `--force-dark-mode`, which recolours the page).
 - Headless clamps the viewport to 500px minimum; anything narrower only crops the screenshot.
@@ -351,7 +377,7 @@ google-chrome --headless=new --no-sandbox --disable-gpu --hide-scrollbars \
 
 ### 10. Run the slop test and record the result
 
-Pass the 45 gates in [`references/slop-test.md`](references/slop-test.md).
+Pass the 48 gates in [`references/slop-test.md`](references/slop-test.md).
 **Do not read that file while generating** — the gates are a post-hoc check; the in-flight
 reference is [`references/anti-patterns.md`](references/anti-patterns.md).
 

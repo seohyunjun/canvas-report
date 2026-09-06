@@ -39,6 +39,40 @@ untrue:
   makes marks swap identities mid-flight, which is worse than no animation at all.
 - **≤ 420ms**, like a scroll step. A sort control is a control.
 
+## What must actually be wired
+
+The four places above are where motion is *allowed*. This is what a report must *do*, and the
+gap between the two is where reports go wrong: every audited report before this rule declared the
+motion vocabulary and then wired one chart out of five.
+
+**Play-once-on-entry is the default, not an extra.** The last line of the wiring block reads:
+
+```js
+R.wireHelp(); R.wireToggles(); R.reveal(); R.paintAll(); R.playAll(700);
+```
+
+`R.playAll()` walks every chart the page has built and gives it play-once-on-entry. It is
+opt-**out**: a chart that must not move is declared static at construction and the reason goes in
+the methodology.
+
+```js
+V.line(cvs, {rows: …, static:true});   // and say why, in the methodology
+```
+
+**"It is a small chart in a column" is not a reason.** Nor is "it is not the lead". Those are
+the excuses that produced 9 animated charts out of 27. A chart is static because moving it would
+mislead — an axis it shares with a neighbour that does not move, a mark whose growth reads as a
+trend it does not have — or it is not static.
+
+Beyond the default:
+
+- A **hero figure** counts up (`R.countUp`). A number rendered flat while the chart under it
+  draws itself looks broken.
+- A **ranking with a stable identity** gets `cfg.key` and a re-sort control. If you write
+  `key:'k'` and never ship a control that re-sorts, the key is dead code and the fourth place
+  is unused.
+- **03 Scrollytelling** must call `R.scrolly`; it is the macro's whole premise.
+
 ## Absolute rules
 
 1. **The animation always ends.** Even when rAF stops (background tab, headless capture) the
@@ -100,8 +134,27 @@ chart.play(700, 'outExpo');          // any VIZ handle; value-safe easings only
 // hbars / lollipop with cfg.key: play() after a re-sort makes marks travel
 R.motion(node, frames, opts);        // Web Animations, opacity + small translate only
 R.easings                            // the nine curves, if you need one directly
+R.playAll(700);                      // play-once-on-entry for every chart. The default.
 R.reduced();                         // true -> do not build the animation at all
 ```
+
+## Verifying it moved
+
+**A screenshot cannot answer this, and neither can the browser check in
+[`slop-test.md`](slop-test.md).** That check passes `--force-prefers-reduced-motion`, which omits
+the animation on purpose, and `--virtual-time-budget`, which freezes `requestAnimationFrame`
+outright — under virtual time a chart's progress reads one constant value forever, so a trace
+taken there shows a stuck animation whether or not one exists.
+
+Motion is verified on a real clock:
+
+```bash
+python3 assets/check-motion.py report.html
+```
+
+It drives Chrome over the DevTools protocol, scrolls the page as a reader would, and reports per
+chart whether anything played it on entry and whether it landed on its final state. It exits
+non-zero if a chart never moves. Run it before the stamp.
 
 ## Do not
 

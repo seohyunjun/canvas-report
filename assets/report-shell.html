@@ -603,11 +603,24 @@ function mk(cvs, draw, opt){
   if(window.ResizeObserver) new ResizeObserver(function(){ paint(c); }).observe(cvs.parentElement);
   else window.addEventListener('resize', function(){ paint(c); });
   bindHover(c);
-  c.play=function(dur,easingName){ anim(c,dur||800,null,easingName); return c; };
+  /* __played lets a verifier ask whether this chart ever animated on its own,
+     however it was wired. See assets/check-motion.py. */
+  c.play=function(dur,easingName){ c.__played=true; anim(c,dur||800,null,easingName); return c; };
   return c;
 }
 function paint(c){ var g=fit(c.cvs); c.g=g; c.hits=[]; c.draw(g.ctx,g.W,g.H,c); }
 function paintAll(){ charts.forEach(paint); }
+/* Wire every chart to play once as it enters view. This is the report's default
+   motion, not an extra: opt a chart out with mk(...,{static:true}), never opt in.
+   Charts already on screen start immediately; the rest wait for entry. Reduced
+   motion is handled downstream by anim(), which jumps straight to the final state. */
+function playAll(dur,easingName){
+  charts.forEach(function(c){
+    if(c.opt.static || c.__wired) return;
+    c.__wired=true;
+    onView(c.cvs, function(){ c.play(dur||700, easingName); });
+  });
+}
 function pick(c,p){
   var found=null,best=Infinity;
   for(var i=0;i<c.hits.length;i++){ var h=c.hits[i];
@@ -1395,7 +1408,9 @@ VIZ.waterfall=function(cvs,cfg){
     if(cfg.startLabel) txt(ctx,cfg.startLabel,pad.l,18,'left',T.muted,'600',12);
     if(cfg.endLabel)   txt(ctx,cfg.endLabel,W-pad.r,18,'right',T.muted,'600',12);
   });
-  c.play=function(dur,easingName){ anim(c,dur||800,null,easingName); return c; };
+  /* __played lets a verifier ask whether this chart ever animated on its own,
+     however it was wired. See assets/check-motion.py. */
+  c.play=function(dur,easingName){ c.__played=true; anim(c,dur||800,null,easingName); return c; };
   return c;
 };
 
@@ -1773,6 +1788,7 @@ return { data:JSON.parse(document.getElementById('report-data').textContent),
          el:el, helpDot:helpDot, wireHelp:wireHelp, wireToggles:wireToggles,
          buildTable:buildTable, onView:onView, paintAll:paintAll, onTheme:function(f){themeHooks.push(f);},
          countUp:countUp, reveal:reveal, scrolly:scrolly, shrinkMasthead:shrinkMasthead,
+         playAll:playAll,
          rgbOf:rgbOf, motion:motion, easings:easings, reduced:function(){return RM.matches;},
          wilson:wilson };
 })();
@@ -1892,7 +1908,7 @@ R.onTheme(function(t){
     '<span><i class="key sq" style="background:'+t.s1+'"></i>Series A</span>'+
     '<span><i class="key sq" style="background:'+t.s2+'"></i>Series B</span>';
 });
-R.wireHelp(); R.wireToggles(); R.reveal(); R.paintAll();
+R.wireHelp(); R.wireToggles(); R.reveal(); R.paintAll(); R.playAll(700);
 })();
 </script>
 </body>

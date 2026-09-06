@@ -4,7 +4,7 @@
 [`anti-patterns.md`](anti-patterns.md). This file is the scorecard for a finished report.
 Anything that trips, fix and run again.
 
-45 gates in five groups. **If anything in group D trips, the rest of the score is meaningless.**
+48 gates in five groups. **If anything in group D trips, the rest of the score is meaningless.**
 
 ---
 
@@ -61,7 +61,7 @@ Anything that trips, fix and run again.
 37. The dark drop is declared in both `@media (prefers-color-scheme)` and `[data-theme]`.
 38. The dark drop was actually rendered and looked at — it is not an inversion.
 
-## M · Motion and finish (39–45)
+## M · Motion and finish (39–48)
 
 39. The animation always ends — the final state draws even if rAF stops.
 40. The final state alone carries all the information.
@@ -71,6 +71,11 @@ Anything that trips, fix and run again.
 44. Rendered and inspected at 1240 / 768 / 500px, and horizontal overflow was **measured** with
     `scrollWidth` against `innerWidth`.
 45. The stamp is at the top of the file and this report is recorded in `.canvas-report/log.json`.
+46. **Every chart plays once on entry.** `R.playAll()` is called, or each chart is wired
+    individually. A chart that does not move is declared `static:true` and the methodology says
+    why. Verified with `python3 assets/check-motion.py report.html`, not by looking.
+47. Every hero figure counts up (`R.countUp`), and 03 Scrollytelling calls `R.scrolly`.
+48. Any `cfg.key` on the page has a re-sort control that uses it. An unused key is dead code.
 
 ---
 
@@ -104,6 +109,10 @@ google-chrome --headless=new --no-sandbox --disable-gpu --hide-scrollbars \
 
 - `--force-prefers-reduced-motion` is **required**. Without it you capture a mid-animation frame
   and misdiagnose it as "the chart is cut off".
+- **This check therefore proves nothing about motion**, and neither does dropping the flag:
+  `--virtual-time-budget` freezes `requestAnimationFrame`, so animation progress reads one
+  constant value however long you wait. Gates 46–48 are checked on a real clock instead, with
+  `python3 assets/check-motion.py report.html` ([`motion.md`](motion.md) § Verifying it moved).
 - Shoot all three widths (1240 / 768 / 500). For the dark drop, temporarily put
   `data-theme="dark"` on `<html>` — do **not** use `--force-dark-mode`, which forcibly recolours
   the page.

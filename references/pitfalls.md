@@ -18,6 +18,15 @@ so `(ts-t0)/dur` is negative — and an easing fed a negative `t` returns a larg
 while `t` only scaled a bar length (a negative width clamps to the 2px minimum) and became visible
 the moment `t` also drove a position, via `cfg.key`.
 
+**Verifying motion with `--virtual-time-budget`.** Virtual time freezes `requestAnimationFrame`
+— the callback simply never fires again — and `performance.now()` stops advancing with it. Trace a
+chart's progress under it and you get a single constant value for as long as you sample, which
+reads exactly like a broken animation. Add `--force-prefers-reduced-motion`, which the screenshot
+check requires, and the animation is omitted by design on top of that. Every screenshot check in
+this skill is therefore blind to motion.
+→ Verify motion on a real clock over the DevTools protocol: `assets/check-motion.py`. Do not
+conclude anything about animation from a screenshot run.
+
 **A mid-animation frame becomes the final state.**
 If progress lives in `c.t`, then whenever rAF stops — a background tab, a headless capture —
 the half-drawn chart is what remains.
@@ -62,6 +71,18 @@ assume non-negative magnitudes; a negative inverts the axis and produces nonsens
 
 **One data point cannot make a line.** `(v.length - 1)` divides by zero.
 → `spark` duplicates the single point; `line` never advances past `rows.length`.
+
+**A verbatim quote with a decision that contradicts it.** The stamp's quote check greps the
+fragment and passes; nothing checks the arrow. One report carried
+`motion "Play once on entry" -> only the lead chart plays, the column charts stay static` — the
+quote was exact and the decision was the opposite of it. → Re-read the fragment before writing the
+arrow. An exception to a reference is allowed; it is written down as an exception, with a reason.
+
+**Wiring one chart and calling the report animated.** `R.onView` on the lead chart, nothing on
+the other four, and a comment inventing a rule that is not in `motion.md` — "charts inside a
+column stay static". An audit of six reports found 9 of 27 charts wired.
+→ `R.playAll()` in the wiring block makes play-once-on-entry opt-out. A static chart is declared
+`static:true` with the reason in the methodology, never by omission.
 
 **A re-sort key that is not stable.** `cfg.key` on `hbars` / `lollipop` decides which mark is
 "the same thing" across a sort. Hand it an array index, or a string that reformats when the value

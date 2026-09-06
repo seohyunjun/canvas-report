@@ -153,6 +153,26 @@ outside the plot, clipped text, blank canvases, an `N rows omitted` note you did
 Judge horizontal overflow by measuring `document.documentElement.scrollWidth` against
 `innerWidth` — not by looking, since headless clamps the viewport to 500px.
 
+That run deliberately turns motion off, so it cannot tell you whether the charts move — and
+neither can leaving the flag out, because `--virtual-time-budget` freezes
+`requestAnimationFrame` and every frame then reads the same value. Motion has its own check, on
+a real clock:
+
+```bash
+python3 assets/check-motion.py report.html   # needs the `websockets` package
+```
+
+It drives Chrome over the DevTools protocol, scrolls the page the way a reader would, and prints
+one line per chart: whether anything played it on entry, how many distinct frames it drew, and
+whether it landed on its final state. It exits non-zero if a chart never moves.
+
+The stamp has a checker too. Every quote in the `read:` block must still appear verbatim in the
+file it cites, which catches both an invented quote and a reference edited after the fact:
+
+```bash
+python3 assets/check-quotes.py report.html
+```
+
 ## The rules it will not break
 
 These are enforced, not suggested:
