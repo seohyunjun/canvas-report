@@ -69,3 +69,13 @@ the deliverable is an **application**, not a document · someone must brush, zoo
 the artefact is a **designed animation** · the data is geographic, hierarchical or a network.
 
 If none of those four is true, the 2.1 MB in here is decoration.
+
+## Applying the lab to an application
+
+1. Choose one semantic intent in `references/motion-decision.md`.
+2. Select an engine whose strength matches that intent; do not choose an effect first.
+3. Keep the static fallback and reduced-motion path equivalent to the animated final state.
+4. Cancel active engine handles before teardown, capture, or a replacement transition.
+
+The lab deliberately demonstrates external runtimes without making them dependencies of generated
+reports. Copy the decision discipline and final-state safeguards, not the vendor bundles.

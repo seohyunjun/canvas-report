@@ -62,3 +62,20 @@ The shell rejects invalid or incompatible combinations and falls back to a stati
 engines decide how a valid intent is implemented; this document does not prescribe duration,
 easing, frames, or engine names.
 
+## External tool extension
+
+External engines may be used in the `lab/motion-engines/` experiments or in an application that
+does not have the single-file report constraint. Select the engine after selecting the semantic
+intent:
+
+| Intent | Useful external tool | What to borrow | Report boundary |
+|---|---|---|---|
+| `data-transition` | D3 transitions or Motion | Named states and value-safe interpolation. | Keep the completed state in the Canvas shell; do not add a network dependency. |
+| `spatial-reordering` | D3 keyed joins | Object constancy through a stable entity key. | Never animate ordinary filtering or unkeyed rows. |
+| `narrative-transition` | GSAP timeline or Motion | Explicit step sequencing and scroll-linked state changes. | Each step must remain readable without animation and respect reduced motion. |
+| `attention-guidance` | Motion or anime.js | One-shot opacity/transform emphasis. | Do not use stagger, loops, or decorative bounce in a report. |
+
+The external engine is an implementation choice, not a fifth intent. Vendor and pin it only for
+the lab or an application; generated reports continue to use the self-contained runtime. Any
+experiment must stop or cancel active animations before painting its final state, because external
+requestAnimationFrame loops can resume after a capture and overwrite that state.
