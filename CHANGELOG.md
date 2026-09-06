@@ -74,6 +74,24 @@ declared `{static:true}`. Where the declaration was simply omitted, "forgot to a
 - `assets/select-candidates.py` derives the compatible macrostructure, theme and lens sets from the
   profile before the Agent chooses, so rotation is a filtered decision rather than an improvised one.
 
+### Gates that a generated report can actually pass
+
+Found by running the pipeline end to end on a 24-month CSV before tagging this version.
+
+- **`FINAL-BUILD-002` counted `<canvas` in the HTML source.** The builder creates every chart
+  canvas at runtime, so a correct report contains none, and the one match it did find was the
+  word `<canvas height="104">` inside a comment in the shell — the same shape of bug as 2.1.1's
+  `<title>` substitution. No generated report could have reached `VERIFIED`. The static phase now
+  compares the chart ids the builder embedded against the spec, and the rendered count moved to
+  `check-render.py --expect-canvases`, which counts elements in the DOM at each viewport and
+  reports `RENDER-CANVAS-003`.
+- **A chart could ship a runtime refusal message and pass every gate.** `VIZ.lollipop` draws at
+  most 20 marks and otherwise prints "a lollipop chart shows at most 20 items" onto the canvas.
+  With 24 rows that is what the reader got: the plan validated, the build succeeded, the render
+  gate saw a canvas with sensible bounds, and the motion gate saw a chart declared static that
+  did not move. `validate-plan.py` now knows the runtime's mark caps and rejects the chart at
+  plan time as `CHART-007`, which is what the retry ladder's **Simplify** step is for.
+
 ### Rotation, insight count, and offline output
 
 - **`.canvas-report/log.json` and the HTML stamp comment are no longer where rotation history
