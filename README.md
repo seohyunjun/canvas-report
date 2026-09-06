@@ -86,7 +86,7 @@ everything after it.
 | 3–4 | pick a macrostructure, then a theme and masthead that all differ | `references/macrostructures.md`, `themes.md` |
 | 5 | copy the shell, apply the theme, write the wiring | `assets/`, `references/pitfalls.md` |
 | 6–8 | sections, motion, help tooltips, methodology | `motion.md`, `tooltip-help.md` |
-| 9–10 | render at three widths, then score 42 gates | `references/slop-test.md` |
+| 9–10 | render at three widths, check motion on a real clock, then score 48 gates | `references/slop-test.md` |
 
 ### Steering it
 
@@ -187,7 +187,7 @@ These are enforced, not suggested:
   the information, and movement is confined to four places that carry meaning.
 - **The limits section is mandatory** — including what the data cannot see.
 
-A finished report is scored against 42 gates in `references/slop-test.md` before it ships.
+A finished report is scored against 48 gates in `references/slop-test.md` before it ships.
 If anything in the data-honesty group trips, the rest of the score is void.
 
 ## Layout

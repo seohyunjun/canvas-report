@@ -89,7 +89,9 @@ fake terminal windows. → A real screenshot, or nothing.
 Label them all and you have built a table, not a chart.
 
 **Decorative animation.** Loops, staggered entrances, hover zoom, loading skeletons.
-→ Delete anything outside the three places in [`motion.md`](motion.md).
+→ Delete anything outside the four places in [`motion.md`](motion.md). Deleting is only half of
+   it: the motion that belongs there must actually be wired, and `motion.md` § What must actually
+   be wired says what that means.
 
 **An inflated title.** "Deep-Dive Insights Dashboard", "Our Future, Seen Through Data".
 → The title says what it is about; the subtitle says the as-of date and the scope. That is all.

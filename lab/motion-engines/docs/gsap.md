@@ -32,8 +32,9 @@ compose. That is the only thing it lacks, and in a report it is fine to lack it.
 ## Taken / refused by this skill
 - **Taken:** the named easing catalogue. It is twenty lines when you only need the curves —
   the shell's nine `easings` are exactly that (`references/motion.md`).
-- **Refused:** the 72 KB runtime, and choreography itself. A report may move in three places only
-  (`references/motion.md`), which leaves a timeline nothing to do.
+- **Refused:** the 72 KB runtime, and choreography itself. A report may move in four places only
+  (`references/motion.md`), none of which sequences one animation after another, which leaves a
+  timeline nothing to do.
 
 ## The safety net you must add yourself
 GSAP **freezes mid-frame when rAF stops** — background tab, headless capture, low-power mode; all
