@@ -21,14 +21,27 @@ def diagnostic(identifier: str, location: str, problem: str, fix: str) -> dict[s
             "problem": problem, "suggested_fix": fix}
 
 
+def embedded_spec(html: str) -> dict:
+    """The spec the builder embedded, which is what the page actually renders from."""
+    match = re.search(r'<script id="report-data" type="application/json">\s*(.*?)\s*</script>', html, re.S)
+    if not match:
+        return {}
+    try:
+        payload = json.loads(match.group(1))
+    except json.JSONDecodeError:
+        return {}
+    spec = payload.get("spec") if isinstance(payload, dict) else None
+    return spec if isinstance(spec, dict) else {}
+
+
 def conforms(item: object) -> bool:
     """A diagnostic carries a Rule ID, so a malformed one is itself a finding."""
     return (isinstance(item, dict) and isinstance(item.get("id"), str)
             and RULE_ID.fullmatch(item["id"]) is not None)
 
 
-def run_json(script: str, html: Path) -> tuple[list[dict], int]:
-    process = subprocess.run([sys.executable, str(ROOT / "assets" / script), str(html), "--json"],
+def run_json(script: str, html: Path, *extra: str) -> tuple[list[dict], int]:
+    process = subprocess.run([sys.executable, str(ROOT / "assets" / script), str(html), "--json", *extra],
                              text=True, capture_output=True)
     try:
         payload = json.loads(process.stdout)
@@ -72,14 +85,16 @@ def main() -> int:
         static: list[dict] = []
         if f"spec-sha256: {spec_hash}" not in html:
             static.append(diagnostic("FINAL-BUILD-001", str(html_path), "HTML provenance does not match report-spec.json.", "Rebuild HTML from this spec; never patch generated HTML."))
-        expected = len(spec.get("charts", [])); actual = len(re.findall(r"<canvas\b", html))
-        if actual != expected:
-            static.append(diagnostic("FINAL-BUILD-002", str(html_path), f"Expected {expected} generated canvases but found {actual}.", "Rebuild from the validated spec and inspect the builder diagnostics."))
+        charts = [chart for chart in spec.get("charts", []) if isinstance(chart, dict)]
+        embedded = embedded_spec(html)
+        built = [chart.get("id") for chart in embedded.get("charts", []) if isinstance(chart, dict)]
+        if built != [chart.get("id") for chart in charts]:
+            static.append(diagnostic("FINAL-BUILD-002", str(html_path), f"HTML embeds charts {built} but the spec declares {[chart.get('id') for chart in charts]}.", "Rebuild from the validated spec and inspect the builder diagnostics."))
         if re.search(r"<(?:script|link|img)[^>]+(?:src|href)=[\"']https?://", html, re.I):
             static.append(diagnostic("ZERO-NETWORK-001", str(html_path), "HTML contains an external resource URL.", "Inline the resource or remove it from the declarative spec."))
         phases["build"] = {"status": "fail" if static else "pass", "diagnostics": static}; diagnostics.extend(static)
         if not static:
-            render, _ = run_json("check-render.py", html_path)
+            render, _ = run_json("check-render.py", html_path, "--expect-canvases", str(len(charts)))
             phases["render"] = {"status": "fail" if render else "pass", "diagnostics": render}; diagnostics.extend(render)
             motion_enabled = any(isinstance(chart, dict) and chart.get("motion", {}).get("enabled") is True for chart in spec.get("charts", []))
             if args.skip_motion and motion_enabled:

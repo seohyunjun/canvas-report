@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """Render a report through Chrome DevTools and validate its runtime surface.
 
-    python3 assets/check-render.py REPORT.html [--json]
+    python3 assets/check-render.py REPORT.html [--json] [--expect-canvases N]
+
+``--expect-canvases`` compares the rendered canvas count against the number the
+validated spec declares. The builder creates every chart canvas at runtime, so
+the count only exists in the DOM.
 
 Requires Chrome/Chromium and the existing ``websockets`` dependency.
 """
@@ -143,7 +147,7 @@ async def inspect(path, port):
         shutil.rmtree(profile, ignore_errors=True)
 
 
-def validate(path, rendered, baseline, dpr_two, dpr_two_repeat, cdp):
+def validate(path, rendered, baseline, dpr_two, dpr_two_repeat, cdp, expect_canvases=None):
     diagnostics = []
     for text in cdp.exceptions:
         diagnostics.append(diag("RENDER-RUNTIME-001", path, "Page JavaScript exception: " + text,
@@ -160,6 +164,11 @@ def validate(path, rendered, baseline, dpr_two, dpr_two_repeat, cdp):
     for (theme, width, _), surface in rendered.items():
         view = surface["viewport"]
         location = "%s %s theme at %dpx" % (path, theme, width)
+        if expect_canvases is not None and len(surface["canvases"]) != expect_canvases:
+            diagnostics.append(diag("RENDER-CANVAS-003", location,
+                "Rendered %d canvases but the spec declares %d."
+                % (len(surface["canvases"]), expect_canvases),
+                "Rebuild from the validated spec and inspect the builder diagnostics."))
         if view["scrollWidth"] > view["width"] + 1:
             diagnostics.append(diag("RESPONSIVE-001", location,
                 "Document scroll width is %dpx but viewport is %dpx." % (view["scrollWidth"], view["width"]),
@@ -194,17 +203,30 @@ def validate(path, rendered, baseline, dpr_two, dpr_two_repeat, cdp):
     return diagnostics
 
 
+def parse_args(argv):
+    json_output = "--json" in argv
+    args = [arg for arg in argv if arg != "--json"]
+    expect = None
+    if "--expect-canvases" in args:
+        index = args.index("--expect-canvases")
+        if index + 1 >= len(args):
+            raise ValueError("--expect-canvases needs a count")
+        expect = int(args[index + 1])
+        del args[index:index + 2]
+    if len(args) != 1:
+        raise ValueError("usage: check-render.py REPORT.html [--json] [--expect-canvases N]")
+    return args[0], json_output, expect
+
+
 def main():
     json_output = "--json" in sys.argv[1:]
-    args = [arg for arg in sys.argv[1:] if arg != "--json"]
     try:
-        if len(args) != 1:
-            raise ValueError("usage: check-render.py REPORT.html [--json]")
-        path = os.path.abspath(args[0])
+        report, json_output, expect = parse_args(sys.argv[1:])
+        path = os.path.abspath(report)
         if not os.path.isfile(path):
             raise ValueError("no such file: " + path)
         rendered, baseline, dpr_two, repeated, cdp = asyncio.run(inspect(path, int(os.environ.get("CR_CDP_PORT", "9413"))))
-        diagnostics = validate(path, rendered, baseline, dpr_two, repeated, cdp)
+        diagnostics = validate(path, rendered, baseline, dpr_two, repeated, cdp, expect)
     except (OSError, RuntimeError, ValueError) as error:
         diagnostics = [diag("RENDER-TOOL-001", "check-render.py", str(error),
                             "Install Chrome and the websockets dependency, then rerun.")]

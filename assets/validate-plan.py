@@ -10,6 +10,10 @@ EXEC=("html","javascript","script","onload","onclick","onerror","eval","function
 CHARTS={"line":("x","value"),"columns":("x","value"),"divColumns":("label","value"),
  "hbars":("label","value"),"lollipop":("label","value"),"bubbles":("label","x","y","size"),
  "concentration":("label","value")}
+# The runtime refuses to draw past these and prints a message instead of the data
+# (assets/report-shell.html, VIZ.lollipop). The builder hands every source row to
+# every chart, so the cap is a plan-time incompatibility, not a rendering detail.
+MAX_ROWS={"lollipop":20}
 class D:
  def __init__(s):s.x=[]
  def add(s,se,i,l,p,f):s.x.append({"severity":se,"id":i,"location":l,"problem":p,"suggested_fix":f})
@@ -116,6 +120,8 @@ def main():
   else:
    missing=[key for key in CHARTS[x["type"]] if not isinstance(x["encodings"].get(key),str) or not x["encodings"][key]]
    if missing:d.e("CHART-005",l+".encodings","Required encodings are missing: "+", ".join(missing)+".","Map each encoding to a profiled field.")
+  cap=MAX_ROWS.get(x["type"])
+  if cap is not None and isinstance(p.get("row_count"),int) and p["row_count"]>cap:d.e("CHART-007",l+".type","%s draws at most %d marks but the source has %d rows; the runtime would print a message instead of the data."%(x["type"],cap,p["row_count"]),"Simplify to a chart type without a mark cap, such as columns or hbars.")
   for f in x["fields"]+x["table"]["columns"]:
    if f not in names:d.e("CHART-003",l,"Chart field %s is not profiled."%f,"Use source column names.")
   for role,f in x["encodings"].items():
