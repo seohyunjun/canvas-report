@@ -51,7 +51,7 @@ flowchart LR
   V -. invalid plan .-> P
   L -. spec/profile/plan change .-> P
   B -. build input change .-> L
-  R -. gate failure .-> B
+  R -. gate failure, HTML rebuilt .-> B
 ```
 
 The labels mean: `VALIDATED` is the state in which a submitted `plan.json` has passed structural validation; `PLANNED` requires the compiler's validated `report-spec.json`. State is recorded with artifact hashes. A changed upstream artifact invalidates every downstream state and result. A user change invalidates from the earliest affected input. Validators never repair artifacts.
@@ -157,8 +157,22 @@ For a failed requirement, retry at most four times in this order:
 4. **Drop Unsupported Section** — remove the section and disclose the limitation.
 
 Each retry invalidates downstream artifacts and reruns the affected progressive gates. Never bypass a gate, edit generated HTML, or convert a failure into a warning to ship it.
-Record it with `assets/report-state.py retry --run-dir <run> --state <failed-state>`;
-the fifth attempt is rejected.
+
+Record it with `assets/report-state.py retry --run-dir <run> --state <state>`, where `<state>` is
+the state that owns the artifact the repair rewrites — not the state whose gate failed. `advance`
+re-hashes every recorded artifact before it moves, so a `plan.json` edited after `VALIDATED`
+recorded it fails the next advance with `STATE-012` on `artifacts.VALIDATED`, whatever state the
+retry named.
+
+- A repair that edits `plan.json` — Local Fix, Simplify, and Drop Unsupported Section all do —
+  rewinds with `--state VALIDATED`. The run returns to `PROFILED`; recompile the spec, rebuild,
+  and advance `VALIDATED → PLANNED → BUILT → VERIFIED` again.
+- A repair that only rebuilds the HTML from an unchanged spec rewinds with `--state BUILT`.
+
+Every retry spends one of the four attempts, a mistargeted one included: retrying `BUILT` for a
+plan edit and then retrying `VALIDATED` to clear the resulting `STATE-012` leaves two attempts for
+the rest of the run, with the ladder already moved on to Component Rebuild. Choose the rewind
+point before running `retry`; the fifth attempt is rejected.
 
 ### 7. COMPLETE: deliver only verified output
 

@@ -23,6 +23,12 @@
   then runs its existing wiring, engine and final-state checks in the taller viewport as
   before. Where every chart sits below the fold — which a masthead-first macrostructure makes
   the common case — it reports `MOTION-VIEWPORT-001`.
+- Say which state a repair rewinds to. The retry ladder told the Agent to pass the failed state
+  to `report-state.py retry`, but three of its four strategies edit `plan.json`, whose hash
+  `VALIDATED` owns; retrying `BUILT` after such an edit left the next `advance` failing with
+  `STATE-012`, and the wasted retry had already spent one of the four attempts. §6 now names the
+  rewind point per repair kind and says what a mistargeted retry costs. The state machine is
+  unchanged.
 - Honour `severity` in the post-build gates. A diagnostic marked `warning` is recorded in
   `validation.json` without failing its phase; every other severity, including a missing one,
   still blocks. `MOTION-VIEWPORT-001` is the first and only warning: on-view entry motion is
