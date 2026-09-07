@@ -127,6 +127,17 @@ The plan records the decision in `theme_rationale` — subject, signals, and the
 record against the artifact, so a plan cannot claim a subject match the profile does not evidence.
 Macrostructure and masthead rotate when compatible alternatives exist.
 
+The builder compiles **sixteen chart types**, one for each lens in
+`references/analysis-lenses.md`: `line`, `columns`, `divColumns`, `hbars`, `lollipop`, `divHbars`,
+`waterfall`, `panels`, `slope`, `boxplot`, `interval`, `bubbles`, `heatmap`, `stackedArea`, `donut`
+and `concentration`. A chart names its `type` and maps the roles that type reads to profiled
+columns, and the validator checks every role against the profile: a role the type does not read, a
+category in a measure role, a negative value under a chart that reads magnitude as a share or an
+area, and a row count outside what the factory will draw are each a diagnostic rather than a chart
+that quietly draws nothing. `columns`, `stackedArea` and `panels` take two or three series through
+`value`, `value2` and `value3` — there is no fourth, because the colour contract will not invent
+one — and the builder emits the legend that names them by column.
+
 The report never fetches external fonts. It uses the shipped system-font stacks. Bars always use a zero baseline. There are no dual axes; axes derive from data; every chart has a table twin and accessible help; and basis, formulas, and limits stay visible.
 
 Motion is designed first as one report-level reading sequence and then made explicit **per chart**.

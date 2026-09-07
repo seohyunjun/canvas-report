@@ -61,6 +61,12 @@ If next period's data could not prove it wrong, it is a summary, not an insight.
 
 One chart per card. If you want two, use two cards.
 
+A card with two or three series carries a legend between the note and the canvas, and the builder
+emits it — a `.legend` of `.key.sq` swatches named by the column each series reads, repainted from
+`R.onTheme()` so the swatch follows the theme toggle. `panels` is the exception: it prints each
+metric's name above its own panel, so a second key would only repeat it. Do not hand-write a legend
+into a plan; there is nowhere to put one, and the builder's is bound to the encodings.
+
 ## Filter bar F1-F4
 
 | Code | Shape | Where |

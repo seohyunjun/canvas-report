@@ -22,6 +22,9 @@ VERSION = "1.0"
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_SHELL = ROOT / "assets" / "report-shell.html"
 APPLY_THEME = ROOT / "assets" / "apply-theme.py"
+# Required encodings per chart type. Every name here is a role the factory reads;
+# the plan maps each role to one profiled column. references/analysis-lenses.md
+# says which data shape earns which of these.
 SUPPORTED = {
     "line": ("x", "value"),
     "columns": ("x", "value"),
@@ -30,7 +33,33 @@ SUPPORTED = {
     "lollipop": ("label", "value"),
     "bubbles": ("label", "x", "y", "size"),
     "concentration": ("label", "value"),
+    "divHbars": ("label", "value"),
+    "donut": ("label", "value"),
+    "heatmap": ("x", "y", "value"),
+    "slope": ("label", "before", "after"),
+    "waterfall": ("label", "value"),
+    "boxplot": ("label", "lo", "q1", "med", "q3", "hi"),
+    "stackedArea": ("x", "value", "value2"),
+    "panels": ("label", "value", "value2"),
+    "interval": ("label", "value", "lo", "hi"),
 }
+# Roles a type accepts but does not require. The series ceiling is three because
+# references/themes.md refuses to invent a fourth colour, not because the factory
+# could not draw one.
+OPTIONAL = {
+    "columns": ("value2", "value3"),
+    "stackedArea": ("value3",),
+    "panels": ("value3",),
+}
+# Marks a factory refuses to draw past. The runtime prints a message instead of the
+# data, so this is a plan-time incompatibility rather than a rendering detail.
+ROW_LIMITS = {"lollipop": (1, 20), "donut": (2, 5), "slope": (1, 12), "heatmap": (1, 100),
+              "stackedArea": (2, None), "concentration": (2, None)}
+
+# Charts that read a magnitude as a share, an area, or an intensity. A negative
+# value has no length on any of them.
+NON_NEGATIVE = {"donut", "heatmap", "stackedArea", "concentration", "bubbles"}
+SERIES_ROLES = ("value", "value2", "value3")
 INTEGER_RE = re.compile(r"^[+-]?(?:0|[1-9]\d*)$")
 NUMBER_RE = re.compile(r"^[+-]?(?:\d+\.\d*|\.\d+)(?:[eE][+-]?\d+)?$|^[+-]?\d+[eE][+-]?\d+$")
 VENDORED_RUNTIMES = {
@@ -127,6 +156,10 @@ def validate(spec: dict[str, Any], source: Path) -> list[dict[str, str]]:
         missing = [name for name in SUPPORTED[chart_type] if not isinstance(encodings.get(name), str) or not encodings[name]]
         if missing:
             errors.append(diagnostic("BUILD-006", location + ".encodings", "Required encodings are missing: " + ", ".join(missing) + ".", "Map every required encoding to a profiled source field."))
+        known = set(SUPPORTED[chart_type]) | set(OPTIONAL.get(chart_type, ()))
+        extra = sorted(set(encodings) - known)
+        if extra:
+            errors.append(diagnostic("BUILD-007", location + ".encodings", f"{chart_type} does not read: " + ", ".join(extra) + ".", "Remove the role, or use a chart type that reads it: " + ", ".join(sorted(known)) + "."))
     selected = spec.get("creative_direction", {}).get("external_tools", [])
     for index, item in enumerate(selected if isinstance(selected, list) else []):
         if not isinstance(item, dict) or item.get("integration") != "vendored-runtime":
@@ -215,15 +248,59 @@ function playVendoredMotion(canvas,engine,chart){
   else if(tool==='anime')engine.__externalMotionHandle=window.anime({targets:engine,t:1,duration:duration,easing:animeEase(chart.motion.easing),update:function(){if(engine.__token===token){engine.t=Math.max(0,Math.min(1,engine.t));paint();}},complete:finish});
   setTimeout(finish,duration+260);
 }
+/* A series set is value, value2, value3 in order, named by the column each one
+   reads. The field name is what the table twin already prints, so the legend and
+   the table cannot disagree about which number is which. Three is the ceiling:
+   references/themes.md refuses to invent a fourth colour. */
+var SERIES_ROLES=['value','value2','value3'],SERIES_COLORS=['s1','s2','s3'];
+function seriesOf(chart){
+  var e=chart.encodings,out=[];
+  SERIES_ROLES.forEach(function(role,i){
+    if(typeof e[role]==='string'&&e[role])out.push({name:e[role],get:e[role],color:SERIES_COLORS[i]});
+  });
+  return out;
+}
 function chartConfig(chart){
-  var e=chart.encodings,base={rows:function(){return rows;},color:'s1'};
+  var e=chart.encodings,base={rows:function(){return rows;},color:'s1'},series=seriesOf(chart);
   if(chart.type==='line')return Object.assign(base,{x:e.x,y:e.value,format:format});
-  if(chart.type==='columns')return {rows:function(){return rows;},x:e.x,series:[{name:chart.title,get:e.value,color:'s1'}],format:format};
+  if(chart.type==='columns')return {rows:function(){return rows;},x:e.x,series:series,format:format};
   if(chart.type==='divColumns')return Object.assign(base,{x:e.label,y:e.value,format:format});
   if(chart.type==='hbars'||chart.type==='lollipop')return Object.assign(base,{label:e.label,value:e.value,format:format});
   if(chart.type==='bubbles')return Object.assign(base,{label:e.label,x:e.x,y:e.y,size:e.size});
   if(chart.type==='concentration')return Object.assign(base,{label:e.label,value:e.value,format:format});
+  if(chart.type==='divHbars')return Object.assign(base,{label:e.label,value:e.value,format:format});
+  /* donut and slope colour each row from the series ramp, and they do it by taking
+     cfg.color as the DEFAULT passed to colorOf — which returns a default unresolved.
+     Handing them the token name 's1' would paint the literal string, which canvas
+     ignores, leaving every arc the previous fill. Omit color and let them ramp. */
+  if(chart.type==='donut')return {rows:function(){return rows;},label:e.label,value:e.value,format:format};
+  if(chart.type==='heatmap')return Object.assign(base,{x:e.x,y:e.y,value:e.value,format:format});
+  if(chart.type==='slope')return {rows:function(){return rows;},label:e.label,before:e.before,after:e.after,
+    labels:{before:e.before,after:e.after},format:format};
+  if(chart.type==='waterfall')return {format:format,steps:function(){
+    return rows.map(function(r){return {name:String(r[e.label]),value:Number(r[e.value])};});}};
+  if(chart.type==='boxplot')return Object.assign(base,{label:e.label,lo:e.lo,q1:e.q1,med:e.med,q3:e.q3,hi:e.hi,format:format});
+  if(chart.type==='stackedArea')return {rows:function(){return rows;},x:e.x,series:series,format:format};
+  if(chart.type==='panels')return {rows:function(){return rows;},label:e.label,
+    panels:series.map(function(s){return {title:s.name,get:s.get,color:s.color};}),format:format};
+  if(chart.type==='interval')return Object.assign(base,{label:e.label,value:e.value,lo:e.lo,hi:e.hi,format:format});
   throw new Error('unsupported validated chart type: '+chart.type);
+}
+/* A multi-series chart is unreadable without a key, and the key has to survive the
+   theme toggle — the swatch colour is a token value, not a class. R.onTheme runs the
+   hook now and again on every change. `panels` is not here: it prints each metric's
+   name above its own panel, so a second key would only repeat it. */
+function legendFor(chart,card){
+  var series=seriesOf(chart);
+  if(series.length<2||(chart.type!=='columns'&&chart.type!=='stackedArea'))return;
+  var node=add(card,text('div','legend',''));
+  R.onTheme(function(t){
+    node.replaceChildren.apply(node,series.map(function(s){
+      var span=R.el('span',null,''),key=R.el('i','key sq','');
+      key.style.background=t[s.color];span.appendChild(key);
+      span.appendChild(document.createTextNode(s.name));return span;
+    }));
+  });
 }
 document.documentElement.lang=S.metadata.locale;
 document.title=S.metadata.title;
@@ -247,7 +324,8 @@ S.charts.forEach(function(chart){
   var section=sections[chart.section_id],card=add(section,text('div','card','')),head=add(card,text('div','card-head','')),title=add(head,text('h3',null,chart.title));title.id='title-'+chart.id;
   title.appendChild(R.helpDot(chart.title,chart.help));
   var button=add(head,text('button','btn',L.table));button.type='button';button.setAttribute('data-table-toggle','tablewrap-'+chart.id);button.setAttribute('aria-expanded','false');
-  add(card,text('p','card-note',chart.note));var chartWrap=add(card,text('div','chart','')),canvas=add(chartWrap,document.createElement('canvas'));
+  add(card,text('p','card-note',chart.note));legendFor(chart,card);
+  var chartWrap=add(card,text('div','chart','')),canvas=add(chartWrap,document.createElement('canvas'));
   canvas.id=chart.id;canvas.height=chart.height||240;canvas.setAttribute('role','img');canvas.setAttribute('aria-label',chart.aria_label);canvas.dataset.motionEnabled=String(chart.motion.enabled);canvas.dataset.motionReason=chart.motion.reason;canvas.dataset.motionKind=chart.motion.kind||'entry';canvas.dataset.motionTrigger=chart.motion.trigger||'on-view';canvas.dataset.motionDuration=String(chart.motion.duration_ms||700);canvas.dataset.motionEasing=chart.motion.easing||'outCubic';canvas.dataset.motionSource=chart.motion.source_tool||'motion';canvas.dataset.motionIntegration=toolIntegration(chart.motion.source_tool||'motion');
   var tableWrap=add(card,text('div','tablewrap',''));tableWrap.id='tablewrap-'+chart.id;tableWrap.hidden=true;var table=add(tableWrap,document.createElement('table'));table.id='table-'+chart.id;
   var factory=R.VIZ[chart.type];if(typeof factory!=='function')throw new Error('runtime lacks '+chart.type);factory(canvas,chartConfig(chart));

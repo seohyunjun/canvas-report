@@ -15,13 +15,34 @@ def catalogue():
  return tuple(x for x in rows if isinstance(x,dict) and all(k in x for k in ("id",)+AXES))
 THEMES=catalogue()
 EXEC=("html","javascript","script","onload","onclick","onerror","eval","function")
+# Required encodings per chart type; the builder's SUPPORTED map is the same table.
 CHARTS={"line":("x","value"),"columns":("x","value"),"divColumns":("label","value"),
  "hbars":("label","value"),"lollipop":("label","value"),"bubbles":("label","x","y","size"),
- "concentration":("label","value")}
+ "concentration":("label","value"),"divHbars":("label","value"),"donut":("label","value"),
+ "heatmap":("x","y","value"),"slope":("label","before","after"),"waterfall":("label","value"),
+ "boxplot":("label","lo","q1","med","q3","hi"),"stackedArea":("x","value","value2"),
+ "panels":("label","value","value2"),"interval":("label","value","lo","hi")}
+# Accepted but not required. Three series is the ceiling because references/themes.md
+# refuses to invent a fourth colour, not because a factory could not draw one.
+OPTIONAL={"columns":("value2","value3"),"stackedArea":("value3",),"panels":("value3",)}
+# Roles that must land on a numeric column, per type — the same role is a measure on
+# one chart and a category on another: bubbles reads x and y as numbers, heatmap reads
+# them as the axes of a category grid. A category in a measure role does not fail
+# loudly; it draws a mark of length NaN, which is no mark at all.
+SERIES=("value","value2","value3")
+MEASURES={"line":("value",),"columns":SERIES,"divColumns":("value",),"hbars":("value",),
+ "lollipop":("value",),"bubbles":("x","y","size"),"concentration":("value",),
+ "divHbars":("value",),"donut":("value",),"heatmap":("value",),"slope":("before","after"),
+ "waterfall":("value",),"boxplot":("lo","q1","med","q3","hi"),"stackedArea":SERIES,
+ "panels":SERIES,"interval":("value","lo","hi")}
 # The runtime refuses to draw past these and prints a message instead of the data
-# (assets/report-shell.html, VIZ.lollipop). The builder hands every source row to
-# every chart, so the cap is a plan-time incompatibility, not a rendering detail.
-MAX_ROWS={"lollipop":20}
+# (assets/report-shell.html, VIZ.lollipop and friends). The builder hands every source
+# row to every chart, so a cap is a plan-time incompatibility, not a rendering detail.
+ROW_LIMITS={"lollipop":(1,20),"donut":(2,5),"slope":(1,12),"heatmap":(1,100),
+ "stackedArea":(2,None),"concentration":(2,None)}
+# Charts that read a magnitude as a share, an area, or an intensity. A negative value
+# has no length on any of them, and the factory prints a refusal instead of drawing.
+NON_NEGATIVE={"donut","heatmap","stackedArea","concentration","bubbles"}
 MOTION_EASINGS={"linear","outCubic","inOutCubic","outQuint","outExpo","outCirc","inOutQuint"}
 TOOLS={"d3-gallery","d3","plotly","gsap","motion","anime"}
 TOOL_ROLES={"chart-form","data-transform","state-model","motion-engine","illustration"}
@@ -31,12 +52,28 @@ MOTION_TOOLS={"gsap","motion","anime"}
 # reads a number smaller than the datum for the whole run and needs one that arrives
 # early. references/motion-features.md carries the reasoning; these are the bands.
 MOTION_FIT={
+ # reveals: t decides how much of the mark set is drawn, and nothing on screen is wrong
  "line":({"outCubic","linear"},(600,800)),
  "concentration":({"outCubic","linear"},(600,800)),
+ "slope":({"outCubic","linear"},(600,800)),
+ # a sequenced reveal: t is divided among the steps, so it needs room for all of them
+ "waterfall":({"outCubic","linear"},(600,900)),
+ # value-scaled marks: the mark reads a number smaller than the datum until it lands
  "columns":({"outQuint","outExpo"},(400,600)),
  "divColumns":({"outQuint","outExpo"},(400,600)),
+ "divHbars":({"outQuint","outExpo"},(400,600)),
  "hbars":({"outQuint","outExpo"},(400,600)),
  "lollipop":({"outQuint","outExpo"},(400,600)),
+ "panels":({"outQuint","outExpo"},(400,600)),
+ "stackedArea":({"outQuint","outExpo"},(400,600)),
+ "donut":({"outQuint","outExpo"},(400,600)),
+ "heatmap":({"outQuint","outExpo"},(400,600)),
+ # spread grows outward from a point already drawn at its true position, so a running
+ # frame shows a narrower interval than the data supports — an overclaim. Keep it brief.
+ "boxplot":({"outQuint","outExpo"},(300,500)),
+ "interval":({"outQuint","outExpo"},(300,500)),
+ # bubbles scales the radius, so area grows with t squared and the mark looks far
+ # smaller than its value for most of the run
  "bubbles":({"outExpo","outQuint"},(700,900)),
 }
 # The portable path runs through the shell's anim(), which caps at 900 ms. Nothing
@@ -198,21 +235,41 @@ def main():
   if not isinstance(x,dict) or not all(isinstance(x.get(k),str) and x[k] for k in ("id","title","lede")):d.e("SECTION-001","plan.sections[%d]"%i,"Section needs id, title, and lede.","Provide rich reader-facing section content.")
   elif x["id"] in sids:d.e("SECTION-002","plan.sections[%d].id"%i,"Section id repeats.","Use a unique id.")
   else:sids.add(x["id"])
- charts=req(plan,"charts",list,"plan",d) or []; names={x.get("name") for x in p.get("columns",[]) if isinstance(x,dict)}
+ charts=req(plan,"charts",list,"plan",d) or []
+ columns={x.get("name"):x for x in p.get("columns",[]) if isinstance(x,dict) and isinstance(x.get("name"),str)}
+ names=set(columns); row_count=p.get("row_count")
  for i,x in enumerate(charts):
   l="plan.charts[%d]"%i
   if not isinstance(x,dict) or not all(isinstance(x.get(k),str) and x[k] for k in ("id","section_id","type","title","note","aria_label","help")) or x.get("dataset")!="source" or not arr(x.get("fields")) or not isinstance(x.get("encodings"),dict) or not x["encodings"] or not isinstance(x.get("table"),dict) or not arr(x["table"].get("columns")) or not isinstance(x.get("motion"),dict) or not isinstance(x["motion"].get("enabled"),bool) or not isinstance(x["motion"].get("reason"),str) or not x["motion"].get("reason"):d.e("CHART-001",l,"Chart must be declarative with rich labels, source dataset, encodings, table columns, and explicit motion.","Complete every required chart field.");continue
   if x["section_id"] not in sids:d.e("CHART-002",l+".section_id","Chart references no declared section.","Use a section id.")
-  if x["type"] not in CHARTS:d.e("CHART-004",l+".type","Chart type is outside the deterministic builder vocabulary.","Use one of: "+", ".join(CHARTS)+".")
+  if x["type"] not in CHARTS:d.e("CHART-004",l+".type","Chart type is outside the deterministic builder vocabulary.","Use one of: "+", ".join(sorted(CHARTS))+".")
   else:
    missing=[key for key in CHARTS[x["type"]] if not isinstance(x["encodings"].get(key),str) or not x["encodings"][key]]
    if missing:d.e("CHART-005",l+".encodings","Required encodings are missing: "+", ".join(missing)+".","Map each encoding to a profiled field.")
-  cap=MAX_ROWS.get(x["type"])
-  if cap is not None and isinstance(p.get("row_count"),int) and p["row_count"]>cap:d.e("CHART-007",l+".type","%s draws at most %d marks but the source has %d rows; the runtime would print a message instead of the data."%(x["type"],cap,p["row_count"]),"Simplify to a chart type without a mark cap, such as columns or hbars.")
+   known=set(CHARTS[x["type"]])|set(OPTIONAL.get(x["type"],()))
+   extra=sorted(set(x["encodings"])-known)
+   if extra:d.e("CHART-008",l+".encodings","%s does not read: %s."%(x["type"],", ".join(extra)),"Remove the role, or choose a chart type that reads it. %s reads: %s."%(x["type"],", ".join(sorted(known))))
+   low,cap=ROW_LIMITS.get(x["type"],(None,None))
+   if isinstance(row_count,int):
+    if cap is not None and row_count>cap:d.e("CHART-007",l+".type","%s draws at most %d marks but the source has %d rows; the runtime would print a message instead of the data."%(x["type"],cap,row_count),"Aggregate the source to that many marks, or use a chart type without the cap, such as columns or hbars.")
+    if low is not None and row_count<low:d.e("CHART-009",l+".type","%s needs at least %d rows and the source has %d."%(x["type"],low,row_count),"Choose a chart type the row count supports, or drop the chart and disclose the limitation.")
+    # The factory draws up to five slices and colours them s1, s2, s3, s1, s2. The
+    # fourth and the first are then the same colour on a chart whose whole job is
+    # telling parts apart — references/themes.md refuses to invent a fourth colour.
+    if x["type"]=="donut" and row_count>3:d.w("CHART-013",l+".type","A %d-part donut reuses a series colour, so two parts share one identity."%row_count,"Fold to three parts plus a remainder, or use hbars, where length carries the comparison and colour does not have to.")
   for f in x["fields"]+x["table"]["columns"]:
    if f not in names:d.e("CHART-003",l,"Chart field %s is not profiled."%f,"Use source column names.")
   for role,f in x["encodings"].items():
-   if not isinstance(f,str) or f not in names:d.e("CHART-006",l+".encodings."+role,"Encoding references an unprofiled field.","Use a field from profile.columns.")
+   if not isinstance(f,str) or f not in names:
+    d.e("CHART-006",l+".encodings."+role,"Encoding references an unprofiled field.","Use a field from profile.columns.");continue
+   column=columns[f]
+   # A category in a measure role is not a loud failure: the factory draws a mark of
+   # length NaN, which is no mark at all, and the table twin still prints the value.
+   measures=MEASURES.get(x["type"],())
+   if role in measures and column.get("type") not in ("integer","number","float","numeric"):
+    d.e("CHART-010",l+".encodings."+role,"Role %s needs a numeric column but %s is profiled as %s."%(role,f,column.get("type")),"Map the role to a profiled measure, or choose a chart type that reads this column as a category.")
+   if role in measures and x["type"] in NON_NEGATIVE and isinstance(column.get("min"),(int,float)) and not isinstance(column.get("min"),bool) and column["min"]<0:
+    d.e("CHART-011",l+".encodings."+role,"%s reads %s as a share, area, or intensity, but %s goes down to %s."%(x["type"],role,f,column["min"]),"Use a chart with a signed scale — divColumns, divHbars, or waterfall — or explain the negative values away in the data, not in the chart.")
   motion=x["motion"]
   if motion.get("enabled") is True:
    missing=[k for k in ("kind","trigger","duration_ms","easing","source_tool") if k not in motion]
