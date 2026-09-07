@@ -23,16 +23,25 @@
   then runs its existing wiring, engine and final-state checks in the taller viewport as
   before. Where every chart sits below the fold — which a masthead-first macrostructure makes
   the common case — it reports `MOTION-VIEWPORT-001`.
-- Rebuild the published pipeline example against this version. Making motion contracts
-  executable changed what the builder emits, and `examples/support-intake-pipeline-run.html` had
-  been built before that: it carried no `data-motion-*` contract, so `check-motion.py` rejected it
-  with eight `MOTION-CONTRACT-*` errors — the repo's own showcase failing the repo's own gate. It
-  is rebuilt from the published CSV through `INIT → COMPLETE`, and the run is a superset of the
-  old one: identical rows, prose, charts, insights and methodology, plus the per-chart contracts,
-  `creative_direction`, and the `TOOL-SELECTION-001` and `MOTION-STORY-001` decisions the compiler
-  now requires. The pre-3.0.0 DART example is left as published and `examples/index.md` says why:
-  no source rows exist to rebuild it from, and one fragment of its `read:` stamp no longer resolves
-  because 3.0.0 rewrote the passage it quotes.
+- Republish the pipeline example as a new report. Making motion contracts executable changed what
+  the builder emits, and the shipped `examples/support-intake-pipeline-run.html` predated that: it
+  carried no `data-motion-*` contract, so `check-motion.py` rejected it with eight
+  `MOTION-CONTRACT-*` errors — the repo's own showcase failing the repo's own gate. Rather than
+  reprint the old plan, the example is written again from the same published CSV and rotated:
+  **Broadsheet · newsprint · M3** against the previous Briefing · cobalt · M4. Its subject is the
+  identity the file actually contains — `backlog_end` moves by exactly `tickets_opened` minus
+  `tickets_resolved` in all 23 consecutive month pairs, which makes the backlog a running total
+  rather than a measurement and implies a balance of 180 before the file opens. Three charts, one
+  of which moves.
+- Say that `VIZ.bubbles` scales both axes from zero. Writing that example turned up the constraint:
+  the Relationship lens was eligible on the profile, and a scatter of handling hours against
+  tickets resolved would have put all 24 marks in one corner of an empty plot, because neither
+  measure comes near zero and the factory takes no domain. `references/analysis-lenses.md` now says
+  to check the ranges against zero before selecting the lens, and the example demonstrates the
+  refusal rather than shipping the smear.
+- Leave the pre-3.0.0 DART example as published, and say why in `examples/index.md`: no source rows
+  exist to rebuild it from, hand-editing a generated report is what this skill refuses, and one
+  fragment of its `read:` stamp no longer resolves because 3.0.0 rewrote the passage it quotes.
 - Capture what the pinned motion runtimes actually expose, and stop trusting the links for it.
   `lab/motion-engines/probe-api.py` reads GSAP 3.12.5, Motion 11.11.17, anime.js 3.2.2 and D3
   7.9.0 out of `vendor/` in headless Chrome, resolves the builder's own plan-easing tables against
