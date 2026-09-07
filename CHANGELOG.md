@@ -23,6 +23,16 @@
   then runs its existing wiring, engine and final-state checks in the taller viewport as
   before. Where every chart sits below the fold — which a masthead-first macrostructure makes
   the common case — it reports `MOTION-VIEWPORT-001`.
+- Rebuild the example under that reference. Its lead chart is a `line`, where `c.t` is a point
+  count rather than a value, so the easing is the pace of the sweep: `linear` at 720 ms paces the
+  24 months evenly, where `outCubic` — what the run had — puts seven of them on screen in the first
+  tenth and crawls through the rest. Same three charts, same claims, new run from `INIT` to
+  `COMPLETE` with no repair attempts.
+- Note that the two integration paths do not enforce the same duration bound. The plan schema and
+  the motion gate take 180–1200 ms, and the vendored path clamps to exactly that, but the shell's
+  own `anim()` caps at 900 ms — so a `portable-pattern` chart declaring 1,000 ms passes every check
+  and runs for 900, because the gate reads the declared attribute rather than the elapsed time.
+  `motion-engines.md` now says not to declare more than 900 ms on the portable path.
 - Add `references/motion-engines.md`, and register it as a conditional reference. The engines'
   own getting-started pages advertise scroll-linked motion, springs, staggers, timelines, drag,
   and an SVG toolset; a report calls exactly one of their functions, once per chart, to move one
