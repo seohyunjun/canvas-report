@@ -18,6 +18,16 @@
   motion capability.
 - Let render and motion gates use `CR_CHROME` when Chrome is installed outside the executable
   search path.
+- Measure motion in the window a reader opens the file into. `check-motion.py` now loads the
+  report at 1280×800 first and records whether any chart with motion is on the first screen,
+  then runs its existing wiring, engine and final-state checks in the taller viewport as
+  before. Where every chart sits below the fold — which a masthead-first macrostructure makes
+  the common case — it reports `MOTION-VIEWPORT-001`.
+- Honour `severity` in the post-build gates. A diagnostic marked `warning` is recorded in
+  `validation.json` without failing its phase; every other severity, including a missing one,
+  still blocks. `MOTION-VIEWPORT-001` is the first and only warning: on-view entry motion is
+  the declared contract, so a report whose motion waits for the scroll is being described,
+  not failed.
 
 Versions are the `version:` field in `SKILL.md`. Dates are the day the work landed on `main`.
 
