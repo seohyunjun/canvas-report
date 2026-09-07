@@ -168,6 +168,17 @@ Run `assets/validate-plan.py` against `schemas/*.schema.json`, `references/rules
 
 Hard rules include: no dual axes; axis ranges derive from data; **all bars have a zero baseline**; colour has a semantic role; every chart has a table twin and help; no invented numbers; and limitations remain visible. A chart is omitted when its support is absent.
 
+The builder compiles **sixteen chart types**, one per lens in `references/analysis-lenses.md`:
+`line`, `columns`, `divColumns`, `hbars`, `lollipop`, `divHbars`, `waterfall`, `panels`, `slope`,
+`boxplot`, `interval`, `bubbles`, `heatmap`, `stackedArea`, `donut`, and `concentration`. Each names
+its `type` and maps the roles that type reads to profiled columns; the encodings table in
+`analysis-lenses.md` is the contract. The validator checks each role against the profile — a role
+the type does not read is `CHART-008`, a category in a measure role is `CHART-010`, a negative value
+under a chart that reads magnitude as a share or an area is `CHART-011`, and a row count outside
+what the factory will draw is `CHART-007`/`CHART-009`. `columns`, `stackedArea` and `panels` take
+two or three series through `value`, `value2` and `value3`; there is no fourth, and the builder
+emits the legend that names them.
+
 ### 5. BUILT: build deterministically
 
 Run `assets/build-report.py` from `report-spec.json`. It emits the single builder-owned HTML file with embedded JSON, canvas 2D charts, no external assets, table twins, keyboard/touch help, and a basis/formulas/limits section. Use the shipped runtime as-is. The Agent does not modify shell, resize, tooltip, `VIZ`, or motion engines.

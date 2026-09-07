@@ -195,23 +195,39 @@ right place" actually bites:
 | Factory | What `c.t` scales | What the reader sees while it runs |
 |---|---|---|
 | `line`, `concentration` | `n = round(rows.length · t)` — how many points are drawn | a **reveal**. Nothing on screen is wrong, there is just less of it |
+| `slope` | how far along each line the endpoint has travelled | a reveal too: the point moves *along* the true line, so no frame is off it |
+| `waterfall` | `clamp(t · steps − i)` per step — a **sequenced** reveal | steps land one after another, so `t` is divided among them |
 | `columns`, `divColumns` | bar height from the zero baseline | the bar **reads a value smaller than the datum** until it lands |
-| `hbars`, `lollipop` | bar length, lollipop value | the same |
+| `hbars`, `lollipop`, `divHbars`, `panels` | bar length | the same |
+| `stackedArea` | each band's height above the one below | the same, and the total is short too |
+| `donut` | the sweep angle of each arc | every share reads smaller than it is until the ring closes |
+| `heatmap` | cell intensity | every cell is paler than its value, so the field looks flatter than it is |
+| `boxplot`, `interval` | the spread, growing **outward from a point drawn at its true position** | the opposite failure: a running frame shows a **narrower** interval than the data supports |
 | `bubbles` | the **radius** | area grows with `t²`, so the mark looks far smaller than its value for most of the run |
 
-Two rules follow:
+Three rules follow:
 
 - **A reveal can afford a steady curve; a value-scaled mark cannot.** A bar that spends 400 ms
   reading 60 % of its number is briefly lying. Use a curve that arrives early.
 - **A reveal's easing is its reading pace.** On `line`, `outExpo` lands almost immediately and wastes
   the sweep; `outCubic` or `linear` keep the left-to-right order legible.
+- **A chart that draws spread gets the shortest run of all.** `boxplot` and `interval` grow the
+  range outward from a value already in place, so every intermediate frame is an *overclaim* of
+  precision. Understating a bar for 400 ms is a delay; understating an interval is a different
+  statement about the evidence.
 
 | Chart | Easing | Duration | Why |
 |---|---|---|---|
 | `line` | `outCubic`, or `linear` when the time order *is* the point | 600–800 ms | the sweep is the reading order; 24 points at 700 ms is one point every 30 ms |
-| `concentration` | `outCubic` | 600–800 ms | the same reveal mechanic |
-| `columns`, `divColumns` | `outQuint` or `outExpo` | 400–600 ms | the baseline registers, then the heights arrive before the eye starts comparing |
-| `hbars`, `lollipop` | `outQuint` or `outExpo` | 400–600 ms | labels are already in place, so only the length is in motion |
+| `concentration` | `outCubic` or `linear` | 600–800 ms | the same reveal mechanic |
+| `slope` | `outCubic` or `linear` | 600–800 ms | the line is read left to right, so it should be drawn that way |
+| `waterfall` | `outCubic` or `linear` | 600–900 ms | the run is shared among the steps; five steps at 700 ms is 140 ms each |
+| `columns`, `divColumns`, `divHbars` | `outQuint` or `outExpo` | 400–600 ms | the baseline registers, then the heights arrive before the eye starts comparing |
+| `hbars`, `lollipop`, `panels` | `outQuint` or `outExpo` | 400–600 ms | labels are already in place, so only the length is in motion |
+| `stackedArea` | `outQuint` or `outExpo` | 400–600 ms | the total is the subject and it has to be right early |
+| `donut` | `outQuint` or `outExpo` | 400–600 ms | a part-way arc is a wrong share, and shares are what the chart is for |
+| `heatmap` | `outQuint` or `outExpo` | 400–600 ms | intensity is the value; a pale grid is a quiet understatement of it |
+| `boxplot`, `interval` | `outQuint` or `outExpo` | 300–500 ms | see the third rule: a narrow band claims more than the data does |
 | `bubbles` | `outExpo` | 700–900 ms | radius is the square root of area, and the curve compensates for the slow visual start |
 | any chart carrying the report's caveat | — | static | that is the reason |
 

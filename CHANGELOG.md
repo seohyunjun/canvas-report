@@ -1,5 +1,39 @@
 # Changelog
 
+## 3.3.0 — 2026-09-07
+
+- Grow the compiled chart vocabulary from seven types to **sixteen**. `divHbars`, `donut`,
+  `heatmap`, `slope`, `waterfall`, `boxplot`, `stackedArea`, `panels` and `interval` join the
+  builder, and `columns` gains a second and third series. Nothing new was added to the runtime:
+  every one of these factories already shipped in `assets/report-shell.html`, and
+  `references/analysis-lenses.md` already listed them as the lens each data shape earns — the
+  pipeline simply could not compile them from a plan, so the reference promised charts the builder
+  refused. It no longer does.
+- Give `analysis-lenses.md` the encodings contract: every type, the roles it requires, the roles it
+  accepts, the row counts the factory will draw, and which measures it will not take negative.
+- Check every encoding against the profile rather than only against the column list.
+  `CHART-008` rejects a role the type does not read, `CHART-010` a category in a measure role — the
+  check is per type, because `x` and `y` are measures on `bubbles` and categories on `heatmap` —
+  `CHART-011` a negative value under a chart that reads magnitude as a share, an area, or an
+  intensity, and `CHART-009` a row count below what the factory will draw. A category in a measure
+  role used to draw a mark of length NaN, which is no mark at all and no error either.
+- Emit a legend for a multi-series chart. `columns`, `stackedArea` and `panels` read `value`,
+  `value2` and `value3`, painted `s1`, `s2`, `s3`; the builder writes the `.legend` and repaints it
+  from `R.onTheme()`, naming each series by the column it reads so the key and the table twin cannot
+  disagree. There is no `value4`: `references/themes.md` will not invent a fourth colour.
+  `CHART-013` warns that a donut past three parts hits the same wall from the other side, because
+  the factory cycles the same three colours and parts four and five repeat parts one and two.
+- Route motion for the nine new factories. `slope` and `waterfall` are reveals like `line`;
+  `donut`, `heatmap`, `stackedArea`, `panels` and `divHbars` are value-scaled like `columns`; and
+  `boxplot` and `interval` get the shortest run in the table, 300–500 ms, because they grow spread
+  outward from a value already in place — every intermediate frame shows a **narrower** interval
+  than the data supports, which is an overclaim rather than a delay.
+- Fix two colour and layout defects the new types exposed. `VIZ.donut` and `VIZ.slope` take
+  `cfg.color` as the *default* handed to `colorOf`, which returns a default unresolved, so the token
+  name `s1` was painted as the literal string and canvas kept the previous fill — every arc and every
+  slope line drew black. And `VIZ.slope` measured its row labels before setting the font it draws
+  them with, so a long label was clipped at the canvas edge instead of ellipsised.
+
 ## 3.2.0 — 2026-09-07
 
 - Add `references/motion-features.md`: a per-feature catalogue of the two documentation pages a

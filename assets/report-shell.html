@@ -1325,7 +1325,10 @@ VIZ.slope=function(cvs,cfg){
       ctx.save(); ctx.strokeStyle=col; ctx.lineWidth=2; ctx.beginPath();ctx.moveTo(left,y1);ctx.lineTo(endX,endY);ctx.stroke();
       ctx.fillStyle=col;ctx.beginPath();ctx.arc(left,y1,3.5,0,7);ctx.fill();
       if(c.t>.92){ctx.beginPath();ctx.arc(right,y2,3.5,0,7);ctx.fill();}ctx.restore();
-      if(c.t>=1){ txt(ctx,ell(ctx,L(r),pad.l-8),left-8,y1,'right',T.text2,'600',10.5); txt(ctx,fmt(b),right+8,y2,'left',T.text2,'650',10.5); }
+      /* Measure with the font you draw with, or ell() decides the label fits and
+         txt() draws it wider — clipped at the canvas edge. Same trap as divHbars. */
+      if(c.t>=1){ ctx.font='600 10.5px system-ui, sans-serif';
+        txt(ctx,ell(ctx,L(r),pad.l-8),left-8,y1,'right',T.text2,'600',10.5); txt(ctx,fmt(b),right+8,y2,'left',T.text2,'650',10.5); }
       var tip=cfg.tip?cfg.tip(r,i,rows):{title:String(L(r)),rows:[{name:before,val:fmt(a),color:col},{name:after,val:fmt(b),color:col}]};
       c.hits.push({x:left,y:y1,r:5,title:tip.title,rows:tip.rows,note:tip.note});
       c.hits.push({x:right,y:y2,r:5,title:tip.title,rows:tip.rows,note:tip.note});

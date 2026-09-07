@@ -25,6 +25,60 @@ The table that decides what you can honestly show, without knowing the domain.
 | **Concentration** | 1 measure over 5+ entities, non-negative | how much of the total comes from how few | `VIZ.concentration` |
 | **Uncertainty** | a point estimate + an interval per row | is this difference mine to claim | `VIZ.interval` |
 
+## Asking for one
+
+Every factory in that table compiles from a plan. A chart names its `type` and maps each **role**
+the factory reads to one profiled column; the roles below are the whole vocabulary, and
+`assets/validate-plan.py` rejects a role a type does not read (`CHART-008`) as firmly as a missing
+one (`CHART-005`).
+
+| `type` | Required roles | Optional | Rows the factory accepts | Measures it will not take negative |
+|---|---|---|---|---|
+| `line` | `x` `value` | — | any | — |
+| `columns` | `x` `value` | `value2` `value3` | any | — |
+| `divColumns` | `label` `value` | — | any | — |
+| `hbars` | `label` `value` | — | any | — |
+| `lollipop` | `label` `value` | — | ≤ 20 | — |
+| `divHbars` | `label` `value` | — | any | — |
+| `waterfall` | `label` `value` | — | any | — |
+| `panels` | `label` `value` `value2` | `value3` | any | — |
+| `slope` | `label` `before` `after` | — | ≤ 12 | — |
+| `boxplot` | `label` `lo` `q1` `med` `q3` `hi` | — | any | — |
+| `interval` | `label` `value` `lo` `hi` | — | any | — |
+| `bubbles` | `label` `x` `y` `size` | — | any | `x` `y` `size` |
+| `heatmap` | `x` `y` `value` | — | ≤ 100 cells | `value` |
+| `stackedArea` | `x` `value` `value2` | `value3` | ≥ 2 | every series |
+| `donut` | `label` `value` | — | 2–5 | `value` |
+| `concentration` | `label` `value` | — | ≥ 2 | `value` |
+
+Four things this table is quietly telling you.
+
+**Roles are typed, per chart.** `value`, `before`, `after`, `lo`, `hi`, `q1`, `med`, `q3` and
+`size` must land on a profiled measure. `x` and `y` are measures on `bubbles` and categories on
+`heatmap`, which is why the check is per type (`CHART-010`). A category in a measure role does not
+fail loudly: the mark is drawn at length NaN, which is no mark at all.
+
+**A row cap applies to the whole source, not to the chart.** The builder hands every source row to
+every chart, so a five-slice `donut` means a five-row report. Aggregate before profiling, or choose
+a form without a cap. Past a cap the runtime prints a message where the data should be, so the
+validator refuses the plan first (`CHART-007`, `CHART-009`).
+
+**Three series is the ceiling.** `columns`, `stackedArea` and `panels` read `value`, `value2` and
+`value3`, painted `s1`, `s2`, `s3`, and the builder emits the legend that names them — by column
+name, so the key and the table twin cannot disagree. There is no `value4`, because
+[`themes.md`](themes.md) will not invent a fourth colour. `donut` past three parts hits the same
+wall from the other side: the factory cycles the same three, so parts four and five repeat parts
+one and two. `CHART-013` warns about it.
+
+**`waterfall` draws each step from the zero line**, not stacked onto the one before, so it reads as
+an ordered set of signed deltas rather than a running balance. The bridge framing is carried by the
+section's prose and the sequence, not by a cumulative bar. Use it where the *order* of the deltas is
+the argument; use `divHbars` where only their direction and size are.
+
+`stackedArea` and `line` also assume the `x` column is **ordered**. The profile cannot tell an
+ordered category from an unordered one, so no validator will stop you drawing a stacked area across
+five team names — and the continuity it implies would be a fiction. That one is yours to check.
+
 ## Judgement rules
 
 **Time granularity.** Fewer than 6 periods is not a trend — demote it to a bar comparison.
