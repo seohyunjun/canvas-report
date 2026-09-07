@@ -27,6 +27,12 @@ enabled contract names its kind, trigger, duration, easing and motion engine, an
 the report-level motion story and the tool selection behind them — which is why the file carries
 `MOTION-STORY-001` and `TOOL-SELECTION-001` in its stamp.
 
+The easing on that one chart is chosen from what the factory does with the progress value rather
+than from taste. `VIZ.line` reveals by point count, so the curve is the pace of the sweep: `linear`
+paces the 24 months evenly across 720 ms, where a decelerating curve would put seven of them on
+screen in the first tenth of the run and crawl through the rest.
+[`references/motion-engines.md`](../references/motion-engines.md) has the table this came from.
+
 It also shows a lens being turned down for a reason the profile could not give. The relationship
 between handling hours and tickets resolved is eligible on the data, and the report does not chart
 it: the deterministic builder draws scatters from a zero origin on both axes, and measures that run

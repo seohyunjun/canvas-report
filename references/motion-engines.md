@@ -168,6 +168,13 @@ Two rules follow, and they are the whole of "use the right one in the right plac
 than quick; they spend time at both ends and suit no evidence chart in a Briefing. `outCirc` starts
 fast and eases late, which reads well on a single hero figure and poorly on a set of bars.
 
-Bounds are enforced, not advisory: the plan schema takes 180–1200 ms and the seven value-safe
-names, and the builder clamps duration into that window. Overshoot curves — `outBack`, `spring` —
-are in the shell for opacity and position only, and `anim()` refuses them on a value-scaled mark.
+Bounds are enforced, not advisory, but the two integration paths do not enforce the same one. The
+plan schema and the motion gate take **180–1200 ms**; the vendored path clamps to exactly that; the
+portable path does not, because the shell's own `anim()` caps at **900 ms**
+(`Math.min(900, Math.max(0, dur))`). Nothing reports the difference — the gate reads the declared
+attribute, not the elapsed time — so a `portable-pattern` chart declaring 1,000 ms passes every
+check and runs for 900. **On the portable path, do not declare more than 900 ms.** Every duration
+recommended above is inside that ceiling, and `bubbles` sits exactly on it.
+
+Overshoot curves — `outBack`, `spring` — are in the shell for opacity and position only, and
+`anim()` refuses them on a value-scaled mark, falling back to `outCubic` with a console warning.
