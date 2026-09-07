@@ -3,9 +3,9 @@
 This skill already refuses to invent a number. This file is the other half: it refuses to
 **assert a difference the data cannot carry.**
 
-A report that says "직거래 13.5% vs 중개 86.5%" is stating an arithmetic fact. A report that says
-"직거래 비중이 늘었다" is making a claim about a population from a sample of it, and a claim needs
-an interval. Most reports slide from the first sentence to the second without noticing.
+A report that says "direct 13.5% vs brokered 86.5%" is stating an arithmetic fact. A report that
+says "the direct share is rising" is making a claim about a population from a sample of it, and a
+claim needs an interval. Most reports slide from the first sentence to the second without noticing.
 
 ---
 
@@ -20,8 +20,8 @@ Concretely, three things must be on the page before a difference is described as
 3. **The reference** the difference is measured against — the pooled value, the previous period,
    zero. A difference is always *from something*.
 
-If you cannot supply all three, describe the magnitude and stop. "직거래는 324건(13.2%)이다" is
-always safe. "직거래가 늘었다" needs the rest.
+If you cannot supply all three, describe the magnitude and stop. "Direct sales are 324 of 2,453
+transactions (13.2%)" is always safe. "Direct sales are rising" needs the rest.
 
 ---
 
@@ -65,7 +65,7 @@ reader's phone, and the raw values usually do not belong in the file anyway.
 ### Spread that outliers cannot move → **MAD**
 
 When a report says "typical", quote the median with the **median absolute deviation**, not the
-standard deviation. One 21억 outlier moves a standard deviation and leaves a MAD alone.
+standard deviation. One sale ten times the median moves a standard deviation and leaves a MAD alone.
 
 ```
 MAD = median(|xᵢ − median(x)|)          robust σ ≈ 1.4826 × MAD
@@ -74,8 +74,9 @@ MAD = median(|xᵢ − median(x)|)          robust σ ≈ 1.4826 × MAD
 ### A trend → say the slope, or say nothing
 
 A line going up is not a trend claim. If you want one, fit it and report the slope **with its
-interval and its unit** ("+1.4건/월, 95% CI +0.6 … +2.2"). If the series has fewer than about a
-dozen points, or the last period is still filling up, do not fit at all — annotate and move on.
+interval and its unit** ("+1.4 transactions/month, 95% CI +0.6 … +2.2"). If the series has fewer
+than about a dozen points, or the last period is still filling up, do not fit at all — annotate and
+move on.
 
 ---
 
