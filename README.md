@@ -12,7 +12,7 @@ scripts, images, or fonts are fetched.
 
 It is an artifact pipeline, not a prompt-to-HTML shortcut: profile evidence constrains the plan, a compiler validates the plan, a deterministic builder owns HTML, and progressive validators decide whether the report ships.
 
-![Ten themes, one runtime, identical data](docs/themes.png)
+![Twenty-six themes, one runtime, identical data](docs/themes.png)
 
 ## Install
 
@@ -96,10 +96,13 @@ The runtime shell, resize/layout code, tooltip system, `VIZ` factories, and moti
 
 1. Run `assets/profile-data.py` on actual data. The profile covers types, nulls and sentinels, measures/dimensions, cardinality, time grain, candidate-key checks, and comparable periods.
 2. Draft evidence-driven, falsifiable insights — **typically 2–6**, not a fixed quota. Unsupported claims and lenses are dropped or rewritten.
-3. Run `assets/select-candidates.py`, then use `references/external-tools.md` to select one
-   chart/state source and at most one primary motion source. The Agent writes only `plan.json`:
-   insights, creative direction, external-tool strategy, supported charts, macrostructure, theme,
-   masthead, table/help/methodology requirements, and per-chart motion contracts.
+3. Run `assets/select-candidates.py`, which scores every theme against the dataset's own subject
+   as well as filtering for compatibility. Then use `references/external-tools.md` to select one
+   chart/state source and at most one primary motion source, and
+   `references/motion-features.md` to choose the easing and duration each chart factory wants.
+   The Agent writes only `plan.json`: insights, creative direction, external-tool strategy,
+   supported charts, macrostructure, theme and its `theme_rationale`, masthead,
+   table/help/methodology requirements, and per-chart motion contracts.
 4. Run `assets/validate-plan.py` against `schemas/*.schema.json`, `references/rules.json`, and `references/index.json`. It emits `report-spec.json` only for a compatible plan.
 5. Run `assets/build-report.py`; it deterministically produces one offline HTML file.
 6. Run `assets/validate-report.py` to persist progressive build, render, and declared-motion gates in `validation.json`.
@@ -111,7 +114,18 @@ Use at most four repairs for a failed requirement: **Local Fix → Component Reb
 
 User requirements take priority over rotation **only after compatibility** with the profile and report contract is proved. Incompatible requested charts, macrostructures, or motion yield a structured diagnostic and an evidence-based alternative.
 
-Theme selection first filters to compatible choices. The selected theme must be rotation distance **at least 2** from the previous theme, unless the user explicitly requests a compatible override; record that override in the plan. Macrostructure and masthead rotate when compatible alternatives exist.
+Theme selection runs three passes in order: **compatibility, subject fit, then rotation.**
+`references/themes.json` catalogues twenty-six themes with the subjects each suits, and
+`assets/select-candidates.py` scores every compatible theme against the profiled column names, the
+source file name, and the stated requirements — a billing extract reaches for `abacus`, an incident
+feed for `sentinel`, a climate series for `tide`. The selected theme must then be rotation distance
+**at least 2** from the previous theme, unless the user explicitly requests a compatible override;
+record that override in the plan. Fit outranks distance.
+
+The plan records the decision in `theme_rationale` — subject, signals, and the `fit_score` and
+`rotation_distance` copied from the candidate artifact — and `assets/validate-plan.py` checks that
+record against the artifact, so a plan cannot claim a subject match the profile does not evidence.
+Macrostructure and masthead rotate when compatible alternatives exist.
 
 The report never fetches external fonts. It uses the shipped system-font stacks. Bars always use a zero baseline. There are no dual axes; axes derive from data; every chart has a table twin and accessible help; and basis, formulas, and limits stay visible.
 
@@ -121,16 +135,28 @@ declared duration and value-safe easing. Prefer it for eligible evidence charts;
 static when a chart-specific clarity reason warrants it. Filters redraw immediately, reduced
 motion omits animation, and the final state contains all information.
 
+`references/motion-features.md` catalogues every feature the [Motion quick-start](https://motion.dev/docs/quick-start)
+and the [anime.js vanilla-JS guide](https://animejs.com/documentation/getting-started/using-with-vanilla-js)
+advertise — `animate` in both forms, keyframes, `stagger`, springs, `scroll`, `inView`, gestures,
+timelines, draggables, the SVG and text toolsets — against the **pinned** 11.11.17 and 3.2.2 files,
+and marks each one used, supplied by the shell, held, absent, or refused. It then routes the choice:
+a reveal chart (`line`, `concentration`) takes a steady curve at 600–800 ms, a value-scaled mark
+(`columns`, `hbars`, `lollipop`) one that arrives early at 400–600 ms, and `bubbles` 700–900 ms
+because radius is the square root of area. `MOTION-FIT-001`/`-002` warn outside those bands, and
+`MOTION-PORTABLE-CEILING-001` is an error when a portable-pattern chart declares more than the
+900 ms the shell actually runs.
+
 ## Rule provenance and lazy references
 
 `references/rules.json` and `references/index.json` provide authoritative Rule-ID provenance. Profile, plan, spec, and validator artifacts identify the rules they applied. Quotations may be retained as explanatory notes but are optional and non-authoritative; quote stamps are not validation evidence.
 
 Reference loading is lazy:
 
-- **Core:** `references/rules.json`, `references/analysis-lenses.md`, and `references/anti-patterns.md`.
+- **Core:** `references/rules.json`, `references/themes.json`, `references/analysis-lenses.md`, and `references/anti-patterns.md`.
 - **Conditional:** `uncertainty.md` for comparisons/estimates, the selected macrostructure,
   `themes.md`, `components.md`, `tooltip-help.md`, factory-relevant `pitfalls.md`, selected tool and
-  lab sections from `external-tools.md`, and `motion.md` whenever charts exist.
+  lab sections from `external-tools.md`, `motion.md` whenever charts exist, and
+  `motion-features.md` before any motion contract is written.
 - **Final:** `references/slop-test.md` and validator guidance after a build exists.
 
 ## Layout
@@ -146,9 +172,13 @@ assets/report-state.py   ordered state transitions and artifact hashes
 assets/validate-report.py progressive gates → validation.json
 assets/check-render.py   render/layout gate
 assets/check-motion.py   declared-motion gate
+assets/check-themes.py   theme contrast contract and catalogue agreement
+assets/make-themes.py    design rows → generated theme blocks
+assets/theme-sheet.py    docs/themes.png contact sheet
 schemas/*.schema.json    artifact contracts
 references/rules.json,
 references/index.json    authoritative Rule-ID provenance
+references/themes.json   theme catalogue: axes, subject keywords, fit baselines
 assets/report-shell.html read-only report runtime
 references/              analytical, design, and final-review guidance
 ```

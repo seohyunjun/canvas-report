@@ -31,7 +31,8 @@ The easing on that one chart is chosen from what the factory does with the progr
 than from taste. `VIZ.line` reveals by point count, so the curve is the pace of the sweep: `linear`
 paces the 24 months evenly across 720 ms, where a decelerating curve would put seven of them on
 screen in the first tenth of the run and crawl through the rest.
-[`references/motion-engines.md`](../references/motion-engines.md) has the table this came from.
+[`references/motion-features.md`](../references/motion-features.md) has the table this came from,
+alongside the feature-by-feature reading of the Motion and anime.js documentation it sits in.
 
 It also shows a lens being turned down for a reason the profile could not give. The relationship
 between handling hours and tickets resolved is eligible on the data, and the report does not chart
