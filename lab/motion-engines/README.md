@@ -29,7 +29,10 @@ Page 6 is the odd one: D3 is a **chart-form vocabulary** (`external-tools.md` §
 engine. It sits here because the thing worth showing about D3 *is* its transitions, and because
 this is where vendored runtimes live.
 
-One doc per tool in [`docs/`](docs/). All four pages animate **the same data**
+One doc per tool in [`docs/`](docs/), plus
+[`docs/api-surface.md`](docs/api-surface.md) — what the pinned runtimes actually expose, versus what
+their sites document today. `python3 probe-api.py --expect docs/api-surface.json` re-reads the
+bundles offline and fails on drift. All four pages animate **the same data**
 (`lab-data.js` — the five parts of ₩66,147 of GCP spend, July 2026) in **the same layout**, so
 that only the engine differs.
 
