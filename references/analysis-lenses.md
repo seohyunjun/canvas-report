@@ -39,6 +39,13 @@ A large gap means the key is masked, recycled, or needs to be a composite.
 - 9–40 → top N plus a folded "other", or a size filter
 - \> 40 → switch to a scatter (one point per entity) or a top/bottom ranking. Forty bars is a table.
 
+**Scatters start at zero here.** `VIZ.bubbles` scales both axes from the origin — there is no
+domain option — so the Relationship lens only reads when the two measures approach zero within the
+data. Two series that live between, say, 1,000 and 2,600 land in one corner of an empty plot and
+their marks overlap into a smear. Check the ranges against zero before selecting the lens; when
+they do not reach it, the honest move is to drop the lens, say so in the plan, and let the two
+measures share a table twin instead of a chart that asserts a shape it cannot draw.
+
 **When the measure is a ratio.** Always state the denominator in the tooltip and the methodology.
 A large ratio from a small denominator needs a minimum-size filter, switched **on** by default.
 If the report goes on to *compare* two ratios, that is a claim, not arithmetic — give each one an
