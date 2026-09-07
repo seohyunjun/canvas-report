@@ -23,6 +23,15 @@
   then runs its existing wiring, engine and final-state checks in the taller viewport as
   before. Where every chart sits below the fold — which a masthead-first macrostructure makes
   the common case — it reports `MOTION-VIEWPORT-001`.
+- Capture what the pinned motion runtimes actually expose, and stop trusting the links for it.
+  `lab/motion-engines/probe-api.py` reads GSAP 3.12.5, Motion 11.11.17, anime.js 3.2.2 and D3
+  7.9.0 out of `vendor/` in headless Chrome, resolves the builder's own plan-easing tables against
+  each engine, and writes `docs/api-surface.json`; `--expect` fails on drift.
+  `docs/api-surface.md` reads that snapshot against what each site documents today. Two gaps
+  mattered: **animejs.com now documents v4**, eleven of whose fourteen headline names do not occur
+  in the pinned 3.2.2 file, and `references/external-tools.md` was describing them as available;
+  and Motion's newer `visualDuration` is absent from the pinned build yet accepted without error,
+  because Motion validates no option names. All twenty-one plan-easing mappings resolve.
 - Say which state a repair rewinds to. The retry ladder told the Agent to pass the failed state
   to `report-state.py retry`, but three of its four strategies edit `plan.json`, whose hash
   `VALIDATED` owns; retrying `BUILT` after such an edit left the next `advance` failing with

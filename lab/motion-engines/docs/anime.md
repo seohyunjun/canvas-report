@@ -9,6 +9,11 @@ Lab page: [`../03-anime.html`](../03-anime.html) · vendored: `vendor/anime-3.2.
 
 The smallest of the three motion engines: roughly a quarter of the pinned GSAP bundle.
 
+**animejs.com now documents v4, which is a different API.** `animate()`, `createTimeline()`,
+`createDraggable()`, `createScope()`, `onScroll()`, `morphTo()` — none of those names occurs in the
+pinned 3.2.2 file. Everything below is v3, which is what a report gets.
+[`api-surface.md`](api-surface.md) has the full comparison.
+
 ## Minimum usage
 ```html
 <script src="vendor/anime-3.2.2.min.js"></script>

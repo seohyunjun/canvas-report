@@ -23,6 +23,14 @@ npm ships ESM by default. To use `<script src>` directly from `file://` you need
 **Two traps.** The easing key is **`ease`**, not `easing`. And animate **`scaleX`**, not `width` —
 `width` forces layout every frame and never reaches WAAPI.
 
+## The pin is two majors behind the site, and says nothing about it
+motion.dev documents **13.1.1**; this is **11.11.17**. Most of the surface matches, but the newer
+spring option `visualDuration` does not occur anywhere in the pinned file — and passing it raises
+nothing, because **Motion does not validate option names**. Neither does it reject a nonsense
+easing string. A contract copied from the current docs will run and quietly ignore the part that
+does not exist; only `assets/check-motion.py` observing real progress catches it.
+[`api-surface.md`](api-surface.md) lists what this build does expose.
+
 ## What only this engine does
 - **A hardware-accelerated path.** transform and opacity are handed to the browser's own engine.
 - **Real spring physics.** `type:'spring'` responds to input velocity instead of replaying a fixed

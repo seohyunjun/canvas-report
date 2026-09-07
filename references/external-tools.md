@@ -102,6 +102,11 @@ trace types snap, and you can animate data *or* layout but not both at once.
 > **Worked examples live in [`../lab/motion-engines/`](../lab/motion-engines/).** Each engine has
 > one runnable page and one doc, all animating the same dataset, with the runtimes vendored and
 > pinned. Read this section for the verdict; go there when the verdict is "yes, close the skill".
+>
+> **Before copying an API name off any of these sites, read
+> [`docs/api-surface.md`](../lab/motion-engines/docs/api-surface.md).** Each site documents whatever
+> version is current; this repo builds against pinned files, and the two have drifted. That file
+> records what the pinned runtimes actually expose, read out of the bundles themselves.
 
 All three are excellent, all three are a network request or a build step, and **all three solve a
 problem this skill does not have.** They animate a document. This skill animates a canvas, where
@@ -129,12 +134,18 @@ animations are its distinctive features.
 helper already drives the Web Animations API directly rather than tweening styles in JavaScript,
 which is Motion's core insight, minus the library.
 
-### [anime.js](https://animejs.com/) — 24.5 KB core, modular
+### [anime.js](https://animejs.com/) — pinned at 3.2.2, 17 KB
 *(lab: [`03-anime.html`](../lab/motion-engines/03-anime.html) · [`docs/anime.md`](../lab/motion-engines/docs/anime.md))*
 
+**Read the link with care:** animejs.com documents **v4**, whose API is `animate()`,
+`createTimeline()`, `createDraggable()`, `createScope()`, `onScroll()` and the SVG factories. This
+repo vendors **3.2.2**, and eleven of those fourteen names do not occur in that file at all — see
+[`docs/api-surface.md`](../lab/motion-engines/docs/api-surface.md). A `vendored-runtime` selection
+gets `anime({targets, duration, easing, update, complete})`, not the API on the site.
+
 **Good at:** breadth per byte. Timeline, keyframes, an SVG toolset (morphing, line drawing, motion
-path), a Draggable API with spring physics, a Scope API for responsive animation, and the most
-developed **stagger** utilities of the three — time-based, value-based and grid-position.
+path), and the most developed **stagger** utilities of the three — time-based, value-based and
+grid-position. The Draggable and Scope APIs the site leads with are v4 only.
 
 **Portable idea taken:** almost none, deliberately. Stagger is anime.js's signature and this skill
 **bans it** ([`motion.md`](motion.md)): six cards rising in sequence delays reading six times.

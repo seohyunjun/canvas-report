@@ -8,7 +8,10 @@ Lab page: [`../01-gsap.html`](../01-gsap.html) · vendored: `vendor/gsap-3.12.5.
 | `gsap-3.12.5.min.js` | 72 KB | cdnjs `gsap/3.12.5/gsap.min.js` |
 
 The plugins (ScrollTrigger, MorphSVG, DrawSVG, SplitText, Draggable) are **not** vendored.
-Add a line to `vendor/fetch.sh` and regenerate `SHA256SUMS` if you need one.
+Add a line to `vendor/fetch.sh` and regenerate `SHA256SUMS` if you need one. The core bundle
+mentions `ScrollTrigger` by name — it knows how to receive the plugin — but `gsap.plugins` is empty
+after load, which is the check that matters ([`api-surface.md`](api-surface.md)). The 70 ease names
+that *do* resolve are listed there too.
 
 ## Minimum usage
 ```html
