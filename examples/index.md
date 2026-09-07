@@ -22,4 +22,14 @@ reference passages behind each decision, machine-checked with `assets/check-quot
 The second report is the whole state path run once: `profile-data.py` → an Agent-written `plan.json`
 → `validate-plan.py` → `build-report.py` → `validate-report.py`, with every state bound to its
 artifact hashes. Two of its four charts declare entry motion and two declare themselves static, and
-`check-motion.py` gates them on that declaration rather than on whether anything moved.
+`check-motion.py` gates them on that declaration rather than on whether anything moved. Each
+enabled contract now names its kind, trigger, duration, easing and motion engine, and the plan
+records the report-level motion story and the tool selection behind them — which is why the file
+carries `MOTION-STORY-001` and `TOOL-SELECTION-001` in its stamp.
+
+The first report predates all of that. It was built before 3.0.0, so it carries the older `read:`
+stamp rather than a spec hash, its charts declare no executable motion contract, and the current
+`check-motion.py` therefore has nothing to gate them against. One fragment in its stamp no longer
+resolves: it quotes `references/motion.md` as it read before 3.0.0 rewrote that file. The quote was
+true when the report was built and `check-quotes.py` is right to say it no longer matches — the
+report is kept as published rather than edited to agree with a reference it never read.
