@@ -34,6 +34,19 @@ def embedded_spec(html: str) -> dict:
     return spec if isinstance(spec, dict) else {}
 
 
+def blocking(diagnostics: list[dict]) -> list[dict]:
+    """Diagnostics that stop the run.
+
+    A validator may report something the author should see without claiming a
+    requirement failed — how much motion a reader meets on the first screen, say.
+    Only an explicit ``severity: "warning"`` is advisory; anything else, including
+    a missing or malformed severity, blocks. This is not a way to ship a failure:
+    a gate that found a broken requirement still reports it as an error.
+    """
+    return [item for item in diagnostics
+            if not (isinstance(item, dict) and item.get("severity") == "warning")]
+
+
 def conforms(item: object) -> bool:
     """A diagnostic carries a Rule ID, so a malformed one is itself a finding."""
     return (isinstance(item, dict) and isinstance(item.get("id"), str)
@@ -92,10 +105,10 @@ def main() -> int:
             static.append(diagnostic("FINAL-BUILD-002", str(html_path), f"HTML embeds charts {built} but the spec declares {[chart.get('id') for chart in charts]}.", "Rebuild from the validated spec and inspect the builder diagnostics."))
         if re.search(r"<(?:script|link|img)[^>]+(?:src|href)=[\"']https?://", html, re.I):
             static.append(diagnostic("ZERO-NETWORK-001", str(html_path), "HTML contains an external resource URL.", "Inline the resource or remove it from the declarative spec."))
-        phases["build"] = {"status": "fail" if static else "pass", "diagnostics": static}; diagnostics.extend(static)
+        phases["build"] = {"status": "fail" if blocking(static) else "pass", "diagnostics": static}; diagnostics.extend(static)
         if not static:
             render, _ = run_json("check-render.py", html_path, "--expect-canvases", str(len(charts)))
-            phases["render"] = {"status": "fail" if render else "pass", "diagnostics": render}; diagnostics.extend(render)
+            phases["render"] = {"status": "fail" if blocking(render) else "pass", "diagnostics": render}; diagnostics.extend(render)
             motion_enabled = any(isinstance(chart, dict) and chart.get("motion", {}).get("enabled") is True for chart in spec.get("charts", []))
             if args.skip_motion and motion_enabled:
                 motion = [diagnostic("MOTION-SKIP-001", "--skip-motion", "Motion validation was skipped although enabled motion exists.", "Run without --skip-motion.")]
@@ -103,17 +116,17 @@ def main() -> int:
                 motion = []
             else:
                 motion, _ = run_json("check-motion.py", html_path)
-            phases["motion"] = {"status": "fail" if motion else "pass", "diagnostics": motion}; diagnostics.extend(motion)
+            phases["motion"] = {"status": "fail" if blocking(motion) else "pass", "diagnostics": motion}; diagnostics.extend(motion)
     except (OSError, json.JSONDecodeError) as exc:
         diagnostics.append(diagnostic("FINAL-INPUT-001", "validate-report", str(exc), "Provide readable matching report-spec.json and HTML files."))
         phases["input"] = {"status": "fail", "diagnostics": diagnostics[:]}
-    result = {"schema_version": VERSION, "status": "fail" if diagnostics else "pass",
+    result = {"schema_version": VERSION, "status": "fail" if blocking(diagnostics) else "pass",
               "spec_sha256": hashlib.sha256(spec_path.read_bytes()).hexdigest() if spec_path.is_file() else None,
               "html_sha256": hashlib.sha256(html_path.read_bytes()).hexdigest() if html_path.is_file() else None,
               "phases": phases, "diagnostics": diagnostics}
     Path(args.output).write_text(json.dumps(result, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))
-    return 1 if diagnostics else 0
+    return 1 if blocking(diagnostics) else 0
 
 
 if __name__ == "__main__":

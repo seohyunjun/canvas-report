@@ -143,6 +143,8 @@ continuity. Reduced motion omits animation and the final state always retains al
 
 Run validators progressively: profile/schema and plan rules before build; then HTML/semantic/accessibility/data-honesty checks; render/layout checks via `assets/check-render.py`; and `assets/check-motion.py` only for charts whose spec declares motion. Results carry Rule-ID diagnostics and artifact hashes.
 
+`check-motion.py` looks twice. It opens the report at 1280×800 — the window a reader opens a file into — and records whether any chart with motion is on the first screen at all; entry motion below the fold is only ever seen on the way past it, so a report whose charts all sit under the masthead is still until the reader scrolls. It then measures wiring, engine, duration and final state in its own taller viewport. A diagnostic carrying `severity: "warning"` is written into `validation.json` and does not block: it tells the author what the report does rather than claiming a requirement failed. Every other severity blocks, including a missing one.
+
 Use `assets/validate-report.py --spec report-spec.json --html report.html --output validation.json`
 to persist the post-build gate results. Advance states with `assets/report-state.py`; it rejects
 skipped transitions and binds each state to its artifact hash.
@@ -173,7 +175,7 @@ A run completes when required gates pass, all errors are resolved, and the final
 | `assets/report-state.py` | ordered state transitions and artifact hashes |
 | `assets/validate-report.py` | progressive gates → `validation.json` |
 | `assets/check-render.py` | render/layout validation |
-| `assets/check-motion.py` | real-clock validation of declared motion |
+| `assets/check-motion.py` | real-clock validation of declared motion, and what a reader meets on the first screen |
 | `schemas/*.schema.json`, `references/rules.json`, `references/index.json` | artifact contracts and authoritative Rule-ID provenance |
 | `assets/report-shell.html` | read-only runtime shell |
 | `references/analysis-lenses.md` | data shape → supported lens/chart |

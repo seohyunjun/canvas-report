@@ -23,6 +23,32 @@ RUNTIMES = {
     "anime": {"runtime": "anime@3.2.2", "version": "3.2.2", "sha256": "bceef94f964481f7680d95e7fbbe5a8c20d3945a926a754874898a578db7c7ab"},
 }
 
+# Two viewports, because they answer two different questions. READER is a laptop
+# window the report is opened into and left alone: it is the only way to see
+# whether a reader meets any motion before touching the scroll wheel. TALL is
+# where the wiring, engine and final-state checks below are measured, unchanged —
+# the report is short enough to hold in one screen there, so nothing in those
+# checks depends on where a fold happens to land. This gate used to run only in
+# TALL, and so reported motion no reader at a normal window would ever see.
+READER = (1280, 800)
+TALL = (1240, 2400)
+
+
+FIRST_SCREEN = r"""
+(() => {
+  const canvases = [...document.querySelectorAll('canvas')];
+  return JSON.stringify({
+    viewport: { width: innerWidth, height: innerHeight },
+    canvases: canvases.map(canvas => ({
+      id: canvas.id || "(unnamed)",
+      enabled: canvas.getAttribute("data-motion-enabled"),
+      played: !!(canvas.__chart && canvas.__chart.__played),
+      top: Math.round(canvas.getBoundingClientRect().top + scrollY)
+    }))
+  });
+})()
+"""
+
 
 PROBE = r"""
 (async () => {
@@ -80,8 +106,8 @@ PROBE = r"""
 """
 
 
-def diagnostic(identifier, location, problem, suggested_fix):
-    return {"severity": "error", "id": identifier, "location": location,
+def diagnostic(identifier, location, problem, suggested_fix, severity="error"):
+    return {"severity": severity, "id": identifier, "location": location,
             "problem": problem, "suggested_fix": suggested_fix}
 
 
@@ -91,8 +117,8 @@ async def probe(url, port):
     chrome = os.environ.get("CR_CHROME") or shutil.which("google-chrome") or shutil.which("chromium") or "google-chrome"
     process = subprocess.Popen(
         [chrome, "--headless=new", "--no-sandbox", "--disable-gpu", "--hide-scrollbars",
-         "--force-device-scale-factor=1", "--window-size=1240,2400",
-         "--user-data-dir=" + profile, "--remote-debugging-port=%d" % port, url],
+         "--force-device-scale-factor=1", "--window-size=%d,%d" % READER,
+         "--user-data-dir=" + profile, "--remote-debugging-port=%d" % port, "about:blank"],
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     try:
         ws_url = None
@@ -111,18 +137,50 @@ async def probe(url, port):
         if not ws_url:
             raise RuntimeError("could not reach Chrome on port %d" % port)
         async with websockets.connect(ws_url, max_size=None) as socket:
+            counter = [0]
+
+            async def call(method, params=None, timeout=60):
+                counter[0] += 1
+                identifier = counter[0]
+                await socket.send(json.dumps({"id": identifier, "method": method,
+                                              "params": params or {}}))
+                while True:
+                    message = json.loads(await asyncio.wait_for(socket.recv(), timeout))
+                    if message.get("id") == identifier:
+                        if "error" in message:
+                            raise RuntimeError("%s: %s" % (method, message["error"].get("message", "CDP error")))
+                        return message.get("result", {})
+
+            async def evaluate(expression):
+                result = await call("Runtime.evaluate", {
+                    "expression": expression, "awaitPromise": True,
+                    "returnByValue": True, "timeout": 40000})
+                if "exceptionDetails" in result:
+                    raise RuntimeError("page threw: " + json.dumps(result["exceptionDetails"])[:400])
+                return result.get("result", {}).get("value")
+
+            async def evaluate_json(expression):
+                return json.loads(await evaluate(expression))
+
+            async def viewport(size):
+                await call("Emulation.setDeviceMetricsOverride", {
+                    "width": size[0], "height": size[1], "deviceScaleFactor": 1, "mobile": False})
+
+            await call("Page.enable")
+            await call("Runtime.enable")
+            # Size the window before the report loads, so the first screen the
+            # observer sees is the one a reader would open the file into.
+            await viewport(READER)
+            await call("Page.navigate", {"url": url})
+            await asyncio.sleep(1.6)
+            first_screen = await evaluate_json(FIRST_SCREEN)
+            # Hand the rest of the checks the viewport they have always run in.
+            await viewport(TALL)
+            await evaluate("window.dispatchEvent(new Event('resize'))")
             await asyncio.sleep(.8)
-            await socket.send(json.dumps({"id": 1, "method": "Runtime.evaluate", "params": {
-                "expression": PROBE, "awaitPromise": True, "returnByValue": True,
-                "timeout": 40000}}))
-            while True:
-                message = json.loads(await asyncio.wait_for(socket.recv(), 60))
-                if message.get("id") == 1:
-                    result = message.get("result", {})
-                    if "exceptionDetails" in result:
-                        raise RuntimeError("page threw: " +
-                                           json.dumps(result["exceptionDetails"])[:400])
-                    return json.loads(result["result"]["value"])
+            result = await evaluate_json(PROBE)
+            result["first_screen"] = first_screen
+            return result
     finally:
         process.terminate()
         try:
@@ -140,8 +198,36 @@ def parse_args(argv):
     return args[0], json_output
 
 
+def blocking(diagnostics):
+    """Anything that is not explicitly a warning stops the run — the default is to fail."""
+    return [item for item in diagnostics
+            if not (isinstance(item, dict) and item.get("severity") == "warning")]
+
+
+def first_screen_diagnostics(result, path):
+    """What the reader gets on opening the file, before touching the scroll wheel.
+
+    Motion below the fold is not a defect — on-view entry is the declared contract,
+    and a Briefing leads with its masthead. It is a fact about the report the author
+    should know, so it is reported as a warning and never blocks a ship.
+    """
+    observed = result.get("first_screen") or {}
+    canvases = [item for item in observed.get("canvases", []) if item.get("enabled") == "true"]
+    if not canvases or any(item.get("played") for item in canvases):
+        return []
+    view = observed.get("viewport", {})
+    nearest = min(canvases, key=lambda item: item.get("top", 0))
+    return [diagnostic("MOTION-VIEWPORT-001", path,
+        "No chart with motion is on the first screen at %dx%d: the nearest starts %dpx down, "
+        "so the report is still until the reader scrolls."
+        % (view.get("width", 0), view.get("height", 0), nearest.get("top", 0)),
+        "Keep it if the reading sequence intends it, or lift the first evidence chart above the "
+        "fold; entry motion below the fold is only ever seen on the way past it.",
+        severity="warning")]
+
+
 def validate(result, path):
-    diagnostics = []
+    diagnostics = first_screen_diagnostics(result, path)
     if result["reduced"]:
         diagnostics.append(diagnostic("MOTION-TOOL-001", path,
             "Chrome reported reduced-motion mode, so animation cannot be measured.",
@@ -243,7 +329,9 @@ def main():
                    item["suggested_fix"]))
         if not diagnostics:
             print("Motion validation passed.")
-    if diagnostics:
+        elif not blocking(diagnostics):
+            print("Motion validation passed with warnings.")
+    if blocking(diagnostics):
         raise SystemExit(1)
 
 
