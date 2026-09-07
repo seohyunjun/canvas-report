@@ -16,7 +16,10 @@ Avoid simultaneous motion in competing cards. A practical default is one lead tr
 by play-once, on-view entry for later evidence charts. Returning to a chart does not replay it.
 
 Tie every enabled chart to one dedicated motion engine selected in
-`creative_direction.external_tools` through `motion.source_tool`. Valid chart-entry sources are
+`creative_direction.external_tools` through `motion.source_tool`.
+[`motion-engines.md`](motion-engines.md) is the companion to this file: what each pinned engine
+actually exposes, which of its advertised features a report may use, and which easing and duration
+suit each chart factory. Valid chart-entry sources are
 GSAP, Motion, and anime.js. D3 remains a visualization/data-join tool and Plotly remains a
 visualization/state-model tool; neither may be reported as the primary motion engine.
 

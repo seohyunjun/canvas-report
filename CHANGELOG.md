@@ -23,6 +23,20 @@
   then runs its existing wiring, engine and final-state checks in the taller viewport as
   before. Where every chart sits below the fold — which a masthead-first macrostructure makes
   the common case — it reports `MOTION-VIEWPORT-001`.
+- Add `references/motion-engines.md`, and register it as a conditional reference. The engines'
+  own getting-started pages advertise scroll-linked motion, springs, staggers, timelines, drag,
+  and an SVG toolset; a report calls exactly one of their functions, once per chart, to move one
+  number from 0 to 1. The new file maps every advertised feature onto that reality — used, banned
+  by `motion.md`, owned by the shell already, or absent from the pinned build — with the pinned
+  call form beside the documented one, including the v4-to-3.2.2 translation anime.js's own vanilla
+  page now requires (`animate(targets, …)` → `anime({targets, …})`, `ease` → `easing`, `onUpdate` →
+  `update`, and a `stagger` whose options were renamed).
+- Choose the easing and the duration from what the factory does with the progress value. `c.t` is a
+  reveal in `line` and `concentration` (`round(rows.length · t)`), a height in `columns` and
+  `divColumns`, a length in `hbars` and `lollipop`, and a **radius** in `bubbles`, where area
+  therefore grows with `t²`. A value-scaled mark displays a number smaller than its datum until it
+  lands, so those charts take a curve that arrives early and a shorter window; a reveal's easing is
+  its reading pace instead. `motion-engines.md` carries the per-factory table.
 - Republish the pipeline example as a new report. Making motion contracts executable changed what
   the builder emits, and the shipped `examples/support-intake-pipeline-run.html` predated that: it
   carried no `data-motion-*` contract, so `check-motion.py` rejected it with eight

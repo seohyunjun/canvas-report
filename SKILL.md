@@ -84,8 +84,8 @@ Load references lazily:
   `references/anti-patterns.md`, and the selection table in `references/external-tools.md`.
 - **Conditional:** `uncertainty.md` for comparisons/estimates, the selected macrostructure file,
   `themes.md`, `components.md`, `tooltip-help.md`, factory-relevant parts of `pitfalls.md`, the
-  selected tool sections and lab docs from `external-tools.md`, and `motion.md` whenever charts
-  exist.
+  selected tool sections and lab docs from `external-tools.md`, `motion.md` whenever charts exist,
+  and `motion-engines.md` whenever a chart enables motion or a runtime is vendored.
 - **Final:** `references/slop-test.md` and validator guidance only after a build exists.
 
 Reference provenance is Rule-ID based. `references/rules.json` and `references/index.json` record the rule IDs applied to profile, plan, spec, and validator results. Optional quotations may explain a decision, but are non-authoritative and are not proof that a rule ran. Do not use a `read:` quote stamp as a gate or source of authority.
@@ -198,6 +198,7 @@ A run completes when required gates pass, all errors are resolved, and the final
 | `references/themes.md` | compatible rotation and theme contract |
 | `references/external-tools.md` | chart, state-model, and motion-tool selection with integration boundaries |
 | `references/motion.md` | report-level choreography and per-chart executable motion contract |
+| `references/motion-engines.md` | what each pinned engine offers, what a report may use, and which easing and duration suit each chart factory |
 | `references/slop-test.md` | final, post-build review guidance |
 
 ## When this is not the right task
