@@ -1,7 +1,9 @@
 # Motion engines — every advertised feature, and where it lands in a report
 
 Read this with [`motion.md`](motion.md) whenever a chart enables motion or a plan names a
-`vendored-runtime`. `motion.md` sets the contract; this file says what the engines actually offer,
+`vendored-runtime`. [`motion-features.md`](motion-features.md) is the fuller catalogue — it walks
+both documentation sites feature by feature and routes easing and duration per chart factory; this
+file is the engine-by-engine comparison. `motion.md` sets the contract; this file says what the engines actually offer,
 what the pinned copies actually contain, and which of it a canvas report can use.
 
 The engines' own sites document whatever version is current. This repo builds against fixed files,

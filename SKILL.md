@@ -72,20 +72,22 @@ The labels mean: `VALIDATED` is the state in which a submitted `plan.json` has p
 
 Use the supplied data, not a description of it. Capture language, output location, requested
 macro/theme/motion, desired interaction depth, and constraints. After profiling,
-run `assets/select-candidates.py` to produce the compatible lens, macrostructure, and theme set
-before the Agent chooses. **User requirements outrank rotation only after compatibility is
+run `assets/select-candidates.py` to produce the compatible lens, macrostructure, and
+subject-scored theme set before the Agent chooses. **User requirements outrank rotation only after compatibility is
 established.** An incompatible requested structure, chart, theme use, or motion treatment is
 rejected with a diagnostic and an evidence-based alternative. External fonts are never an
 exception: reports remain offline and use the shipped system-font stacks.
 
 Load references lazily:
 
-- **Core:** the compact `references/rules.json` registry, `references/analysis-lenses.md`,
-  `references/anti-patterns.md`, and the selection table in `references/external-tools.md`.
+- **Core:** the compact `references/rules.json` registry, `references/themes.json` catalogue,
+  `references/analysis-lenses.md`, `references/anti-patterns.md`, and the selection table in
+  `references/external-tools.md`.
 - **Conditional:** `uncertainty.md` for comparisons/estimates, the selected macrostructure file,
-  `themes.md`, `components.md`, `tooltip-help.md`, factory-relevant parts of `pitfalls.md`, the
-  selected tool sections and lab docs from `external-tools.md`, `motion.md` whenever charts exist,
-  and `motion-engines.md` whenever a chart enables motion or a runtime is vendored.
+  `themes.md` for the theme procedure, `components.md`, `tooltip-help.md`, factory-relevant parts of
+  `pitfalls.md`, the selected tool sections and lab docs from `external-tools.md`, `motion.md`
+  whenever charts exist, `motion-features.md` before any chart motion contract is written, and
+  `motion-engines.md` whenever a runtime is vendored.
 - **Final:** `references/slop-test.md` and validator guidance only after a build exists.
 
 Reference provenance is Rule-ID based. `references/rules.json` and `references/index.json` record the rule IDs applied to profile, plan, spec, and validator results. Optional quotations may explain a decision, but are non-authoritative and are not proof that a rule ran. Do not use a `read:` quote stamp as a gate or source of authority.
@@ -105,6 +107,22 @@ Motion for simple entry transitions. Use Plotly's named-frame model for stateful
 genuinely sequenced scrollytelling, and anime.js for compact SVG choreography. Do not select tools
 merely to increase the tool count.
 
+Before writing a single `motion` block, read `references/motion-features.md`. It summarises every
+feature the Motion quick-start and the anime.js vanilla-JS guide advertise — `animate` in both its
+element and numeric forms, keyframes, `stagger`, springs, `scroll`, `inView`, gestures, timelines,
+draggables, the SVG and text toolsets, playback controls — says how the **pinned** 11.11.17 and
+3.2.2 files actually take each call, and marks each one *used*, *shell*, *held*, *absent*, or
+*refused* with the reason. Nothing on those lists leaves a capability gap: where a feature is not
+called, the runtime shell already supplies the job, and its version is what the gates measure.
+
+That file also routes the choice per chart, which is where the decision actually lands. What a
+chart's progress value scales differs by factory — `line` and `concentration` reveal points, while
+`columns`, `hbars`, `lollipop` and `bubbles` scale the mark itself — so a reveal takes a steady
+curve at 600–800 ms and a value-scaled mark takes one that arrives early at 400–600 ms, with
+`bubbles` at 700–900 ms because radius is the square root of area. `MOTION-FIT-001` and
+`MOTION-FIT-002` warn when a chart leaves its band; `MOTION-PORTABLE-CEILING-001` is an error when a
+`portable-pattern` chart declares more than 900 ms, which the shell's `anim()` would silently clamp.
+
 The offline builder normally adopts a selected tool's portable pattern through the shipped
 runtime. If the request truly requires an actual third-party runtime, the supported narrow path is
 GSAP 3.12.5, Motion 11.11.17, or anime.js 3.2.2 as a `vendored-runtime` motion engine. The builder
@@ -119,7 +137,30 @@ data mappings, tables, help, methodology, `creative_direction.external_tools`, a
 motion story, per-chart motion contracts, and Rule-ID provenance. It cannot edit the shell or use
 runtime code as an authoring surface.
 
-Choose a macrostructure because the profile supports it. Then choose theme and masthead. Rotation considers compatible choices first; the theme must be at least **distance 2** from the previous theme, unless the user explicitly requests a compatible override. A compatible explicit user override is recorded in the plan. Macrostructure and masthead rotate where compatible alternatives exist.
+Choose a macrostructure because the profile supports it, then the masthead. Macrostructure and
+masthead rotate where compatible alternatives exist.
+
+**The theme is chosen in three passes, in this order — compatibility, subject fit, then rotation.**
+`references/themes.json` catalogues twenty-six themes with the subjects each one suits, and
+`assets/select-candidates.py` has already scored them; `references/themes.md` states the procedure.
+
+1. **Compatibility** discards themes the profile, accessibility contract, macrostructure, or an
+   explicit `native_mode` requirement rules out.
+2. **Subject fit** scores what the dataset is *about*, from profiled column names, the source file
+   name, and the stated requirements. A billing extract should reach for `abacus`, an incident feed
+   for `sentinel`, a support queue for `desk`, a climate series for `tide`. Subject-neutral themes
+   carry a baseline so data whose columns name no domain still has candidates.
+3. **Rotation** then requires **distance ≥ 2** from the previous theme across paper band, display
+   class, and accent hue. Fit outranks distance: a report about payroll should look like payroll
+   first and differ from the last report second.
+
+Record the decision in `plan.theme_rationale`: the subject in the report's own words, the signals
+relied on, and the `fit_score` and `rotation_distance` **copied** from the candidate artifact.
+`assets/validate-plan.py` checks the record against that artifact, so a plan cannot claim a subject
+match the profile does not evidence — `THEME-FIT-003` on a mismatched number, `THEME-FIT-004` on an
+invented signal, and a `THEME-FIT-001` warning when a theme matching nothing was chosen over a
+compatible theme that fits. A compatible explicit user override outranks rotation once compatibility
+is proven; record it. `THEME-SELECTION-001` provenance is required in `rule_decisions`.
 
 ### 4. PLANNED: compile and validate
 
@@ -195,10 +236,14 @@ A run completes when required gates pass, all errors are resolved, and the final
 | `references/analysis-lenses.md` | data shape → supported lens/chart |
 | `references/uncertainty.md` | earned comparisons, intervals, estimates |
 | `references/anti-patterns.md` | data and visual honesty failures |
-| `references/themes.md` | compatible rotation and theme contract |
+| `references/themes.json` | canonical theme catalogue: axes, subject keywords, fit baselines |
+| `references/themes.md` | the three-pass theme procedure, catalogue, and contrast contract |
+| `assets/make-themes.py` | design rows → generated theme blocks in `themes.css` |
+| `assets/check-themes.py` | contrast contract and catalogue/CSS agreement |
 | `references/external-tools.md` | chart, state-model, and motion-tool selection with integration boundaries |
 | `references/motion.md` | report-level choreography and per-chart executable motion contract |
-| `references/motion-engines.md` | what each pinned engine offers, what a report may use, and which easing and duration suit each chart factory |
+| `references/motion-features.md` | every feature the Motion and anime.js docs advertise, its verdict here, and the per-factory easing/duration routing |
+| `references/motion-engines.md` | what each pinned engine offers and what a vendored runtime costs |
 | `references/slop-test.md` | final, post-build review guidance |
 
 ## When this is not the right task

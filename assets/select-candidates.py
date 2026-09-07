@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate deterministic macrostructure, theme, and lens candidates before planning."""
+"""Generate deterministic macrostructure, theme, and lens candidates before planning.\n\nThemes are ranked by how well their subject matches the dataset, then by rotation\ndistance from the previous run. references/themes.json is the catalogue.\n"""
 from __future__ import annotations
 
 import argparse
@@ -8,21 +8,80 @@ import json
 from pathlib import Path
 from typing import Any
 
-THEMES = (
-    {"id":"almanac","paper_band":"light","display_class":"humanist-sans","accent_hue":"cool"},
-    {"id":"specimen","paper_band":"light","display_class":"high-contrast-serif","accent_hue":"warm"},
-    {"id":"newsprint","paper_band":"light","display_class":"roman-serif","accent_hue":"warm"},
-    {"id":"cobalt","paper_band":"light","display_class":"techno-grotesk","accent_hue":"cool"},
-    {"id":"grid","paper_band":"light","display_class":"neo-grotesk","accent_hue":"warm"},
-    {"id":"terminal","paper_band":"dark","display_class":"mono","accent_hue":"green"},
-    {"id":"lumen","paper_band":"dark","display_class":"classical-serif","accent_hue":"warm"},
-    {"id":"garden","paper_band":"light","display_class":"roman-serif","accent_hue":"green"},
-    {"id":"carnival","paper_band":"light","display_class":"display-heavy","accent_hue":"warm"},
-    {"id":"riso","paper_band":"light","display_class":"reverse-pair","accent_hue":"cool"},
-)
+CATALOGUE = Path(__file__).resolve().parent.parent / "references" / "themes.json"
+AXES = ("paper_band", "display_class", "accent_hue")
+MIN_KEYWORD = 4
+FIT_SATURATION = 5.0
+
 INTENTS = {"conclusion":{"Briefing","Deck"},"lookup":{"Ledger","Workbench"},
            "persuade":{"Scrolly","Broadsheet","Bridge"},"scan":{"Poster","Spread"},
            "explore":{"Workbench","Fieldnotes"}}
+
+
+def themes() -> list[dict[str, Any]]:
+    """The canonical catalogue. Selection reads it; themes.css only holds tokens."""
+    rows = json.loads(CATALOGUE.read_text(encoding="utf-8")).get("themes", [])
+    if not isinstance(rows, list) or not rows:
+        raise ValueError(f"{CATALOGUE} lists no themes")
+    return rows
+
+
+def tokens(value: Any, sink: set[str]) -> None:
+    """Collect lowercase word tokens from any nested requirement or profile value."""
+    if isinstance(value, str):
+        word = ""
+        for ch in value.lower():
+            if ch.isalnum():
+                word += ch
+            else:
+                if word:
+                    sink.add(word)
+                word = ""
+        if word:
+            sink.add(word)
+    elif isinstance(value, dict):
+        for key, item in value.items():
+            tokens(key, sink)
+            tokens(item, sink)
+    elif isinstance(value, list):
+        for item in value:
+            tokens(item, sink)
+
+
+def subject_signals(profile: dict[str, Any], requirements: dict[str, Any]) -> list[str]:
+    """What the dataset is about, as far as the artifacts can evidence it.
+
+    Column names carry the subject far more reliably than a title does, so they are
+    the first source; the file name and the stated requirements fill in the rest.
+    Nothing here inspects cell values — the profile is the only view of the data.
+    """
+    sink: set[str] = set()
+    for column in profile.get("columns", []):
+        if isinstance(column, dict):
+            tokens(column.get("name"), sink)
+    source = profile.get("source")
+    if isinstance(source, dict):
+        tokens(Path(str(source.get("path", ""))).stem, sink)
+    for key in ("subject", "domain", "title", "audience", "question", "notes", "purpose"):
+        tokens(requirements.get(key), sink)
+    return sorted(token for token in sink if len(token) >= 3)
+
+
+def subject_fit(theme: dict[str, Any], signals: list[str]) -> tuple[float, list[str]]:
+    """Score one theme against the dataset's subject.
+
+    A keyword matches when a signal token equals it or starts with it, so `enrol`
+    catches `enrolment` without `enrol` also catching an unrelated `enrolled_by_id`
+    twice. The score saturates: five matches is as fitted as a theme gets, and the
+    catalogue baseline keeps subject-neutral themes selectable for data whose
+    columns say nothing about their domain.
+    """
+    matched = sorted({
+        keyword for keyword in theme.get("subjects", [])
+        if len(keyword) >= MIN_KEYWORD and any(token.startswith(keyword) for token in signals)
+    })
+    earned = min(1.0, len(matched) / FIT_SATURATION)
+    return round(max(earned, float(theme.get("baseline", 0.0))), 3), matched
 
 
 def load(path: str | None) -> dict[str, Any]:
@@ -89,26 +148,38 @@ def main() -> int:
             rotated = compatible and identifier == prior_macro and identifier != explicit_macro
             macros.append({"id": identifier, "compatible": compatible, "rotation_excluded": rotated,
                            "intent_match": identifier in INTENTS.get(intent, set()), "reason": reason})
-        prior_theme = next((item for item in THEMES if item["id"] == previous(history, "theme")), None)
+        catalogue = themes()
+        signals = subject_signals(profile, requirements)
+        prior_theme = next((item for item in catalogue if item["id"] == previous(history, "theme")), None)
         requested_mode = requirements.get("native_mode")
         explicit_theme = requirements.get("theme")
-        themes = []
-        for item in THEMES:
+        theme_rows = []
+        for item in catalogue:
             compatible = requested_mode in (None, item["paper_band"])
-            distance = 3 if prior_theme is None else sum(item[key] != prior_theme[key] for key in ("paper_band","display_class","accent_hue"))
+            distance = 3 if prior_theme is None else sum(item[key] != prior_theme[key] for key in AXES)
             rotation_excluded = compatible and distance < 2 and item["id"] != explicit_theme
-            themes.append({**item, "compatible": compatible, "rotation_distance": distance,
-                           "rotation_excluded": rotation_excluded, "explicit_override": item["id"] == explicit_theme})
+            fit_score, fit_matched = subject_fit(item, signals)
+            theme_rows.append({
+                "id": item["id"], "paper_band": item["paper_band"],
+                "display_class": item["display_class"], "accent_hue": item["accent_hue"],
+                "suits": item.get("suits", ""), "compatible": compatible,
+                "rotation_distance": distance, "rotation_excluded": rotation_excluded,
+                "explicit_override": item["id"] == explicit_theme,
+                "fit_score": fit_score, "fit_matched": fit_matched,
+            })
         result = {"schema_version":"1.0", "profile_sha256":profile_sha256,
                   "requirements_sha256":requirements_sha256, "lenses":lenses,
+                  "subject_signals":signals,
                   "macros":sorted(macros, key=lambda item: (not item["compatible"], item["rotation_excluded"], not item["intent_match"], item["id"])),
-                  "themes":sorted(themes, key=lambda item: (not item["compatible"], item["rotation_excluded"], -item["rotation_distance"], item["id"]))}
+                  # Subject fit outranks rotation distance: a report about payroll should
+                  # look like payroll first, and merely differ from the last report second.
+                  "themes":sorted(theme_rows, key=lambda item: (not item["compatible"], item["rotation_excluded"], -item["fit_score"], -item["rotation_distance"], item["id"]))}
         encoded = json.dumps(result, ensure_ascii=False, sort_keys=True, indent=2) + "\n"
         if args.output: Path(args.output).write_text(encoded, encoding="utf-8")
         else: print(encoded, end="")
         return 0
     except (OSError, ValueError, json.JSONDecodeError) as exc:
-        print(json.dumps({"diagnostics":[{"severity":"error","id":"CANDIDATE-001","location":"candidate selection","problem":str(exc),"suggested_fix":"Provide valid profile, requirements, and history JSON objects."}]}, ensure_ascii=False, sort_keys=True))
+        print(json.dumps({"diagnostics":[{"severity":"error","id":"CANDIDATE-001","location":"candidate selection","problem":str(exc),"suggested_fix":"Provide valid profile, requirements, and history JSON objects, and a readable references/themes.json catalogue."}]}, ensure_ascii=False, sort_keys=True))
         return 1
 
 

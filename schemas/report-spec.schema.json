@@ -3,7 +3,7 @@
   "title": "Canvas report specification",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "source", "plan_sha256", "metadata", "masthead", "grain", "candidates", "lenses", "insights", "macro", "theme", "creative_direction", "sections", "charts", "methodology", "rule_decisions", "retry_policy", "ownership"],
+  "required": ["schema_version", "source", "plan_sha256", "metadata", "masthead", "grain", "candidates", "lenses", "insights", "macro", "theme", "theme_rationale", "creative_direction", "sections", "charts", "methodology", "rule_decisions", "retry_policy", "ownership"],
   "properties": {
     "schema_version": {"const": "1.0"},
     "source": {
@@ -33,6 +33,7 @@
     "insights": {"type": "array"},
     "macro": {"type": "string"},
     "theme": {"type": "string"},
+    "theme_rationale": {"type": "object", "required": ["subject", "signals", "fit_score", "rotation_distance"]},
     "creative_direction": {"type": "object"},
     "sections": {"type": "array"},
     "charts": {"type": "array"},

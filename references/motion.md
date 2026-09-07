@@ -17,9 +17,11 @@ by play-once, on-view entry for later evidence charts. Returning to a chart does
 
 Tie every enabled chart to one dedicated motion engine selected in
 `creative_direction.external_tools` through `motion.source_tool`.
-[`motion-engines.md`](motion-engines.md) is the companion to this file: what each pinned engine
-actually exposes, which of its advertised features a report may use, and which easing and duration
-suit each chart factory. Valid chart-entry sources are
+Two companions carry the detail. [`motion-features.md`](motion-features.md) walks the Motion
+quick-start and the anime.js vanilla-JS guide feature by feature — what each one does, how the
+pinned version takes it, and whether it is used, supplied by the shell, held, absent, or refused —
+and then routes easing and duration per chart factory. [`motion-engines.md`](motion-engines.md)
+compares the three pinned engines and their integration costs. Valid chart-entry sources are
 GSAP, Motion, and anime.js. D3 remains a visualization/data-join tool and Plotly remains a
 visualization/state-model tool; neither may be reported as the primary motion engine.
 
@@ -63,6 +65,12 @@ that chart.
 Value-safe easing values are `linear`, `outCubic`, `inOutCubic`, `outQuint`, `outExpo`,
 `outCirc`, and `inOutQuint`. Overshoot curves temporarily assert values beyond the axis and are
 therefore invalid for data marks.
+
+Which of the seven, and how long, depends on what the chart's progress value scales — a reveal and
+a value-scaled mark do not want the same curve. The per-factory table is in
+[`motion-features.md`](motion-features.md); `MOTION-FIT-001` and `MOTION-FIT-002` warn when a chart
+leaves its band, and `MOTION-PORTABLE-CEILING-001` is an error for a portable-pattern chart
+declaring more than the shell's 900 ms cap.
 
 ## Richer motion
 

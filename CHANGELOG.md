@@ -1,5 +1,60 @@
 # Changelog
 
+## 3.2.0 — 2026-09-07
+
+- Add `references/motion-features.md`: a per-feature catalogue of the two documentation pages a
+  plan is most likely to be written from — [Motion's quick-start](https://motion.dev/docs/quick-start)
+  and [anime.js's *Using with vanilla JS*](https://animejs.com/documentation/getting-started/using-with-vanilla-js).
+  Every advertised feature gets a one-line summary, the call as the **pinned** 11.11.17 / 3.2.2 file
+  would take it, and a verdict — *used*, *shell*, *held*, *absent*, or *refused* with the reason.
+  The two pages document 13.x and 4.0.0; the pins are two majors behind on both, so every v4 name
+  in the anime.js example (`animate`, `utils`, `createDraggable`, `spring`) is absent from the file
+  a report actually inlines, and Motion's `hover`/`press` are not in 11.11.17 either. Registered as
+  a conditional reference, read before any motion contract is written.
+- Route motion per chart factory rather than per taste. What a chart's progress value scales
+  differs — `line` and `concentration` reveal points, `columns`, `hbars`, `lollipop` and `bubbles`
+  scale the mark itself — so a reveal takes a steady curve at 600–800 ms and a value-scaled mark one
+  that arrives early at 400–600 ms, with `bubbles` at 700–900 ms because radius is the square root
+  of area. `assets/validate-plan.py` now warns with `MOTION-FIT-001` (curve) and `MOTION-FIT-002`
+  (duration) when a chart leaves its band, and registers `MOTION-FIT-001` in `references/rules.json`.
+- Make the portable-path duration ceiling an error rather than a footnote.
+  `MOTION-PORTABLE-CEILING-001` fires when a `portable-pattern` chart declares more than 900 ms,
+  which the shell's `anim()` silently clamps and no downstream gate compares.
+- Add a dedicated theme step: **compatibility, subject fit, then rotation**, in that order.
+  `assets/select-candidates.py` now scores every compatible theme against what the dataset is
+  *about* — profiled column names, the source file name, and the stated requirements, tokenised and
+  matched against each theme's subject keywords — and ranks fit above rotation distance. A
+  subject-neutral theme carries a baseline so data whose columns name no domain still has
+  candidates. The candidate artifact gains `subject_signals`, and each theme row gains `fit_score`
+  and `fit_matched`.
+- Require `plan.theme_rationale` — subject, signals, and the `fit_score` and `rotation_distance`
+  **copied** from the candidate artifact. `assets/validate-plan.py` checks the record against that
+  artifact: `THEME-FIT-002` for a missing or malformed rationale, `THEME-FIT-003` for a number that
+  does not match, `THEME-FIT-004` for a signal the artifact never produced, and a `THEME-FIT-001`
+  warning when a theme matching nothing was chosen over a compatible theme that fits.
+  `THEME-SELECTION-001` provenance is now required in `rule_decisions`, and `THEME-FIT-001` joins
+  the rule registry.
+- Grow the catalogue from ten themes to **twenty-six**. The sixteen new faces exist because a
+  common kind of dataset deserves one that belongs to it: `abacus` (finance), `clinic` (clinical),
+  `atlas` (place and movement), `voltage` (energy), `campus` (education), `pitch` (competition),
+  `bazaar` (retail), `blueprint` (built environment), `sentinel` (security), `assay` (laboratory),
+  `civic` (public sector), `signal` (growth analytics), `roster` (workforce), `desk` (support
+  queues), `tide` (climate), and `flux` (network). Six themes are now dark-native.
+- Add `references/themes.json` as the canonical catalogue — axes, character, subjects, fit baseline
+  — read by both `select-candidates.py` and `validate-plan.py`, which no longer keep their own
+  copies of the theme list.
+- Add `assets/make-themes.py`, which solves the new blocks rather than picking them: a hue and
+  chroma are chosen for the role, then lightness is searched until the token clears its contrast
+  floor on the darkest *and* lightest ground a card can present — `--bg`, `--surface-1` and
+  `--surface-2` — not only on the page. The ten original hand-frozen themes are untouched.
+- Add `assets/check-themes.py`, which proves the contrast contract for all 26 themes across all
+  three drops and fails when `themes.css` and `references/themes.json` disagree about which themes
+  exist (`THEME-CATALOGUE-001`/`-002`). It is what makes "hand-editing a value breaks the contract"
+  checkable rather than merely stated.
+- Add `assets/theme-sheet.py` and regenerate `docs/themes.png` for all 26 themes, each shown in the
+  band it ships as its default. The sheet is composed by Chrome from real reports rather than by an
+  image library, so a tile cannot drift from what a reader sees.
+
 ## 3.1.0 — 2026-09-07
 
 - Remove Lottie and Rive from tool selection, documentation, lab pages, generated sample assets,

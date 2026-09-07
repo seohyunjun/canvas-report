@@ -4,8 +4,16 @@ import argparse, hashlib, json, sys
 from pathlib import Path
 
 VERSION="1.0"; RETRY=("Local Fix","Component Rebuild","Simplify","Drop Unsupported Section")
-THEMES=(
- {"id":"almanac","paper_band":"light","display_class":"humanist-sans","accent_hue":"cool"},{"id":"specimen","paper_band":"light","display_class":"high-contrast-serif","accent_hue":"warm"},{"id":"newsprint","paper_band":"light","display_class":"roman-serif","accent_hue":"warm"},{"id":"cobalt","paper_band":"light","display_class":"techno-grotesk","accent_hue":"cool"},{"id":"grid","paper_band":"light","display_class":"neo-grotesk","accent_hue":"warm"},{"id":"terminal","paper_band":"dark","display_class":"mono","accent_hue":"green"},{"id":"lumen","paper_band":"dark","display_class":"classical-serif","accent_hue":"warm"},{"id":"garden","paper_band":"light","display_class":"roman-serif","accent_hue":"green"},{"id":"carnival","paper_band":"light","display_class":"display-heavy","accent_hue":"warm"},{"id":"riso","paper_band":"light","display_class":"reverse-pair","accent_hue":"cool"})
+ROOT=Path(__file__).resolve().parent.parent
+CATALOGUE=ROOT/"references/themes.json"
+AXES=("paper_band","display_class","accent_hue")
+def catalogue():
+ # A missing catalogue must reach the reader as THEME-CATALOGUE-001, not as an
+ # import-time traceback with no diagnostic envelope around it.
+ try:rows=json.loads(CATALOGUE.read_text(encoding="utf-8")).get("themes",[])
+ except (OSError,ValueError):return ()
+ return tuple(x for x in rows if isinstance(x,dict) and all(k in x for k in ("id",)+AXES))
+THEMES=catalogue()
 EXEC=("html","javascript","script","onload","onclick","onerror","eval","function")
 CHARTS={"line":("x","value"),"columns":("x","value"),"divColumns":("label","value"),
  "hbars":("label","value"),"lollipop":("label","value"),"bubbles":("label","x","y","size"),
@@ -18,6 +26,23 @@ MOTION_EASINGS={"linear","outCubic","inOutCubic","outQuint","outExpo","outCirc",
 TOOLS={"d3-gallery","d3","plotly","gsap","motion","anime"}
 TOOL_ROLES={"chart-form","data-transform","state-model","motion-engine","illustration"}
 MOTION_TOOLS={"gsap","motion","anime"}
+# What c.t scales differs per factory, so the curve that keeps a mark honest differs
+# too. A reveal (line, concentration) can afford a steady curve; a value-scaled mark
+# reads a number smaller than the datum for the whole run and needs one that arrives
+# early. references/motion-features.md carries the reasoning; these are the bands.
+MOTION_FIT={
+ "line":({"outCubic","linear"},(600,800)),
+ "concentration":({"outCubic","linear"},(600,800)),
+ "columns":({"outQuint","outExpo"},(400,600)),
+ "divColumns":({"outQuint","outExpo"},(400,600)),
+ "hbars":({"outQuint","outExpo"},(400,600)),
+ "lollipop":({"outQuint","outExpo"},(400,600)),
+ "bubbles":({"outExpo","outQuint"},(700,900)),
+}
+# The portable path runs through the shell's anim(), which caps at 900 ms. Nothing
+# downstream reports the difference: the motion gate reads the declared attribute,
+# so a longer declaration passes every check and still runs for 900.
+PORTABLE_CEILING_MS=900
 class D:
  def __init__(s):s.x=[]
  def add(s,se,i,l,p,f):s.x.append({"severity":se,"id":i,"location":l,"problem":p,"suggested_fix":f})
@@ -61,13 +86,13 @@ def compatible(p,r,n):
  if keys and dates and any(isinstance(c,dict) and c.get("name") in dates and c.get("distinct_count",0)>=2 for c in cols):macros.append("Bridge")
  if r.get("comparable_sets")==2:macros.append("Spread")
  if r.get("qualitative_notes") is True:macros.append("Fieldnotes")
- return {"lenses":lens,"macros":macros,"themes":list(THEMES)}
+ return {"lenses":lens,"macros":macros,"themes":[{k:t[k] for k in ("id",)+AXES} for t in THEMES]}
 def history(h,k):
  rows=h if isinstance(h,list) else h.get("runs",[]) if isinstance(h,dict) else []
  for x in reversed(rows):
   if isinstance(x,dict) and isinstance(x.get(k),str):return x[k]
  return h.get(k) if isinstance(h,dict) and isinstance(h.get(k),str) else None
-def distance(a,b):return sum(a[k]!=b[k] for k in ("paper_band","display_class","accent_hue"))
+def distance(a,b):return sum(a[k]!=b[k] for k in AXES)
 def main():
  ap=argparse.ArgumentParser();ap.add_argument("--profile",required=True);ap.add_argument("--plan",required=True);ap.add_argument("--candidates",required=True);ap.add_argument("--requirements");ap.add_argument("--output",required=True);ap.add_argument("--history");a=ap.parse_args();d=D()
  Path(a.output).unlink(missing_ok=True)
@@ -104,13 +129,41 @@ def main():
  allowed_macros={x.get("id") for x in candidate_artifact.get("macros",[]) if isinstance(x,dict) and x.get("compatible") is True and x.get("rotation_excluded") is not True}
  if macro not in allowed_macros:d.e("MACRO-001","plan.macro","Macro is incompatible or excluded by the authenticated candidate set.","Choose a compatible non-excluded macro candidate.")
  tm={x["id"]:x for x in THEMES}
- if theme not in tm:d.e("THEME-001","plan.theme","Theme is not in the canonical catalogue.","Use one of almanac, specimen, newsprint, cobalt, grid, terminal, lumen, garden, carnival, riso.")
+ if not tm:d.e("THEME-CATALOGUE-001","references/themes.json","Theme catalogue is empty or unreadable.","Restore references/themes.json; selection cannot proceed without it.")
+ if theme not in tm:d.e("THEME-001","plan.theme","Theme is not in the canonical catalogue.","Use an id from references/themes.json (%d themes)."%len(tm))
  explicit=requirements.get("theme")
  if explicit is not None and explicit != theme:d.e("THEME-003","plan.requirements.theme","Explicit theme requirement does not match plan.theme.","Set plan.theme to the requested compatible theme or remove the override.")
  if explicit is not None and explicit not in tm:d.e("THEME-004","plan.requirements.theme","Explicit theme requirement is not in the canonical compatible catalogue.","Choose a canonical theme or remove the override.")
- allowed_themes={x.get("id") for x in candidate_artifact.get("themes",[]) if isinstance(x,dict) and x.get("compatible") is True and x.get("rotation_excluded") is not True}
+ theme_rows={x.get("id"):x for x in candidate_artifact.get("themes",[]) if isinstance(x,dict)}
+ allowed_themes={i for i,x in theme_rows.items() if x.get("compatible") is True and x.get("rotation_excluded") is not True}
  if theme not in allowed_themes:d.e("THEME-002","plan.theme","Theme is incompatible or excluded by the authenticated candidate set.","Choose a compatible non-excluded theme or record a compatible explicit override in requirements.")
- selected_tool_names=set();creative=plan.get("creative_direction")
+ # ── the theme is fitted to the dataset before it is rotated ──────────────────
+ # The rationale is checked against the candidate artifact rather than read as
+ # prose: a plan cannot claim a subject match the profile does not evidence.
+ chosen=theme_rows.get(theme,{})
+ rationale=plan.get("theme_rationale")
+ if not isinstance(rationale,dict):
+  d.e("THEME-FIT-002","plan.theme_rationale","No theme rationale was recorded.","State the dataset subject, the signals that evidenced it, the candidate fit_score, and the rotation distance.")
+ else:
+  if not isinstance(rationale.get("subject"),str) or not rationale["subject"]:
+   d.e("THEME-FIT-002","plan.theme_rationale.subject","Theme rationale needs the dataset subject in the report's own words.","Name what the data is about, not what the theme looks like.")
+  signals=rationale.get("signals")
+  if not arr(signals) or not signals:
+   d.e("THEME-FIT-002","plan.theme_rationale.signals","Theme rationale needs the subject signals it relied on.","List the matched column-name or requirement tokens from the candidate artifact.")
+  else:
+   evidenced=set(candidate_artifact.get("subject_signals",[]))|set(chosen.get("fit_matched",[]))
+   unknown=[v for v in signals if v not in evidenced]
+   if unknown:d.e("THEME-FIT-004","plan.theme_rationale.signals","Signals absent from the candidate artifact: "+", ".join(sorted(unknown)[:6])+".","Cite only tokens the profile and requirements actually produced.")
+  for key,expected in (("fit_score",chosen.get("fit_score")),("rotation_distance",chosen.get("rotation_distance"))):
+   given=rationale.get(key)
+   if isinstance(given,bool) or not isinstance(given,(int,float)):
+    d.e("THEME-FIT-002","plan.theme_rationale."+key,"%s must be the number the candidate artifact computed."%key,"Copy it from the theme row in candidates.json.")
+   elif expected is not None and abs(float(given)-float(expected))>1e-6:
+    d.e("THEME-FIT-003","plan.theme_rationale."+key,"Recorded %s %s does not match the candidate artifact's %s."%(key,given,expected),"Copy the value instead of estimating it.")
+  better=sorted(((theme_rows[i].get("fit_score") or 0,i) for i in allowed_themes if i!=theme),reverse=True)
+  if (chosen.get("fit_score") or 0)==0 and better and better[0][0]>=0.4:
+   d.w("THEME-FIT-001","plan.theme","The chosen theme matches nothing in the dataset's subject; %s scores %.2f and is also compatible."%(better[0][1],better[0][0]),"Prefer the fitted theme, or record why this subject is better served by a neutral face.")
+ selected_tool_names=set();tool_integration={};creative=plan.get("creative_direction")
  if creative is None:
   d.e("CREATIVE-DIRECTION-001","plan.creative_direction","No report-level creative direction was recorded.","Add concept, hierarchy, selected external tools, and a restrained motion story.")
  elif not isinstance(creative,dict):
@@ -128,7 +181,7 @@ def main():
     if not isinstance(item,dict) or item.get("tool") not in TOOLS or item.get("role") not in TOOL_ROLES or item.get("integration") not in ("portable-pattern","vendored-runtime") or not isinstance(item.get("reason"),str) or not item["reason"]:
      d.e("TOOL-SELECTION-002",location,"Tool selection needs a known tool, role, integration mode, and reason.","Use the selection contract in references/external-tools.md.")
      continue
-    selected_tool_names.add(item["tool"])
+    selected_tool_names.add(item["tool"]);tool_integration[item["tool"]]=item["integration"]
     if item["role"]=="motion-engine":motion_sources+=1
     if item["role"] in ("chart-form","data-transform","state-model"):chart_sources+=1
     if item["role"]=="motion-engine" and item["tool"] not in MOTION_TOOLS:
@@ -172,6 +225,17 @@ def main():
    if motion.get("source_tool") is not None and motion.get("source_tool") not in MOTION_TOOLS:d.e("MOTION-CONTRACT-006",l+".motion.source_tool","Enabled chart motion cites a visualization or state-model tool as its motion engine.","Use GSAP, Motion, or anime.js as source_tool.")
    elif selected_tool_names and motion.get("source_tool") is None:d.e("MOTION-CONTRACT-006",l+".motion.source_tool","Enabled chart motion does not identify its selected external source tool.","Set source_tool to the report-level motion source.")
    elif motion.get("source_tool") is not None and motion["source_tool"] not in selected_tool_names:d.e("MOTION-CONTRACT-006",l+".motion.source_tool","Chart motion cites a tool absent from creative_direction.external_tools.","Select the source tool at report level or use the tool already selected there.")
+   # The portable path never sees a duration above the shell's own cap, and no gate
+   # downstream compares the two, so an over-long declaration is silently untrue.
+   if tool_integration.get(motion.get("source_tool"),"portable-pattern")!="vendored-runtime" and isinstance(duration,int) and not isinstance(duration,bool) and duration>PORTABLE_CEILING_MS:
+    d.e("MOTION-PORTABLE-CEILING-001",l+".motion.duration_ms","A portable-pattern chart declares %d ms but the shell's anim() caps at %d; the report would not run for the declared time."%(duration,PORTABLE_CEILING_MS),"Declare %d ms or less, or select the engine as a vendored-runtime."%PORTABLE_CEILING_MS)
+   fit=MOTION_FIT.get(x.get("type"))
+   if fit and motion.get("easing") in MOTION_EASINGS and isinstance(duration,int) and not isinstance(duration,bool):
+    curves,(low,high)=fit
+    if motion["easing"] not in curves:
+     d.w("MOTION-FIT-001",l+".motion.easing","%s reads better on %s than on %s for a %s."%(x["type"]," or ".join(sorted(curves)),motion["easing"],"reveal" if x["type"] in ("line","concentration") else "value-scaled mark"),"See the per-factory table in references/motion-features.md, or record why this chart differs.")
+    if not low<=duration<=high:
+     d.w("MOTION-FIT-002",l+".motion.duration_ms","%d ms is outside the %d–%d ms band that suits %s."%(duration,low,high,x["type"]),"Use the recommended band, or record why this chart's reading pace differs.")
  meth=req(plan,"methodology",dict,"plan",d) or {}
  for k in ("basis","formulas","limitations"):
   if not arr(meth.get(k)) or not meth[k]:d.e("METHOD-001","plan.methodology."+k,"Methodology %s must be a nonempty string array."%k,"Document it explicitly.")
@@ -181,10 +245,11 @@ def main():
   if not isinstance(x,dict) or x.get("rule_id") not in known or not isinstance(x.get("decision"),str) or not x["decision"]:d.e("RULE-002","plan.rule_decisions[%d]"%i,"Decision needs a canonical Rule-ID and nonempty decision.","Use references/rules.json ids.")
  decision_ids={x.get("rule_id") for x in decisions if isinstance(x,dict)}
  if isinstance(creative,dict) and "MOTION-STORY-001" not in decision_ids:d.e("RULE-003","plan.rule_decisions","Creative direction lacks MOTION-STORY-001 provenance.","Record how the report-level motion sequence was bounded.")
+ if "THEME-SELECTION-001" not in decision_ids:d.e("RULE-006","plan.rule_decisions","Theme selection lacks THEME-SELECTION-001 provenance.","Record how compatibility, subject fit, and rotation distance produced this theme.")
  if isinstance(creative,dict) and "TOOL-SELECTION-001" not in decision_ids:d.e("RULE-004","plan.rule_decisions","External tool use lacks TOOL-SELECTION-001 provenance.","Record why the selected toolchain is minimal, useful, and compatible with the build boundary.")
  if any(isinstance(x,dict) and isinstance(x.get("motion"),dict) and x["motion"].get("enabled") is True for x in charts) and "MOTION-INTENT-001" not in decision_ids:d.e("RULE-005","plan.rule_decisions","Enabled chart motion lacks MOTION-INTENT-001 provenance.","Record the reader benefit for enabled chart motion.")
  if not d.bad():
-  canonical=json.dumps(plan,ensure_ascii=False,sort_keys=True,separators=(",",":"));spec={"schema_version":VERSION,"source":{"path":source["path"],"sha256":sha},"plan_sha256":hashlib.sha256(canonical.encode()).hexdigest(),"metadata":meta,"masthead":plan["masthead"],"grain":plan["grain"],"candidates":cand,"lenses":ld,"insights":insights,"macro":macro,"theme":theme,"sections":sections,"charts":charts,"methodology":meth,"rule_decisions":decisions,"retry_policy":{"max_attempts":4,"steps":list(RETRY)},"ownership":{"writable":["report content","sections","charts","methodology","rule decisions"],"immutable":["runtime engines","generated HTML","builder"]}}
+  canonical=json.dumps(plan,ensure_ascii=False,sort_keys=True,separators=(",",":"));spec={"schema_version":VERSION,"source":{"path":source["path"],"sha256":sha},"plan_sha256":hashlib.sha256(canonical.encode()).hexdigest(),"metadata":meta,"masthead":plan["masthead"],"grain":plan["grain"],"candidates":cand,"lenses":ld,"insights":insights,"macro":macro,"theme":theme,"theme_rationale":plan.get("theme_rationale"),"sections":sections,"charts":charts,"methodology":meth,"rule_decisions":decisions,"retry_policy":{"max_attempts":4,"steps":list(RETRY)},"ownership":{"writable":["report content","sections","charts","methodology","rule decisions"],"immutable":["runtime engines","generated HTML","builder"]}}
   if isinstance(creative,dict):spec["creative_direction"]=creative
   Path(a.output).write_text(json.dumps(spec,ensure_ascii=False,sort_keys=True,indent=2)+"\n",encoding="utf-8")
  print(json.dumps({"diagnostics":d.x},ensure_ascii=False,sort_keys=True));return 1 if d.bad() else 0
