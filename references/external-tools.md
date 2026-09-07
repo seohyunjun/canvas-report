@@ -103,6 +103,10 @@ trace types snap, and you can animate data *or* layout but not both at once.
 > one runnable page and one doc, all animating the same dataset, with the runtimes vendored and
 > pinned. Read this section for the verdict; go there when the verdict is "yes, close the skill".
 >
+> **[`motion-engines.md`](motion-engines.md) maps every feature these engines advertise onto what a
+> report can use, and picks the easing and duration per chart factory.** Read it when a chart
+> enables motion.
+>
 > **Before copying an API name off any of these sites, read
 > [`docs/api-surface.md`](../lab/motion-engines/docs/api-surface.md).** Each site documents whatever
 > version is current; this repo builds against pinned files, and the two have drifted. That file
