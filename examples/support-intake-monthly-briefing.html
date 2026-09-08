@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- canvas-report spec-sha256: 2b607fd7312455ee50c49825bb9247f124a303dc476e5ab345fbaa7911036bfb · rules: DATA-HONESTY-001,LENS-ELIGIBILITY-001,CLAIMS-001,MACRO-SELECTION-001,THEME-SELECTION-001,TOOL-SELECTION-001,MOTION-STORY-001,MOTION-INTENT-001,MOTION-FINAL-STATE-001,TABLE-TWIN-001,HELP-TWIN-001 -->
 <!--
   ============================================================================
   canvas-report — reusable shell (domain-agnostic, theme-swappable)
@@ -32,45 +33,45 @@
 /* [T] theme tokens — replace this whole run with one THEME block from
    assets/themes.css. The default is ALMANAC. Never ship the same theme twice
    in a row; the rotation rule lives in references/themes.md. */
-/* ── THEME ALMANAC ─────────────────────────────────────────────────────────
-   ALMANAC — statistical yearbook · cool bone paper + indigo · light-native
+/* ── THEME DESK ─────────────────────────────────────────────────────────
+   DESK — service desk · cool grey sheet + rust · light-native
    ───────────────────────────────────────────────────────────────────────── */
 :root{
   color-scheme: light;
-  --bg:#e7ecf0; --surface-1:#f0f4f8; --surface-2:#d7dbdf;
-  --text-primary:#060e15; --text-secondary:#414950; --text-muted:#636a70;
-  --line:#bec1c4; --line-strong:#9c9fa1;
-  --accent:#004887; --accent-ink:#004887;
-  --s1:#1162b9; --s2:#c67100; --s3:#00635b;
-  --pos:#0064b5; --neg:#c13d34; --mid:#d5d8da;
-  --focus:#004887;
-  --font-display:"Hanken Grotesk","Inter","Pretendard",-apple-system,BlinkMacSystemFont,"Segoe UI",ui-sans-serif,sans-serif;
-  --font-body:"Hanken Grotesk","Inter","Pretendard",-apple-system,BlinkMacSystemFont,"Segoe UI",ui-sans-serif,sans-serif;
-  --font-label:"Geist Mono","JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
-  --radius:12px; --rule:1px; --track-display:-.022em; --label-caps:uppercase;
-  --shadow:0 1px 2px rgba(20,18,14,.05), 0 10px 28px -20px rgba(20,18,14,.30);
+  --bg:#eef0f3; --surface-1:#f5f8fb; --surface-2:#dee1e3;
+  --text-primary:#040b15; --text-secondary:#344454; --text-muted:#526374;
+  --line:#d2d4d7; --line-strong:#adb0b3;
+  --accent:#9b3200; --accent-ink:#9b3200;
+  --s1:#b03b00; --s2:#006c7f; --s3:#00731b;
+  --pos:#006c7f; --neg:#b92846; --mid:#e2e5e7;
+  --focus:#9b3200;
+  --font-display:"Barlow","IBM Plex Sans",system-ui,-apple-system,"Segoe UI",ui-sans-serif,sans-serif;
+  --font-body:"Barlow","Inter",system-ui,-apple-system,"Segoe UI",ui-sans-serif,sans-serif;
+  --font-label:"IBM Plex Mono","JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --radius:6px; --rule:1px; --track-display:-.018em; --label-caps:uppercase;
+  --shadow:0 0 0 1px rgba(16,20,30,.05), 0 12px 30px -24px rgba(16,20,30,.45);
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
   color-scheme: dark;
-  --bg:#040a10; --surface-1:#0c1218; --surface-2:#151b22;
-  --text-primary:#eaeff3; --text-secondary:#9ea2a5; --text-muted:#787b7d;
-  --line:#22272c; --line-strong:#3e4348;
-  --accent:#57a8ff; --accent-ink:#57a8ff;
-  --s1:#569aef; --s2:#ffbc63; --s3:#26998e;
-  --pos:#519cec; --neg:#e56356; --mid:#13161a;
-  --focus:#57a8ff;
-  --shadow:0 1px 2px rgba(0,0,0,.40), 0 10px 28px -18px rgba(0,0,0,.75);
+  --bg:#090b0e; --surface-1:#0f1215; --surface-2:#15181b;
+  --text-primary:#e3f1ff; --text-secondary:#9badbf; --text-muted:#748597;
+  --line:#14171b; --line-strong:#282c2f;
+  --accent:#ee764a; --accent-ink:#ee764a;
+  --s1:#ea6a3a; --s2:#009fb9; --s3:#36a542;
+  --pos:#009fb9; --neg:#f15f73; --mid:#0d1012;
+  --focus:#ee764a;
+  --shadow:0 0 0 1px rgba(255,255,255,.03), 0 18px 44px -26px rgba(0,0,0,.90);
 }}
 [data-theme="dark"]{
   color-scheme: dark;
-  --bg:#040a10; --surface-1:#0c1218; --surface-2:#151b22;
-  --text-primary:#eaeff3; --text-secondary:#9ea2a5; --text-muted:#787b7d;
-  --line:#22272c; --line-strong:#3e4348;
-  --accent:#57a8ff; --accent-ink:#57a8ff;
-  --s1:#569aef; --s2:#ffbc63; --s3:#26998e;
-  --pos:#519cec; --neg:#e56356; --mid:#13161a;
-  --focus:#57a8ff;
-  --shadow:0 1px 2px rgba(0,0,0,.40), 0 10px 28px -18px rgba(0,0,0,.75);
+  --bg:#090b0e; --surface-1:#0f1215; --surface-2:#15181b;
+  --text-primary:#e3f1ff; --text-secondary:#9badbf; --text-muted:#748597;
+  --line:#14171b; --line-strong:#282c2f;
+  --accent:#ee764a; --accent-ink:#ee764a;
+  --s1:#ea6a3a; --s2:#009fb9; --s3:#36a542;
+  --pos:#009fb9; --neg:#f15f73; --mid:#0d1012;
+  --focus:#ee764a;
+  --shadow:0 0 0 1px rgba(255,255,255,.03), 0 18px 44px -26px rgba(0,0,0,.90);
 }
 /* [/T] end theme tokens ─────────────────────────────────────────────────── */
 
@@ -386,21 +387,7 @@ footer{margin-top:56px; padding-top:20px; border-top:1px solid var(--line); font
 
 <!-- [2] data ────────────────────────────────────────────────────────────── -->
 <script id="report-data" type="application/json">
-{"meta":{"title":"Demo report","subtitle":"A minimum example that proves the shell runs.","eyebrow":"DEMO",
-  "meta":[["Period","last 12 periods"],["Unit","count"]]},
- "trend":[{"t":"P1","v":120,"a":70,"b":50},{"t":"P2","v":132,"a":75,"b":48},{"t":"P3","v":128,"a":66,"b":58},
-          {"t":"P4","v":145,"a":88,"b":54},{"t":"P5","v":151,"a":80,"b":61},{"t":"P6","v":139,"a":72,"b":66},
-          {"t":"P7","v":158,"a":95,"b":59},{"t":"P8","v":163,"a":90,"b":63},{"t":"P9","v":149,"a":71,"b":74},
-          {"t":"P10","v":171,"a":102,"b":68},{"t":"P11","v":168,"a":88,"b":70},{"t":"P12","v":182,"a":110,"b":72}],
- "groups":[{"k":"A","v":182,"d":14,"p":8.3,"x":9.1,"y":4.2,"n":120},
-           {"k":"B","v":146,"d":-9,"p":-5.8,"x":5.4,"y":7.8,"n":210},
-           {"k":"C","v":98,"d":3,"p":3.2,"x":6.9,"y":6.1,"n":75},
-           {"k":"D","v":61,"d":-2,"p":-3.2,"x":3.2,"y":3.9,"n":48},
-           {"k":"E","v":33,"d":7,"p":26.9,"x":11.4,"y":5.5,"n":22}],
- "bridge":[{"name":"Entered","sub":"new","value":42},{"name":"Left","sub":"closed","value":-27},
-           {"name":"Continuing","sub":"stayed","value":-1},{"name":"Net","sub":"close − open","value":14,"total":true}],
- "hist":[{"label":"−3 or less","n":12,"sum":-51},{"label":"−2","n":19,"sum":-38},{"label":"−1","n":44,"sum":-44},
-         {"label":"+1","n":51,"sum":51},{"label":"+2","n":22,"sum":44},{"label":"+3 or more","n":15,"sum":63}]}
+{"rows":[{"backlog_end":268,"handling_hours":2063.8,"month":"2024-01-01","tickets_opened":1391,"tickets_resolved":1303},{"backlog_end":311,"handling_hours":1644.5,"month":"2024-02-01","tickets_opened":1077,"tickets_resolved":1034},{"backlog_end":319,"handling_hours":1857.6,"month":"2024-03-01","tickets_opened":1085,"tickets_resolved":1077},{"backlog_end":316,"handling_hours":1937.3,"month":"2024-04-01","tickets_opened":1133,"tickets_resolved":1136},{"backlog_end":417,"handling_hours":1726.2,"month":"2024-05-01","tickets_opened":1166,"tickets_resolved":1065},{"backlog_end":499,"handling_hours":1786.6,"month":"2024-06-01","tickets_opened":1131,"tickets_resolved":1049},{"backlog_end":491,"handling_hours":1919.7,"month":"2024-07-01","tickets_opened":1167,"tickets_resolved":1175},{"backlog_end":572,"handling_hours":1771.8,"month":"2024-08-01","tickets_opened":1162,"tickets_resolved":1081},{"backlog_end":627,"handling_hours":1822.3,"month":"2024-09-01","tickets_opened":1334,"tickets_resolved":1279},{"backlog_end":626,"handling_hours":1993.3,"month":"2024-10-01","tickets_opened":1221,"tickets_resolved":1222},{"backlog_end":757,"handling_hours":2063.3,"month":"2024-11-01","tickets_opened":1382,"tickets_resolved":1251},{"backlog_end":804,"handling_hours":2326.7,"month":"2024-12-01","tickets_opened":1382,"tickets_resolved":1335},{"backlog_end":775,"handling_hours":2413.6,"month":"2025-01-01","tickets_opened":1577,"tickets_resolved":1606},{"backlog_end":902,"handling_hours":1818.8,"month":"2025-02-01","tickets_opened":1329,"tickets_resolved":1202},{"backlog_end":1003,"handling_hours":1726.3,"month":"2025-03-01","tickets_opened":1302,"tickets_resolved":1201},{"backlog_end":1001,"handling_hours":2382.5,"month":"2025-04-01","tickets_opened":1399,"tickets_resolved":1401},{"backlog_end":1092,"handling_hours":1987.1,"month":"2025-05-01","tickets_opened":1399,"tickets_resolved":1308},{"backlog_end":1082,"handling_hours":2315.1,"month":"2025-06-01","tickets_opened":1403,"tickets_resolved":1413},{"backlog_end":1106,"handling_hours":2167.6,"month":"2025-07-01","tickets_opened":1439,"tickets_resolved":1415},{"backlog_end":1128,"handling_hours":2200.8,"month":"2025-08-01","tickets_opened":1440,"tickets_resolved":1418},{"backlog_end":1234,"handling_hours":1930.9,"month":"2025-09-01","tickets_opened":1524,"tickets_resolved":1418},{"backlog_end":1294,"handling_hours":1929.6,"month":"2025-10-01","tickets_opened":1344,"tickets_resolved":1284},{"backlog_end":1321,"handling_hours":2565.5,"month":"2025-11-01","tickets_opened":1526,"tickets_resolved":1499},{"backlog_end":1392,"handling_hours":2183.1,"month":"2025-12-01","tickets_opened":1395,"tickets_resolved":1324}],"spec":{"charts":[{"aria_label":"Line chart of the backlog outstanding at the end of each month, rising from 268 in January 2024 to 1,392 in December 2025","dataset":"source","encodings":{"value":"backlog_end","x":"month"},"fields":["month","backlog_end","tickets_opened","tickets_resolved"],"help":"Measure: backlog_end, the count still open when the month closed. Basis: every row of the source file; the balance before 2024-01 is not in the data. Interaction: hover a point for its month and level, or open the table below, which lists the backlog beside the opened and resolved counts that produced it.","id":"c1","motion":{"duration_ms":720,"easing":"linear","enabled":true,"kind":"entry","reason":"VIZ.line reveals by point count, so the progress value decides how many of the 24 months are drawn and the easing is the reading pace rather than the speed of a value. linear paces one month every 30 ms across the whole sweep; a decelerating curve would put seven months on screen in the first tenth of the run and crawl through the rest, and this section's subject is the shape over time.","source_tool":"motion","trigger":"on-view"},"note":"One point per month, 24 in all, on an axis forced through zero because the quantity is a count of tickets and its distance from zero is the point. The value is a level carried forward, so the line's slope — not its height — is the month's net gain.","options":{"zero_based":true},"section_id":"finding","table":{"columns":["month","backlog_end","tickets_opened","tickets_resolved"]},"title":"Month-end backlog, 2024-01 to 2025-12","type":"line"},{"aria_label":"Paired column chart of tickets opened and tickets resolved for each of the 24 months, with opened above resolved in most months","dataset":"source","encodings":{"value":"tickets_opened","value2":"tickets_resolved","x":"month"},"fields":["month","tickets_opened","tickets_resolved","backlog_end"],"help":"Measures: tickets_opened and tickets_resolved, both counts of tickets in the month, drawn on one shared axis. Basis: all 24 rows, unfiltered. Interaction: hover a month for both figures, or open the table below, which adds the backlog they produced.","id":"c2","motion":{"enabled":false,"reason":"The whole point of this chart is that the two series can be compared against each other. A value-scaled entry shows both bars short at once, and a reader comparing two short bars is comparing a frame rather than the data — so it draws finished."},"note":"Two series on one axis, because both are counts of tickets in the same month and a shared scale is the only way the comparison is honest. Bars start at zero because the length is the quantity. The gap between each pair is the month's net addition to the backlog above.","section_id":"sides","table":{"columns":["month","tickets_opened","tickets_resolved","backlog_end"]},"title":"Opened and resolved, month by month","type":"columns"},{"aria_label":"Scatter plot of tickets resolved against tickets opened for each of the 24 months, with a dashed resolved-equals-opened line; 18 of the 24 months fall below it","dataset":"source","encodings":{"label":"month","x":"tickets_opened","y":"tickets_resolved"},"fields":["month","tickets_opened","tickets_resolved","backlog_end"],"help":"Measures: tickets_opened and tickets_resolved, both counts of tickets in the month. Basis: all 24 rows. The dashed line marks equality; it is not a fit and no line is fitted through the points. Interaction: hover a dot for its month and both counts, or open the table below.","id":"c3","motion":{"duration_ms":700,"easing":"outCubic","enabled":true,"kind":"entry","reason":"VIZ.scatter reveals by dot count: the progress value decides how many of the 24 months are on the plot, and every dot drawn is already at its final position. A steady curve at 700 ms lets the cloud fill in without any frame asserting a position it will later move away from.","source_tool":"motion","trigger":"on-view"},"note":"One dot per month: tickets opened on the horizontal axis, tickets resolved on the vertical. The dashed line is resolved = opened; a dot below it is a month the backlog grew, above it a month it shrank. Both axes take their range from the data rather than from zero — nothing here encodes length, so the zero baseline that binds the bars above does not bind this.","options":{"axis_x":"tickets opened","axis_y":"tickets resolved","identity_line":"resolved = opened"},"section_id":"sides","table":{"columns":["month","tickets_opened","tickets_resolved","backlog_end"]},"title":"Every month, opened against resolved","type":"scatter"},{"aria_label":"Scatter plot of recorded handling hours against tickets resolved for each of the 24 months; the points rise together in a narrow band","dataset":"source","encodings":{"label":"month","x":"tickets_resolved","y":"handling_hours"},"fields":["month","tickets_resolved","handling_hours"],"help":"Measures: tickets_resolved, a count, against handling_hours, recorded hours. Basis: all 24 rows. No line is fitted and no ratio is drawn. Interaction: hover a dot for its month and both figures, or open the table below.","id":"c4","motion":{"duration_ms":700,"easing":"outCubic","enabled":true,"kind":"entry","reason":"The same reveal mechanic as the scatter above and the same reason: dots arrive in month order at their final positions, so the run adds pace and never a wrong value.","source_tool":"motion","trigger":"on-view"},"note":"One dot per month: tickets resolved on the horizontal axis, recorded handling hours on the vertical. The two rise together. This chart shows that they move together; it does not divide one by the other, and the per-ticket band those two columns imply is stated in the methodology rather than drawn as a line here.","options":{"axis_x":"tickets resolved","axis_y":"handling hours"},"section_id":"effort","table":{"columns":["month","tickets_resolved","handling_hours"]},"title":"Handling hours against tickets resolved","type":"scatter"},{"aria_label":"Histogram of monthly recorded handling hours across 24 months in six bins, with more months in the lower bins than the upper ones","dataset":"source","encodings":{"value":"handling_hours"},"fields":["month","handling_hours","tickets_resolved"],"help":"Measure: handling_hours, the hours recorded in the month. Basis: all 24 rows, binned by the chart rather than upstream. Interaction: hover a bar for its range, the number of months in it, and their share of the 24. The table below lists every month's figure so the bins can be checked.","id":"c5","motion":{"enabled":false,"reason":"A histogram's bars are counts of the same 24 rows, so a value-scaled entry understates every bin at once and the shape — which is the only thing this chart is for — is wrong in every frame until the last. It draws finished."},"note":"The hours column on its own, binned rather than divided: 24 monthly totals across six bins of 153.5 hours, from 1,644.5 to 2,565.5. The bin count is Sturges on the row count and the width is printed on the axis, because the same 24 numbers under a different bin count would tell a different story.","options":{"axis_note":"recorded handling hours per month, 6 bins of 153.5","bins":6},"section_id":"effort","table":{"columns":["month","handling_hours","tickets_resolved"]},"title":"The spread of monthly handling hours","type":"histogram"}],"creative_direction":{"concept":"A briefing that leads with the conclusion and then dismantles its own strongest number: the backlog line is the first thing on the page and the last thing the file actually evidences, so every chart after it works on the two columns that were really counted.","external_tools":[{"integration":"portable-pattern","reason":"Line, paired-column, scatter and histogram forms, their scale treatment and tick density follow the D3 gallery patterns, redrawn on canvas by the shipped VIZ factories. No D3 runtime is loaded and none is needed: the report has no data joins and no object constancy to maintain.","role":"chart-form","tool":"d3-gallery"},{"integration":"portable-pattern","reason":"One eased progress value per chart is exactly what the shell's motion helper already expresses, so Motion is taken as a pattern and nothing is inlined. A vendored runtime would add weight for behaviour the report does not use.","role":"motion-engine","tool":"motion"}],"hierarchy":"The four claims sit above everything. Then the backlog line as the consequence; then the two counted columns, once as paired bars on one axis and once as a scatter against the line where they would be equal; then the hours, against the resolutions they were booked on and as their own spread; then what the file does not contain.","motion_story":{"goal":"Three charts resolve in reading order so the eye lands on the backlog line first and reaches the scatter having already accepted what the line is made of.","restraint":"Entry only, on view, once. The paired columns and the histogram stay still, each for a stated reason about what a running frame would say.","sequence":["finding","sides","effort"]}},"grain":"one row per calendar month, 2024-01 through 2025-12 (24 rows, no nulls, no sentinel values)","insights":[{"claim":"For all 23 consecutive month pairs the change in backlog_end equals tickets_opened minus tickets_resolved exactly, so backlog_end is not an independent measurement in this file — it is the running sum of the other two columns, and the balance it starts from implies an opening position of 180 tickets before 2024-01.","evidence_fields":["month","backlog_end","tickets_opened","tickets_resolved"],"id":"i1","limitation":"An exact identity across 23 pairs is consistent with backlog_end being derived, and this file cannot distinguish that from a measured balance that happens to reconcile perfectly. The opening position of 180 is an implication of the identity, not a recorded figure."},{"claim":"Intake exceeded resolution in 18 of the 24 months, and month-end backlog rose from 268 to 1,392 — a gain of 1,124 tickets — growing in 17 of the 23 month-to-month steps.","evidence_fields":["month","tickets_opened","tickets_resolved","backlog_end"],"id":"i2","limitation":"The counts carry no ticket identifiers, so a month's surplus cannot be attributed to a queue, a case type, or a team, and nothing here says whether the same tickets are being carried forward or different ones."},{"claim":"Resolution grew faster than intake between the two calendar years — 14,007 to 16,489 tickets resolved, 17.7 per cent, against 14,631 to 17,077 opened, 16.7 per cent — and the backlog still rose in both years, because the gap was already open when 2024 began.","evidence_fields":["month","tickets_opened","tickets_resolved"],"id":"i3","limitation":"Two years is two observations. The difference between 17.7 and 16.7 per cent is stated as a magnitude and is not claimed as a trend; with 24 monthly rows and no interval, nothing here supports a comparison of the two growth rates."},{"claim":"Recorded handling hours per resolved ticket stayed between 1.36 and 1.74 in every one of the 24 months, with a median of 1.63; the 2025 median of 1.53 sits below 2024's 1.64.","evidence_fields":["month","handling_hours","tickets_resolved"],"id":"i4","limitation":"The ratio's denominator is a monthly count, not a per-ticket duration, so it describes hours booked in a month against tickets closed in that month and cannot say what any single ticket took. The two medians are described, not compared: nothing in this file supports an interval on the difference."}],"lenses":{"rejected":["comparison","cohort"],"selected":["trend","relationship","distribution"]},"macro":"Briefing","masthead":"M2","masthead_figure":{"label":"tickets the backlog gained across 24 months","value":"1,124"},"metadata":{"eyebrow":"canvas-report · synthetic data · 2024-01 to 2025-12","locale":"en","subtitle":"Twenty-four months of synthetic support intake. Three of the file's five columns are counts of things that happened; the fourth is not a measurement at all, and once you can see that, the report is about what the file cannot answer.","title":"The backlog was never measured"},"methodology":{"basis":["The data is synthetic. It was generated for this example and describes no real organisation, product, or team. Nothing here should be cited as a finding about support work.","One CSV of 24 rows, one row per calendar month from 2024-01 to 2025-12, with no null values and no sentinel values in any column.","Every figure in this report is read from that file. Nothing is interpolated, smoothed, or filled.","backlog_end is a month-end level carried forward. The balance standing before 2024-01 is outside the file."],"formulas":["Monthly gap = tickets_opened − tickets_resolved for that month.","Identity check = backlog_end(month) − backlog_end(previous month), compared against the monthly gap; it matched for all 23 consecutive pairs.","Implied opening balance = backlog_end(2024-01) − (tickets_opened(2024-01) − tickets_resolved(2024-01)) = 268 − 88 = 180.","Hours per resolved ticket = handling_hours ÷ tickets_resolved, computed per month and then summarised; the median across the 24 months is 1.63.","Year totals = the sum of the 12 monthly values in each calendar year. Growth = 2025 total ÷ 2024 total − 1.","Histogram bins = Sturges on the row count, ceil(log2(24)) + 1 = 6, clamped to the 5–30 range the factory draws; bin width = (2,565.5 − 1,644.5) ÷ 6 = 153.5."],"limitations":["No ticket identifiers, so no cohort can be followed and no figure can be traced to a case, a queue, or a team.","The only candidate key in the file is the month, which is the period rather than an entity within it, so the cohort lens has nothing to follow even though the profile marks it eligible.","No dimension column, so nothing in this file can be broken down by anything and the comparison lens is unavailable.","Two calendar years is two observations. The year-on-year growth figures are magnitudes, not a trend, and the difference between them is not claimed.","24 monthly totals is a thin distribution. The histogram shows where those 24 numbers fall and should not be read as the shape of a population.","The last period is not annotated for collection lag because the data is synthetic and generated complete; a real extract would need that check before the final month were read as a decline."]},"plan_sha256":"89049a1bca23308f613d43a2c5e8fe5c662110c4d91a3b376d4baf568a326cca","rule_decisions":[{"decision":"Every figure is read from the profiled columns. The one derived number in the report — the implied opening balance of 180 — is labelled as an implication of the identity and given its arithmetic in the methodology, and the methodology's first line says the data is synthetic so no reader takes a generated series for a measurement.","rule_id":"DATA-HONESTY-001"},{"decision":"trend, relationship and distribution are selected from the eligible set. relationship is drawn with VIZ.scatter, which takes its domain from the data: VIZ.bubbles would have forced both axes through zero and pushed measures running from 1,034 to 1,606 against 1,644.5 to 2,565.5 into one corner, and it would also have required a size column this file does not have. distribution is drawn as a histogram of handling_hours, a source column, rather than of the derived monthly ratio the builder cannot chart. comparison is ineligible: the file has no dimension column. cohort is marked eligible by the profile because month is both a candidate key and a date, and is rejected on the evidence — the key is the period itself, so there is no entity to follow across periods.","rule_id":"LENS-ELIGIBILITY-001"},{"decision":"Each of the four claims names the columns it reads and the limit on what it can support. The two year-on-year growth rates are stated as magnitudes and explicitly not compared, and the two per-ticket medians are described rather than tested, because 24 monthly rows carry no interval on either difference.","rule_id":"CLAIMS-001"},{"decision":"Briefing is compatible and matches the stated conclusion-first reader intent. Broadsheet is compatible but rotation-excluded as the previous report's choice, and Bridge is compatible but wants a candidate key that names an entity rather than the period.","rule_id":"MACRO-SELECTION-001"},{"decision":"desk is compatible under no native_mode requirement, scores 1.00 on subject fit — the catalogue's saturation point — from backlog, handling, intake, queue, resolution, resolved and ticket in the profiled column names and the stated requirements, and sits at rotation distance 2 from the previous report's newsprint across paper band, display class and accent hue. Fit and rotation agree, so no override was needed.","rule_id":"THEME-SELECTION-001"},{"decision":"One chart-form influence and one motion source, both portable-pattern. Nothing is vendored, so the report stays offline and adds no runtime; the report has no data joins or object constancy that would earn a D3 runtime, and no stateful story that would earn Plotly's frame model.","rule_id":"TOOL-SELECTION-001"},{"decision":"One entry per chart, on view, once, in section reading order: the backlog line, then the two scatters. The paired columns and the histogram are static, each with a reason about what a running frame would state rather than a preference.","rule_id":"MOTION-STORY-001"},{"decision":"The three enabled charts are all reveals — the line by point count and the scatters by dot count — so every frame shows fewer marks rather than wrong ones, and each sits inside the 600–800 ms band its factory is routed to. The two static charts are value-scaled forms whose partial frames would misstate the very comparison they exist for.","rule_id":"MOTION-INTENT-001"},{"decision":"Every enabled contract is entry on-view with a bounded duration and a deterministic end state; reduced motion omits the animation and the final content is unchanged either way.","rule_id":"MOTION-FINAL-STATE-001"},{"decision":"Every chart declares a table twin. The histogram's twin lists all 24 monthly values, which is what lets a reader check bins the chart computed rather than the source supplied.","rule_id":"TABLE-TWIN-001"},{"decision":"Every chart's help names its measure, its basis, and how to interact with it; the two scatters' help states that no line is fitted, because a dashed equality line is easily read as one.","rule_id":"HELP-TWIN-001"}],"schema_version":"1.0","sections":[{"id":"finding","lede":"Month-end backlog is the only column in this file that carries memory. Every other figure describes one month and stops; this one adds that month to everything before it, and it does so exactly — for all 23 consecutive pairs the change in the backlog is the month's opened minus its resolved, to the ticket. Read the line as a level rather than a flow: two neighbouring points are two photographs of the same pile, and the slope between them is the month's net gain.","title":"The pile is the sum of the gaps"},{"id":"sides","lede":"Opened and resolved are the two columns that were actually counted, and they belong on one axis because they share a unit — the paired bars put them there rather than on two charts whose independent scales would invite a comparison neither could support. The scatter underneath asks the same question a different way: its dashed line is resolved = opened, and 18 of the 24 months sit below it.","title":"Both sides grew; only one of them had to"},{"id":"effort","lede":"Handling hours are recorded against the tickets resolved in the month, so the honest chart is the two together. They rise together across the 24 months and stay inside 1.36 to 1.74 hours per resolved ticket throughout. The histogram beside it shows the hours column on its own, before it is divided by anything: 24 monthly totals in six bins of 153.5 hours, leaning to the low end.","title":"The hours track the closures, inside a narrow band"},{"id":"limits","lede":"No ticket identifiers, so nothing here can be traced to a case, a queue, or a person, and no cohort can be followed across months — the only candidate key in this file is the month itself, which is the period, not an entity within it. No per-ticket duration, so handling hours can only ever be divided by a count. No opening balance before 2024-01, so the first month's 268 tickets have no history and the 180 above is an implication rather than a record. And no dimension column of any kind, so nothing in this file can be broken down by anything.","title":"What the file does not contain"}],"theme":"desk"}}
 </script>
 
 <script>
@@ -2062,120 +2049,183 @@ return { data:JSON.parse(document.getElementById('report-data').textContent),
 </script>
 
 <script>
-/* ============================================================================
- * [3] REPORT WIRING — this is the part you rewrite for every report.
- * What follows is a demo proving the shell is alive. Delete it entirely and
- * write your own sections.
- * ==========================================================================*/
+/* [3] REPORT WIRING — generated by assets/build-report.py; do not edit. */
 (function(){
-var R=REPORT, D=R.data, V=R.VIZ, T=R.tokens();
-
-document.getElementById('hEyebrow').textContent=D.meta.eyebrow;
-document.getElementById('hTitle').textContent=D.meta.title;
-document.getElementById('hSub').textContent=D.meta.subtitle;
-D.meta.meta.forEach(function(p){
-  var s=R.el('span'); s.appendChild(document.createTextNode(p[0]+' '));
-  var b=R.el('b',null,p[1]); s.appendChild(b);
-  document.getElementById('hMeta').appendChild(s);
+'use strict';
+var R=REPORT,D=R.data,S=D.spec,rows=D.rows;
+/* Builder chrome is English. The report's own prose — titles, notes, help, methodology —
+   is whatever language the plan was written in; these are the words the builder supplies. */
+var L={grain:'Grain',table:'Table',method:'Method',methodTitle:'Basis, formulas, and limits',basis:'Basis',formulas:'Formulas',limits:'Limits',data:' data'};
+function text(tag,cls,value){return R.el(tag,cls,value==null?'':String(value));}
+function add(parent,child){parent.appendChild(child);return child;}
+function format(value){return typeof value==='number'?R.nf(value):String(value==null?'—':value);}
+function toolIntegration(tool){
+  var tools=S.creative_direction&&S.creative_direction.external_tools||[];
+  for(var i=0;i<tools.length;i++)if(tools[i].tool===tool)return tools[i].integration;
+  return 'portable-pattern';
+}
+function motionEase(name){return {linear:'linear',outCubic:[.22,.61,.36,1],inOutCubic:[.65,0,.35,1],outQuint:[.23,1,.32,1],outExpo:[.16,1,.3,1],outCirc:[0,.55,.45,1],inOutQuint:[.83,0,.17,1]}[name]||[.22,.61,.36,1];}
+function gsapEase(name){return {linear:'none',outCubic:'power3.out',inOutCubic:'power3.inOut',outQuint:'power4.out',outExpo:'expo.out',outCirc:'circ.out',inOutQuint:'power4.inOut'}[name]||'power3.out';}
+function animeEase(name){return {linear:'linear',outCubic:'easeOutCubic',inOutCubic:'easeInOutCubic',outQuint:'easeOutQuint',outExpo:'easeOutExpo',outCirc:'easeOutCirc',inOutQuint:'easeInOutQuint'}[name]||'easeOutCubic';}
+function runtimeName(tool){return {gsap:'gsap@3.12.5',motion:'motion@11.11.17',anime:'anime@3.2.2'}[tool]||null;}
+function hasVendoredRuntime(tool){return tool==='gsap'?!!(window.gsap&&window.gsap.to):tool==='motion'?!!(window.Motion&&window.Motion.animate):tool==='anime'?typeof window.anime==='function':false;}
+function playVendoredMotion(canvas,engine,chart){
+  var tool=chart.motion.source_tool;engine.__played=true;engine.__motionRuntime=runtimeName(tool);
+  var token={};engine.__token=token;
+  function paint(){R.paintOne(engine);}
+  function finish(){
+    if(engine.__token!==token)return;
+    if(tool==='gsap'&&engine.__externalMotionHandle&&typeof engine.__externalMotionHandle.kill==='function')engine.__externalMotionHandle.kill();
+    if(tool==='motion'&&engine.__externalMotionHandle&&typeof engine.__externalMotionHandle.stop==='function')engine.__externalMotionHandle.stop();
+    if(tool==='anime'&&window.anime&&typeof window.anime.remove==='function')window.anime.remove(engine);
+    engine.t=1;paint();engine.__externalMotionHandle=null;
+  }
+  if(R.reduced()){finish();return;}
+  engine.t=0;paint();
+  var duration=Math.min(1200,Math.max(180,Number(chart.motion.duration_ms)||700));
+  if(tool==='gsap')engine.__externalMotionHandle=window.gsap.to(engine,{t:1,duration:duration/1000,ease:gsapEase(chart.motion.easing),onUpdate:function(){if(engine.__token===token){engine.t=Math.max(0,Math.min(1,engine.t));paint();}},onComplete:finish});
+  else if(tool==='motion')engine.__externalMotionHandle=window.Motion.animate(0,1,{duration:duration/1000,ease:motionEase(chart.motion.easing),onUpdate:function(value){if(engine.__token===token){engine.t=Math.max(0,Math.min(1,value));paint();}},onComplete:finish});
+  else if(tool==='anime')engine.__externalMotionHandle=window.anime({targets:engine,t:1,duration:duration,easing:animeEase(chart.motion.easing),update:function(){if(engine.__token===token){engine.t=Math.max(0,Math.min(1,engine.t));paint();}},complete:finish});
+  setTimeout(finish,duration+260);
+}
+/* A series set is value, value2, value3 in order, named by the column each one
+   reads. The field name is what the table twin already prints, so the legend and
+   the table cannot disagree about which number is which. Three is the ceiling:
+   references/themes.md refuses to invent a fourth colour. */
+var SERIES_ROLES=['value','value2','value3'],SERIES_COLORS=['s1','s2','s3'];
+function seriesOf(chart){
+  var e=chart.encodings,out=[];
+  SERIES_ROLES.forEach(function(role,i){
+    if(typeof e[role]==='string'&&e[role])out.push({name:e[role],get:e[role],color:SERIES_COLORS[i]});
+  });
+  return out;
+}
+/* Plan options are snake_case and the factories are camelCase; this is the whole
+   translation. Every name here is a capability the shipped factory already had
+   and no plan could previously ask for. validate-plan.py owns which type takes
+   which, so an unknown name never reaches this map. */
+var OPTION_KEYS={reference:'ref',reference_label:'refLabel',identity_line:'identityLine',
+  axis_x:'axisX',axis_y:'axisY',zero_based:'zeroBased',rotate_labels:'rotate',
+  axis_note:'axisNote',bins:'bins',marks:'marks',start_label:'startLabel',
+  end_label:'endLabel',center_label:'centerLabel',center_note:'centerNote',
+  target_label:'targetLabel',before_label:'beforeLabel',after_label:'afterLabel',
+  band_note:'bandNote'};
+function withOptions(chart,cfg){
+  var o=chart.options;
+  if(!o) return cfg;
+  Object.keys(o).forEach(function(k){
+    /* divColumns diverges when it is handed NEITHER colorOf nor a flat colour.
+       The option is therefore the absence of one, not a value to pass through. */
+    if(k==='diverging'){ if(o[k]) delete cfg.color; return; }
+    var name=OPTION_KEYS[k];
+    if(name) cfg[name]=o[k];
+  });
+  return cfg;
+}
+function chartConfig(chart){
+  var e=chart.encodings,base={rows:function(){return rows;},color:'s1'},series=seriesOf(chart);
+  if(chart.type==='line')return Object.assign(base,{x:e.x,y:e.value,format:format});
+  if(chart.type==='columns')return {rows:function(){return rows;},x:e.x,series:series,format:format};
+  if(chart.type==='divColumns')return Object.assign(base,{x:e.label,y:e.value,format:format});
+  if(chart.type==='hbars'||chart.type==='lollipop')return Object.assign(base,{label:e.label,value:e.value,format:format});
+  if(chart.type==='bubbles')return Object.assign(base,{label:e.label,x:e.x,y:e.y,size:e.size});
+  if(chart.type==='concentration')return Object.assign(base,{label:e.label,value:e.value,format:format});
+  if(chart.type==='divHbars')return Object.assign(base,{label:e.label,value:e.value,format:format});
+  /* donut and slope colour each row from the series ramp, and they do it by taking
+     cfg.color as the DEFAULT passed to colorOf — which returns a default unresolved.
+     Handing them the token name 's1' would paint the literal string, which canvas
+     ignores, leaving every arc the previous fill. Omit color and let them ramp. */
+  if(chart.type==='donut')return {rows:function(){return rows;},label:e.label,value:e.value,format:format};
+  if(chart.type==='heatmap')return Object.assign(base,{x:e.x,y:e.y,value:e.value,format:format});
+  if(chart.type==='slope')return {rows:function(){return rows;},label:e.label,before:e.before,after:e.after,
+    labels:{before:e.before,after:e.after},format:format};
+  if(chart.type==='waterfall')return {format:format,steps:function(){
+    return rows.map(function(r){return {name:String(r[e.label]),value:Number(r[e.value])};});}};
+  if(chart.type==='boxplot')return Object.assign(base,{label:e.label,lo:e.lo,q1:e.q1,med:e.med,q3:e.q3,hi:e.hi,format:format});
+  if(chart.type==='stackedArea')return {rows:function(){return rows;},x:e.x,series:series,format:format};
+  if(chart.type==='panels')return {rows:function(){return rows;},label:e.label,
+    panels:series.map(function(s){return {title:s.name,get:s.get,color:s.color};}),format:format};
+  if(chart.type==='interval')return Object.assign(base,{label:e.label,value:e.value,lo:e.lo,hi:e.hi,format:format});
+  if(chart.type==='scatter')return Object.assign(base,{label:e.label,x:e.x,y:e.y,format:format});
+  if(chart.type==='dumbbell')return Object.assign(base,{label:e.label,before:e.before,after:e.after,format:format});
+  if(chart.type==='bullet')return Object.assign(base,{label:e.label,value:e.value,target:e.target,format:format});
+  if(chart.type==='histogram')return Object.assign(base,{value:e.value,format:format});
+  /* spark takes a value list, not rows: it has no axes and reads no x. Row order
+     is the source's, exactly as it is for line and stackedArea. */
+  if(chart.type==='spark')return {values:function(){return rows.map(function(r){return Number(r[e.value]);});},color:'s1'};
+  throw new Error('unsupported validated chart type: '+chart.type);
+}
+/* A multi-series chart is unreadable without a key, and the key has to survive the
+   theme toggle — the swatch colour is a token value, not a class. R.onTheme runs the
+   hook now and again on every change. `panels` is not here: it prints each metric's
+   name above its own panel, so a second key would only repeat it. */
+function legendFor(chart,card){
+  var series=seriesOf(chart);
+  if(series.length<2||(chart.type!=='columns'&&chart.type!=='stackedArea'))return;
+  var node=add(card,text('div','legend',''));
+  R.onTheme(function(t){
+    node.replaceChildren.apply(node,series.map(function(s){
+      var span=R.el('span',null,''),key=R.el('i','key sq','');
+      key.style.background=t[s.color];span.appendChild(key);
+      span.appendChild(document.createTextNode(s.name));return span;
+    }));
+  });
+}
+document.documentElement.lang=S.metadata.locale;
+document.title=S.metadata.title;
+document.getElementById('hEyebrow').textContent=S.metadata.eyebrow;
+document.getElementById('hTitle').textContent=S.metadata.title;
+document.getElementById('hSub').textContent=S.metadata.subtitle;
+document.getElementById('hMeta').replaceChildren(text('span',null,L.grain+': '+S.grain));
+/* The masthead archetype is a plan choice, and until now it was recorded in the
+   spec and never applied — every report rendered as M1 whatever it declared.
+   M4 and M5 need content the plan has no field for, so validate-plan.py refuses
+   them rather than letting them render as something else. */
+var MASTHEADS={M1:'',M2:'masthead--figure',M3:'masthead--broadsheet',M6:'masthead--sticky'};
+var header=document.querySelector('.masthead'), archetype=MASTHEADS[S.masthead]||'';
+if(header&&archetype)header.classList.add(archetype);
+var heroFigure=document.getElementById('hFig');
+if(heroFigure){
+  var fig=S.masthead==='M2'?S.masthead_figure:null;
+  if(fig){
+    heroFigure.replaceChildren(document.createTextNode(fig.value),text('small',null,fig.label));
+    heroFigure.hidden=false;
+  } else { heroFigure.textContent=''; heroFigure.hidden=true; }
+}
+if(header&&S.masthead==='M6')R.shrinkMasthead(header,140);
+var main=document.getElementById('main');main.replaceChildren();
+if(S.insights.length){
+  var summary=add(main,text('section','reveal','')),list=add(summary,text('div','insights',''));
+  S.insights.forEach(function(insight){var card=add(list,text('article','insight',''));add(card,text('h3',null,insight.claim));add(card,text('p',null,insight.limitation));});
+}
+var sections={};
+S.sections.forEach(function(section,index){
+  var node=add(main,text('section','reveal',''));node.id=section.id;
+  var head=add(node,text('div','sec-head',''));add(head,text('p','sec-num',String(index+1).padStart(2,'0')));add(head,text('h2',null,section.title));add(head,text('p','lede',section.lede));
+  sections[section.id]=node;
 });
-
-var main=document.getElementById('main');
-main.innerHTML =
-'<section class="reveal"><div class="sec-head"><p class="sec-num">01 · Trend</p><h2>How it moved over time</h2>'+
-'<p class="lede">Metrics in different units never share an axis.</p></div>'+
-'<div class="grid grid-2">'+
- '<div class="card"><div class="card-head"><h3 id="t1">Total over time</h3><button class="btn" type="button" data-table-toggle="tw1" aria-expanded="false">Table view</button></div>'+
-  '<p class="card-note">Only the endpoint carries a printed value; the axis and the tooltip do the rest.</p>'+
-  '<div class="chart"><canvas id="c1" height="230" role="img" aria-label="Line chart of the total by period" data-motion-enabled="true" data-motion-reason="Entry motion reveals the trend direction once"></canvas></div><div class="tablewrap" id="tw1" hidden><table id="tb1"></table></div></div>'+
- '<div class="card"><div class="card-head"><h3 id="t2">Components</h3><button class="btn" type="button" data-table-toggle="tw2" aria-expanded="false">Table view</button></div>'+
-  '<p class="card-note">Two series in the same unit, so one axis compares them directly.</p>'+
-  '<div class="legend" id="lg2"></div>'+
-  '<div class="chart"><canvas id="c2" height="230" role="img" aria-label="Grouped column chart of two series by period" data-motion-enabled="true" data-motion-reason="Entry motion establishes the shared-baseline comparison once"></canvas></div><div class="tablewrap" id="tw2" hidden><table id="tb2"></table></div></div>'+
-'</div></section>'+
-'<section class="reveal"><div class="sec-head"><p class="sec-num">02 · Flow</p><h2>From opening to closing</h2>'+
-'<p class="lede">A single net figure hides what moved. This splits it into parts.</p></div>'+
-'<div class="card"><div class="card-head"><h3 id="t3">Change decomposition</h3>'+
- '<button class="btn" type="button" data-table-toggle="tw3" aria-expanded="false">Table view</button><button class="btn" type="button" id="replay">▷ Replay</button></div>'+
- '<div class="chart"><canvas id="c3" height="300" role="img" aria-label="Waterfall chart decomposing the change" data-motion-enabled="true" data-motion-reason="Sequential motion communicates the bridge flow"></canvas></div>'+
- '<div class="tablewrap" id="tw3" hidden><table id="tb3"></table></div></div></section>'+
-'<section><div class="sec-head"><p class="sec-num">03 · Comparison and distribution</p><h2>The groups split</h2></div>'+
-'<div class="grid grid-2">'+
- '<div class="card"><div class="card-head"><h3 id="t4">Group size</h3><button class="btn" type="button" data-table-toggle="tw4" aria-expanded="false">Table view</button></div>'+
-  '<div class="chart"><canvas id="c4" height="240" role="img" aria-label="Bar chart of size by group" data-motion-enabled="true" data-motion-reason="Entry motion introduces the magnitude comparison once"></canvas></div><div class="tablewrap" id="tw4" hidden><table id="tb4"></table></div></div>'+
- '<div class="card"><div class="card-head"><h3 id="t5">Distribution of change</h3><button class="btn" type="button" data-table-toggle="tw5" aria-expanded="false">Table view</button></div>'+
-  '<div class="chart"><canvas id="c5" height="240" role="img" aria-label="Distribution of change by bucket" data-motion-enabled="true" data-motion-reason="Entry motion reveals the distribution shape once"></canvas></div><div class="tablewrap" id="tw5" hidden><table id="tb5"></table></div></div>'+
-'</div></section>';
-
-/* help chip beside each card title — what am I looking at · how do I read it ·
-   what can I do with it */
-[['t1','Total over time','The total per period. Hover the line for that period\u2019s value and its change from the previous one.','The axis does not start at zero; it is fitted to the data range.'],
- ['t2','Components','Both series share a unit, so one axis compares them directly.'],
- ['t3','Change decomposition','A bridge splitting the opening-to-closing difference into entering, leaving and continuing. Every bar is drawn from zero.'],
- ['t4','Group size','Bar length is the value. One series, so one colour.'],
- ['t5','Distribution of change','Counts per change bucket. Colour carries direction, not size.']
-].forEach(function(h){
-  var el=document.getElementById(h[0]);
-  el.style.cssText='display:flex;align-items:center;gap:7px';
-  el.appendChild(R.helpDot(h[1],h[2],h[3]));
+S.charts.forEach(function(chart){
+  var section=sections[chart.section_id],card=add(section,text('div','card','')),head=add(card,text('div','card-head','')),title=add(head,text('h3',null,chart.title));title.id='title-'+chart.id;
+  title.appendChild(R.helpDot(chart.title,chart.help));
+  var button=add(head,text('button','btn',L.table));button.type='button';button.setAttribute('data-table-toggle','tablewrap-'+chart.id);button.setAttribute('aria-expanded','false');
+  add(card,text('p','card-note',chart.note));legendFor(chart,card);
+  var chartWrap=add(card,text('div','chart','')),canvas=add(chartWrap,document.createElement('canvas'));
+  canvas.id=chart.id;canvas.height=chart.height||240;canvas.setAttribute('role','img');canvas.setAttribute('aria-label',chart.aria_label);canvas.dataset.motionEnabled=String(chart.motion.enabled);canvas.dataset.motionReason=chart.motion.reason;canvas.dataset.motionKind=chart.motion.kind||'entry';canvas.dataset.motionTrigger=chart.motion.trigger||'on-view';canvas.dataset.motionDuration=String(chart.motion.duration_ms||700);canvas.dataset.motionEasing=chart.motion.easing||'outCubic';canvas.dataset.motionSource=chart.motion.source_tool||'motion';canvas.dataset.motionIntegration=toolIntegration(chart.motion.source_tool||'motion');
+  var tableWrap=add(card,text('div','tablewrap',''));tableWrap.id='tablewrap-'+chart.id;tableWrap.hidden=true;var table=add(tableWrap,document.createElement('table'));table.id='table-'+chart.id;
+  var factory=R.VIZ[chart.type];if(typeof factory!=='function')throw new Error('runtime lacks '+chart.type);factory(canvas,withOptions(chart,chartConfig(chart)));
+  R.buildTable(table,chart.table.columns.map(function(field){return {name:field,value:function(row){return format(row[field]);},num:false};}),rows,{caption:chart.title+L.data});
 });
-
-document.getElementById('lg2').innerHTML=
-  '<span><i class="key sq" style="background:'+T.s1+'"></i>Series A</span>'+
-  '<span><i class="key sq" style="background:'+T.s2+'"></i>Series B</span>';
-
-var c1=V.line(document.getElementById('c1'),{
-  rows:function(){return D.trend;}, x:'t', y:'v', color:'s1', format:R.nf, seriesName:'total',
-  tip:function(r,i,rows){ var p=i>0?rows[i-1].v:null;
-    return {title:r.t, rows:[{name:'Total',val:R.nf(r.v),color:T.s1}]
-      .concat(p!=null?[{name:'vs previous',val:R.sg(r.v-p,''),cls:R.dirCls(r.v-p)}]:[])}; }});
-var c2=V.columns(document.getElementById('c2'),{
-  rows:function(){return D.trend;}, x:'t',
-  series:[{name:'Series A',get:'a',color:'s1'},{name:'Series B',get:'b',color:'s2'}]});
-var c3=V.waterfall(document.getElementById('c3'),{
-  steps:function(){return D.bridge.map(function(s){return {name:s.name,sub:s.sub,value:s.value,total:s.total};});},
-  startLabel:'Opening 1,000', endLabel:'Closing 1,014'});
-var c4=V.hbars(document.getElementById('c4'),{
-  rows:function(){return D.groups;}, label:'k', value:'v', color:'s1',
-  tip:function(r){ return {title:r.k, rows:[{name:'Value',val:R.nf(r.v),color:T.s1},
-    {name:'Change',val:R.sg(r.d,''),cls:R.dirCls(r.d)},{name:'Change %',val:R.pc(r.p),cls:R.dirCls(r.d)}]}; }});
-var c5=V.divColumns(document.getElementById('c5'),{
-  rows:function(){return D.hist;}, x:'label', y:'n',
-  axisNote:'← decrease                 increase →',
-  tip:function(r){ return {title:r.label, rows:[{name:'Count',val:R.nf(r.n)},{name:'Bucket sum',val:R.sg(r.sum,''),cls:R.dirCls(r.sum)}]}; }});
-
-R.buildTable(document.getElementById('tb3'),[
-  {name:'Part',value:function(r){return r.name;},num:false},
-  {name:'Detail',value:function(r){return r.sub;},num:false},
-  {name:'Value',value:function(r){return R.sg(r.value,'');},cls:function(r){return R.dirCls(r.value);}}
-], D.bridge, {caption:'Change decomposition (table view)'});
-R.buildTable(document.getElementById('tb1'),[
-  {name:'Period',value:function(r){return r.t;},num:false},
-  {name:'Total',value:function(r){return R.nf(r.v);}}
-], D.trend, {caption:'Total by period'});
-R.buildTable(document.getElementById('tb2'),[
-  {name:'Period',value:function(r){return r.t;},num:false},
-  {name:'Series A',value:function(r){return R.nf(r.a);}},
-  {name:'Series B',value:function(r){return R.nf(r.b);}}
-], D.trend, {caption:'Components by period'});
-R.buildTable(document.getElementById('tb4'),[
-  {name:'Group',value:function(r){return r.k;},num:false},
-  {name:'Size',value:function(r){return R.nf(r.v);}},
-  {name:'Change',value:function(r){return R.sg(r.d,'');},cls:function(r){return R.dirCls(r.d);}}
-], D.groups, {caption:'Size by group'});
-R.buildTable(document.getElementById('tb5'),[
-  {name:'Bucket',value:function(r){return r.label;},num:false},
-  {name:'Count',value:function(r){return R.nf(r.n);}},
-  {name:'Bucket sum',value:function(r){return R.sg(r.sum,'');},cls:function(r){return R.dirCls(r.sum);}}
-], D.hist, {caption:'Distribution of change'});
-
-document.getElementById('replay').addEventListener('click',function(){ c3.play(); });
-R.onView(document.getElementById('main'),function(){ [c1,c2,c4,c5].forEach(function(c){c.play(850);}); c3.play(); });
-R.onTheme(function(t){
-  document.getElementById('lg2').innerHTML=
-    '<span><i class="key sq" style="background:'+t.s1+'"></i>Series A</span>'+
-    '<span><i class="key sq" style="background:'+t.s2+'"></i>Series B</span>';
+var method=add(main,text('section','reveal',''));method.id='methodology';var mh=add(method,text('div','sec-head',''));add(mh,text('p','sec-num',L.method));add(mh,text('h2',null,L.methodTitle));var mc=add(method,text('div','card method',''));
+[[L.basis,S.methodology.basis],[L.formulas,S.methodology.formulas],[L.limits,S.methodology.limitations]].forEach(function(group){var block=add(mc,text('div',null,''));add(block,text('h3',null,group[0]));group[1].forEach(function(item){add(block,text('p',null,item));});});
+R.wireHelp();R.wireToggles();R.reveal();R.paintAll();
+S.charts.forEach(function(chart){
+  if(!chart.motion.enabled)return;
+  var canvas=document.getElementById(chart.id),engine=canvas&&canvas.__chart;
+  if(!engine)return;
+  var vendored=canvas.dataset.motionIntegration==='vendored-runtime'&&hasVendoredRuntime(chart.motion.source_tool);
+  canvas.__reportReplay=vendored?function(){playVendoredMotion(canvas,engine,chart);}:function(){engine.play(chart.motion.duration_ms||700,chart.motion.easing||'outCubic');};
+  R.onView(canvas,canvas.__reportReplay);
 });
-R.wireHelp(); R.wireToggles(); R.reveal(); R.paintAll(); R.playAll(700);
 })();
 </script>
 </body>

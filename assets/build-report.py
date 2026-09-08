@@ -342,7 +342,22 @@ document.getElementById('hEyebrow').textContent=S.metadata.eyebrow;
 document.getElementById('hTitle').textContent=S.metadata.title;
 document.getElementById('hSub').textContent=S.metadata.subtitle;
 document.getElementById('hMeta').replaceChildren(text('span',null,L.grain+': '+S.grain));
-var heroFigure=document.getElementById('hFig');if(heroFigure)heroFigure.textContent='';
+/* The masthead archetype is a plan choice, and until now it was recorded in the
+   spec and never applied — every report rendered as M1 whatever it declared.
+   M4 and M5 need content the plan has no field for, so validate-plan.py refuses
+   them rather than letting them render as something else. */
+var MASTHEADS={M1:'',M2:'masthead--figure',M3:'masthead--broadsheet',M6:'masthead--sticky'};
+var header=document.querySelector('.masthead'), archetype=MASTHEADS[S.masthead]||'';
+if(header&&archetype)header.classList.add(archetype);
+var heroFigure=document.getElementById('hFig');
+if(heroFigure){
+  var fig=S.masthead==='M2'?S.masthead_figure:null;
+  if(fig){
+    heroFigure.replaceChildren(document.createTextNode(fig.value),text('small',null,fig.label));
+    heroFigure.hidden=false;
+  } else { heroFigure.textContent=''; heroFigure.hidden=true; }
+}
+if(header&&S.masthead==='M6')R.shrinkMasthead(header,140);
 var main=document.getElementById('main');main.replaceChildren();
 if(S.insights.length){
   var summary=add(main,text('section','reveal','')),list=add(summary,text('div','insights',''));
@@ -382,6 +397,8 @@ S.charts.forEach(function(chart){
 
 def build(spec: dict[str, Any], records: list[dict[str, Any]], shell: str) -> str:
     public_spec = {key: spec[key] for key in ("schema_version", "plan_sha256", "metadata", "masthead", "grain", "lenses", "insights", "macro", "theme", "sections", "charts", "methodology", "rule_decisions")}
+    if isinstance(spec.get("masthead_figure"), dict):
+        public_spec["masthead_figure"] = spec["masthead_figure"]
     if isinstance(spec.get("creative_direction"), dict):
         public_spec["creative_direction"] = spec["creative_direction"]
     payload = script_safe_json({"rows": records, "spec": public_spec})

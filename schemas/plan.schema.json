@@ -19,6 +19,7 @@
       }
     },
     "masthead": {"type": "string", "minLength": 1},
+    "masthead_figure": {"type": "object", "additionalProperties": false, "required": ["value", "label"], "properties": {"value": {"type": "string", "minLength": 1}, "label": {"type": "string", "minLength": 1}}},
     "grain": {"type": "string", "minLength": 1},
     "lenses": {
       "type": "object",

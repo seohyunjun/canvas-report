@@ -32,6 +32,19 @@
 - Fix the histogram count axis. `ticks()` spaces a small range in fractions and rounding those for
   display printed "1 1 1 0 0 0" up the axis — six gridlines claiming three values. Bin counts are
   whole numbers of rows, so the axis steps in integers and rounds its top up to one.
+- Apply the masthead archetype the plan declares. `assets/report-shell.html` has always shipped CSS
+  for M1–M6, and the builder never added the class: every report rendered as the M1 label stack
+  whatever it recorded, so the published example declared `M3` and was not a nameplate. The builder
+  now applies M1, M2, M3 and M6, and M2 gets the one number it is for through a new
+  `masthead_figure` field. M4 wants per-section anchors with headline values and M5 a rail label —
+  content the plan has no field for — so `MASTHEAD-002` refuses them rather than letting them fall
+  back to something else. `MASTHEAD-001` rejects an unknown archetype, `MASTHEAD-003` an M2 with no
+  figure, and `MASTHEAD-004` a figure on an archetype that does not render one.
+- Publish a second report from the same support-intake CSV: **The backlog was never measured**,
+  a fresh run from `INIT` with rotation and subject fit applied — `Briefing · desk · M2` against the
+  first report's `Broadsheet · newsprint · M3`, with `desk` at a saturated 1.00 subject fit and
+  rotation distance 2. It carries five charts where the first has three, using the two-series
+  `columns`, `scatter` and `histogram`, and it is the first `M2` masthead this repository has built.
 - Rebuild the published pipeline example against the new vocabulary. It gains the two scatters it
   could not draw: handling hours against tickets resolved, and opened against resolved under a
   `resolved = opened` identity line, below which 18 of the 24 months sit. That line is the report's
