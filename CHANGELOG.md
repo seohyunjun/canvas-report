@@ -1,5 +1,40 @@
 # Changelog
 
+## 3.4.0 — 2026-09-08
+
+- Turn `references/analysis-lenses.md` from a lookup table into a selection procedure. The file
+  named seventeen lenses and the shape each one needs, but not how a lens is chosen when several
+  shapes are true at once, nor how its seventeen names relate to the five gates
+  `assets/select-candidates.py` actually emits. Both joins are now written down.
+- Add the **Gate** column and an *Eligibility, in two steps* section. Each lens now names the
+  candidate gate — `trend`, `comparison`, `distribution`, `relationship`, `cohort` — that must be
+  eligible before it is arguable, and the section states exactly what each gate tests: column
+  types, column counts, and a six-period test on the date column. Nothing more. The gates never
+  count rows per group, never check that two measures share a unit, and never read a cell, so an
+  eligible gate is permission to consider a lens and not evidence for it. A table maps the rest of
+  the mapping's conditions to the `profile.json` fields that settle them — `row_count`,
+  `columns[].min`, `columns[].distinct_count`, `time_grains`, `comparable_periods`,
+  `candidate_keys`, `null_rate`, `sentinel_candidates`.
+- Say that the row caps **intersect**. The builder hands one `rows` array to every chart and the
+  validator measures each one against the profile's single `row_count`, so a cap is not local to
+  the chart that carries it: a five-slice `donut` makes the whole report a five-row report, and
+  every other chart and table twin on the page then draws at most five rows. `donut` alongside
+  `lollipop` is a five-row report, not a twenty-row one. The file previously said the cap applied
+  to the source rather than the chart, which is half of it.
+- Add *When two lenses both fit*: eleven pairs the mapping leaves open — `hbars`/`lollipop`,
+  `hbars`/`donut`, `columns`/`stackedArea`, `columns`/`panels`, `waterfall`/`divHbars`,
+  `slope`/`divHbars`, `bubbles`/`panels`, `boxplot`/`divColumns`, `heatmap`/`panels`,
+  `concentration`/`hbars`, `interval`/`hbars` — each with the question that closes it. A slope
+  chart with no crossing lines is a ranking drawn the hard way; `lollipop` drags its 20-row cap
+  onto every other chart; `panels` exists for the two-unit case `columns` cannot take.
+- Add *What the lens costs downstream*: the motion band the factory fixes at the moment the lens is
+  chosen — reveals at 600–800 ms, `waterfall` at 600–900, value-scaled marks at 400–600, spread at
+  300–500, `bubbles` at 700–900 — so the consequence is visible during selection rather than at
+  `MOTION-FIT-002`. `references/motion-features.md` remains the authority for the easings.
+- Add *When nothing fits*: the four honest exits, in order — aggregate upstream of profiling,
+  rewrite the claim down to the evidence, keep the table twin and drop the chart, drop the section
+  and disclose it. A caveat in a card note does not undraw a mark.
+
 ## 3.3.0 — 2026-09-07
 
 - Grow the compiled chart vocabulary from seven types to **sixteen**. `divHbars`, `donut`,
