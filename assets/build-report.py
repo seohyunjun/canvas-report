@@ -69,10 +69,13 @@ INTEGER_RE = re.compile(r"^[+-]?(?:0|[1-9]\d*)$")
 NUMBER_RE = re.compile(r"^[+-]?(?:\d+\.\d*|\.\d+)(?:[eE][+-]?\d+)?$|^[+-]?\d+[eE][+-]?\d+$")
 VENDORED_RUNTIMES = {
     "gsap": {
-        "version": "3.12.5",
-        "path": ROOT / "lab" / "motion-engines" / "vendor" / "gsap-3.12.5.min.js",
-        "sha256": "28033e449a31ebcc396e5be8b13b63152bf03094288fb5867034321927bce087",
-        "license": "GreenSock Standard no-charge license",
+        "version": "3.15.0",
+        # The core, not lab/.../gsap-all-3.15.0.min.js: a report inlines what it runs, and
+        # it runs one entry tween. The 325 KB all-plugin bundle is the lab's, not a
+        # document's. lab/motion-engines/docs/gsap.md carries the plugin catalogue.
+        "path": ROOT / "lab" / "motion-engines" / "vendor" / "gsap-3.15.0.min.js",
+        "sha256": "92bb9a96476f983d212a2bc4f54c889039c1696dd4461d40a736860938570fbb",
+        "license": "Standard \"No Charge\" GSAP License",
     },
     "motion": {
         "version": "11.11.17",
@@ -232,7 +235,7 @@ function toolIntegration(tool){
 function motionEase(name){return {linear:'linear',outCubic:[.22,.61,.36,1],inOutCubic:[.65,0,.35,1],outQuint:[.23,1,.32,1],outExpo:[.16,1,.3,1],outCirc:[0,.55,.45,1],inOutQuint:[.83,0,.17,1]}[name]||[.22,.61,.36,1];}
 function gsapEase(name){return {linear:'none',outCubic:'power3.out',inOutCubic:'power3.inOut',outQuint:'power4.out',outExpo:'expo.out',outCirc:'circ.out',inOutQuint:'power4.inOut'}[name]||'power3.out';}
 function animeEase(name){return {linear:'linear',outCubic:'easeOutCubic',inOutCubic:'easeInOutCubic',outQuint:'easeOutQuint',outExpo:'easeOutExpo',outCirc:'easeOutCirc',inOutQuint:'easeInOutQuint'}[name]||'easeOutCubic';}
-function runtimeName(tool){return {gsap:'gsap@3.12.5',motion:'motion@11.11.17',anime:'anime@3.2.2'}[tool]||null;}
+function runtimeName(tool){return {gsap:'gsap@3.15.0',motion:'motion@11.11.17',anime:'anime@3.2.2'}[tool]||null;}
 function hasVendoredRuntime(tool){return tool==='gsap'?!!(window.gsap&&window.gsap.to):tool==='motion'?!!(window.Motion&&window.Motion.animate):tool==='anime'?typeof window.anime==='function':false;}
 function playVendoredMotion(canvas,engine,chart){
   var tool=chart.motion.source_tool;engine.__played=true;engine.__motionRuntime=runtimeName(tool);

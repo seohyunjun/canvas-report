@@ -19,7 +19,7 @@ Site claims were captured **2026-09-07** from the links in `references/external-
 
 | Tool | Pinned here | Site documents | Aligned |
 |---|---|---|---|
-| GSAP | 3.12.5 | v3 (core, plus 15 plugins) | core yes, plugins no |
+| GSAP | 3.15.0 (core **and** `all.min.js`) | v3 (core, plus 24 plugin files) | yes — every plugin is pinned |
 | Motion | 11.11.17 | 13.1.1 | mostly |
 | anime.js | 3.2.2 | 4.0.0 | **no — different API** |
 | D3 | 7.9.0 | 7.9.0 | yes |
@@ -27,7 +27,7 @@ Site claims were captured **2026-09-07** from the links in `references/external-
 
 ---
 
-## GSAP 3.12.5 — the eases are real, the plugins are not here
+## GSAP 3.15.0 — the eases are real, and now so are the plugins
 
 The pinned core exposes 34 entries (`to` `from` `fromTo` `set` `timeline` `parseEase` `killTweensOf`
 `quickTo` `matchMedia` `registerPlugin` `ticker` `utils` …) and 17 `gsap.utils` helpers.
@@ -38,11 +38,13 @@ The pinned core exposes 34 entries (`to` `from` `fromTo` `set` `timeline` `parse
 `quint` `strong`. Parametric forms work: `back.out(1.7)`, `elastic.out(1,0.3)`, `steps(12)`.
 The default ease is `power1.out`, confirmed by identity against `gsap.parseEase('power1.out')`.
 
-**No plugin is present.** `ScrollTrigger`, `MorphSVG`, `DrawSVG`, `MotionPath`, `SplitText`,
-`Draggable`, `Flip`, `Observer`, `ScrollSmoother`, `CustomEase` are all separate files and none is
-vendored; `gsap.plugins` is empty after load. The core bundle does contain the *string*
-`ScrollTrigger` — it knows how to receive the plugin — which is why the string scan in
-`api-surface.json` reports it present while the browser probe reports nothing registered. Half the
+**Every plugin is present, in the bundle.** Two GSAP files are pinned: `gsap-3.15.0.min.js`,
+the core, which the probe reads as text only, and `gsap-all-3.15.0.min.js`, which the probe loads.
+The core contains **6** of the 31 names asked of it and the bundle contains all **31**; on window
+the split is 1 global against **27**. `gsap.plugins` holds six built-in property plugins in both
+and reaches 18 only after `gsap.registerPlugin()` — loading a plugin file does not register it, and
+`gsap.parseEase('rough')`, `'slow'` and `'expoScale(1,2)'` all fail until EasePack is registered.
+[`gsap.md`](gsap.md) carries the full catalogue and the verdict for each plugin. Half the
 reason to reach for GSAP lives in those plugins, and none of it is available to a report.
 
 ## Motion 11.11.17 — two versions behind, and it will not tell you
@@ -114,7 +116,7 @@ A plan's `motion.easing` is one of seven names, and `assets/build-report.py` map
 selected engine. The probe re-reads that table out of the builder and resolves every value against
 the pinned runtime:
 
-| plan | GSAP 3.12.5 | Motion 11.11.17 | anime 3.2.2 |
+| plan | GSAP 3.15.0 | Motion 11.11.17 | anime 3.2.2 |
 |---|---|---|---|
 | `linear` | `none` | `linear` | `linear` |
 | `outCubic` | `power3.out` | `[.22,.61,.36,1]` | `easeOutCubic` |

@@ -1,5 +1,38 @@
 # Changelog
 
+## 3.6.0 — 2026-09-08
+
+- Repin GSAP from 3.12.5 to **3.15.0**, and vendor the whole plugin set. Two files now sit in
+  `lab/motion-engines/vendor/`: `gsap-3.15.0.min.js`, the 72 KB core a report inlines when a plan
+  names `gsap` as a `vendored-runtime` motion engine, and `gsap-all-3.15.0.min.js`, 325 KB of core
+  plus **all 24 plugin files**, which is the lab's. A document that runs one entry tween has no
+  business shipping ScrollSmoother, so no report inlines the bundle.
+- Rewrite `lab/motion-engines/docs/gsap.md` as the full catalogue from
+  <https://gsap.com/docs/v3/Plugins>: every plugin, what it does, whether it is a **property**,
+  **behaviour** or **ease** plugin — measured, not read off the site — and the verdict for this
+  skill in the vocabulary `references/motion-features.md` uses. Nothing on that list is *absent*
+  any more, which is the point: each plugin is now refused or held on what a report should do,
+  where at 3.12.5 half the catalogue was simply not there to refuse.
+- The pin had to move for that to be true. At 3.12.5 cdnjs carried **12** plugin files; the bonus
+  set — SplitText, MorphSVG, DrawSVG, ScrollSmoother, Inertia, ScrambleText, Physics2D,
+  PhysicsProps, GSDevTools, MotionPathHelper, CustomWiggle, CustomBounce — was Club GSAP and not
+  publicly distributable. From **3.13.0** all 24 are on the CDN, alongside `all.min.js`.
+- Record the licence change. Webflow's Standard "No Charge" GSAP License of 30 April 2025 made the
+  library free for commercial use and freed the bonus plugins with it, and the 3.15.0 banner no
+  longer mentions Club membership. `vendor/LICENSES.md` now carries the pinned file's own banner,
+  says GSAP is still not MIT, and names the one restriction that survives — you may not put GSAP
+  inside a no-code visual animation builder, nor reverse-engineer it to compete.
+- **Loading a plugin file does not register it**, and `gsap.plugins` is the wrong place to look.
+  `lab/motion-engines/probe-api.py` now measures the surface either side of
+  `gsap.registerPlugin()`: 27 plugin globals arrive with the bundle, `gsap.plugins` holds 6 built-in
+  property plugins before and 18 after, `gsap.core.globals()` goes 29 → 48, and
+  `gsap.parseEase('rough')`, `'slow'` and `'expoScale(1,2)'` all fail until EasePack is registered.
+  The core is scanned as text without being loaded, so the catalogue can show which names live only
+  in the bundle: all of them.
+- `lab/motion-engines/01-gsap.html` loads the bundle, mints its bar curve with `CustomEase` so a
+  plugin genuinely drives something, and prints that before/after measurement on the page. The
+  numbers in the doc and the numbers on the lab page come from the same call.
+
 ## 3.5.0 — 2026-09-08
 
 - Grow the compiled chart vocabulary from sixteen types to **twenty-one**. `scatter`, `dumbbell`,

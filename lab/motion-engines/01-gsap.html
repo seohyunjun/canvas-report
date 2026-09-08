@@ -1,6 +1,6 @@
 <!doctype html>
 <!-- canvas-report LAB · NOT a report. This page breaks the skill's output contract
-     (zero network requests) on purpose. Engine: GSAP 3.12.5 · vendored: gsap-3.12.5.min.js -->
+     (zero network requests) on purpose. Engine: GSAP 3.15.0 · vendored: gsap-all-3.15.0.min.js -->
 <html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>GSAP — timelines and choreography — canvas-report lab</title>
@@ -9,7 +9,7 @@
 <h1>GSAP — timelines and choreography</h1>
 <p class="sub" id="sub"></p>
 <div class="warn"><b>This is not a report.</b> canvas-report ships one HTML file with
-<b>zero network requests</b>; this page loads <code>vendor/gsap-3.12.5.min.js</code>(72 KB) instead. It is the worked example for
+<b>zero network requests</b>; this page loads <code>vendor/gsap-all-3.15.0.min.js</code> (325 KB — the core plus all 24 plugins) instead. It is the worked example for
 <code>references/external-tools.md</code> § When to close this skill.
 Usage: <code>docs/gsap.md</code>.</div>
 <div class="stage">
@@ -17,14 +17,48 @@ Usage: <code>docs/gsap.md</code>.</div>
   <div id="rows"></div>
   <button class="btn" id="replay" type="button">▷ Replay</button>
 </div>
-<p class="meta">GSAP 3.12.5 · free licence · 72 KB minified, before gzip. This page uses exactly one
-feature, <code>gsap.timeline()</code>; no plugins (ScrollTrigger, MorphSVG …) are vendored.
+<div class="stage">
+  <p class="eyebrow">WHAT THE PIN ACTUALLY REGISTERS</p>
+  <pre class="meta" id="plugins" style="white-space:pre-wrap"></pre>
+</div>
+<p class="meta">GSAP 3.15.0 · Standard "No Charge" GSAP License · 325 KB minified, before gzip.
+The bars use one feature, <code>gsap.timeline()</code>, on a curve minted by <code>CustomEase</code>.
 What the shell's <code>chart.play()</code> cannot reproduce is <b>placing unlike things against one
-shared time axis</b>.</p>
+shared time axis</b>. The panel above it is a measurement, not a decoration: it reads the plugin
+surface either side of <code>gsap.registerPlugin()</code>, because loading a plugin file does not
+register it. Catalogue and verdicts: <code>docs/gsap.md</code>.</p>
 </div>
 <script src="lab-data.js"></script>
-<script src="vendor/gsap-3.12.5.min.js"></script>
+<script src="vendor/gsap-all-3.15.0.min.js"></script>
 <script>
+/* ── the plugin surface, measured on this page ─────────────────────────────
+   Every name below is in the bundle. None of them is registered until the call
+   two lines down, and gsap.plugins is the wrong place to check: it holds six
+   built-in property plugins before and 18 after, because two thirds of the set
+   are behaviour or ease plugins that never appear there at all. */
+var PLUGIN_NAMES=['ScrollTrigger','ScrollSmoother','ScrollToPlugin','SplitText',
+  'ScrambleTextPlugin','TextPlugin','DrawSVGPlugin','MorphSVGPlugin','MotionPathPlugin',
+  'MotionPathHelper','Flip','Draggable','InertiaPlugin','Observer','Physics2DPlugin',
+  'PhysicsPropsPlugin','GSDevTools','EaselPlugin','PixiPlugin','CustomEase','CustomWiggle',
+  'CustomBounce','CSSRulePlugin','EasePack','RoughEase','SlowMo','ExpoScaleEase'];
+function easeOK(n){ try { return typeof gsap.parseEase(n)==='function'; } catch(e){ return false; } }
+var onWindow=PLUGIN_NAMES.filter(function(n){ return typeof window[n]!=='undefined'; });
+var before={p:Object.keys(gsap.plugins).length, g:Object.keys(gsap.core.globals()).length,
+            e:['rough','slow','expoScale(1,2)'].filter(easeOK).length};
+onWindow.forEach(function(n){ try { gsap.registerPlugin(window[n]); } catch(e){} });
+var after={p:Object.keys(gsap.plugins).length, g:Object.keys(gsap.core.globals()).length,
+           e:['rough','slow','expoScale(1,2)'].filter(easeOK).length};
+document.getElementById('plugins').textContent=
+  'gsap '+gsap.version+' · '+onWindow.length+' of '+PLUGIN_NAMES.length+' plugin globals in the bundle\n'+
+  'gsap.plugins            '+before.p+'  ->  '+after.p+'   (after registerPlugin)\n'+
+  'gsap.core.globals()     '+before.g+' ->  '+after.g+'\n'+
+  'rough / slow / expoScale '+before.e+' of 3 resolve  ->  '+after.e+' of 3\n'+
+  onWindow.join(', ');
+
+/* One plugin genuinely drives something here: CustomEase mints the curve the bars use. */
+var BAR_EASE='power3.out';
+try { CustomEase.create('labBar','M0,0 C0.16,1 0.3,1 1,1'); BAR_EASE='labBar'; } catch(e){}
+
 var D=window.LAB_DATA, mx=Math.max.apply(null,D.svc.map(function(s){return s.v;}));
 document.getElementById('sub').textContent=D.title+' · '+D.note;
 var rows=document.getElementById('rows');
@@ -40,7 +74,7 @@ function play(){
   /* GSAP's point is not easing, it is the timeline — bars, per-row numbers and the total
      placed on one axis, positioned relative to each other (-=0.35). That is the one
      capability the shell does not have. */
-  var tl=gsap.timeline({defaults:{duration:.75,ease:'power3.out'}});
+  var tl=gsap.timeline({defaults:{duration:.75,ease:BAR_EASE}});
   var box={t:0};
   tl.to(box,{t:D.total,onUpdate:function(){document.getElementById('fig').textContent=won(box.t);},duration:.9},0);
   D.svc.forEach(function(s,i){

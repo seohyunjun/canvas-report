@@ -31,7 +31,7 @@ linked lab docs.
 Record `tool`, `role`, `integration`, and `reason`. Prefer `portable-pattern`. A
 `vendored-runtime` selection requires a supported builder and the pinned files under
 `lab/motion-engines/vendor/`. The deterministic builder supports three deliberately narrow vendored
-paths for `entry` motion: GSAP 3.12.5, Motion 11.11.17, and anime.js 3.2.2. It verifies the pinned
+paths for `entry` motion: GSAP 3.15.0, Motion 11.11.17, and anime.js 3.2.2. It verifies the pinned
 SHA-256, inlines the chosen runtime, uses that engine to drive canvas progress, and records version,
 hash, and licence in the build manifest. Select only one of them per report. D3 and Plotly are not
 accepted as `motion.source_tool` for chart entry.

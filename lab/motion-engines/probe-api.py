@@ -22,14 +22,28 @@ import tempfile
 from pathlib import Path
 
 VERSION = "1.0"
-RUNTIMES = ("gsap-3.12.5.min.js", "motion-11.11.17.js", "anime-3.2.2.min.js", "d3-7.9.0.min.js")
+# Loaded into the probe page. The GSAP entry is the all-in-one bundle, which contains the
+# core: loading the core as well would put a second gsap on window and the inventory would
+# read whichever won.
+RUNTIMES = ("gsap-all-3.15.0.min.js", "motion-11.11.17.js", "anime-3.2.2.min.js",
+            "d3-7.9.0.min.js")
+# Hashed and read as text, never loaded. The core is here so the catalogue can show which
+# names live only in the bundle — the answer is all of them.
+SCAN_ONLY = ("gsap-3.15.0.min.js",)
+GSAP_PLUGINS = ("ScrollTrigger", "ScrollSmoother", "ScrollToPlugin", "SplitText",
+                "ScrambleTextPlugin", "TextPlugin", "DrawSVGPlugin", "MorphSVGPlugin",
+                "MotionPathPlugin", "MotionPathHelper", "Flip", "Draggable", "InertiaPlugin",
+                "Observer", "Physics2DPlugin", "PhysicsPropsPlugin", "GSDevTools",
+                "EaselPlugin", "PixiPlugin", "CustomEase", "CustomWiggle", "CustomBounce",
+                "CSSRulePlugin", "EasePack", "RoughEase", "SlowMo", "ExpoScaleEase")
 
 # Names each tool's own site documents today. A false here is the interesting case: the site
 # describes it, the pinned build does not contain the identifier at all.
 DOCUMENTED = {
-    "gsap-3.12.5.min.js": ("ScrollTrigger", "ScrollSmoother", "MorphSVG", "DrawSVG", "MotionPath",
-                           "SplitText", "Draggable", "Flip", "Observer", "CustomEase", "timeScale",
-                           "killTweensOf", "quickTo", "matchMedia"),
+    # Every plugin name, asked of both GSAP files. The core answers false to all of them and
+    # the bundle answers true to all of them, which is the whole distinction between the two.
+    "gsap-3.15.0.min.js": GSAP_PLUGINS + ("timeScale", "killTweensOf", "quickTo", "matchMedia"),
+    "gsap-all-3.15.0.min.js": GSAP_PLUGINS + ("timeScale", "killTweensOf", "quickTo", "matchMedia"),
     "motion-11.11.17.js": ("visualDuration", "restSpeed", "restDelta", "stiffness", "damping",
                            "bounce", "repeatType", "animateMini", "inView", "scroll", "stagger"),
     "anime-3.2.2.min.js": ("animate", "createTimeline", "createTimer", "createDraggable",
@@ -56,6 +70,30 @@ if (window.gsap) {
   ['back.out(1.7)', 'elastic.out(1,0.3)', 'steps(12)'].forEach(function (n) {
     try { parametric[n] = !!gsap.parseEase(n); } catch (e) { parametric[n] = false; }
   });
+  // Loading a plugin file is not registering it. Read the surface either side of the call,
+  // because gsap.plugins never names most of them and the eases only resolve afterwards.
+  var PLUGIN_NAMES = ['ScrollTrigger', 'ScrollSmoother', 'ScrollToPlugin', 'SplitText', 'ScrambleTextPlugin', 'TextPlugin', 'DrawSVGPlugin', 'MorphSVGPlugin', 'MotionPathPlugin', 'MotionPathHelper', 'Flip', 'Draggable', 'InertiaPlugin', 'Observer', 'Physics2DPlugin', 'PhysicsPropsPlugin', 'GSDevTools', 'EaselPlugin', 'PixiPlugin', 'CustomEase', 'CustomWiggle', 'CustomBounce', 'CSSRulePlugin', 'EasePack', 'RoughEase', 'SlowMo', 'ExpoScaleEase'];
+  function easeReport() {
+    var r = {};
+    ['none','linear','power1','power2','power3','power4','back','bounce','circ','elastic','expo',
+     'sine','steps(12)','rough','slow','expoScale(1,2)'].forEach(function (n) {
+      try { r[n] = typeof gsap.parseEase(n) === 'function'; } catch (e) { r[n] = false; }
+    });
+    return r;
+  }
+  var onWindow = PLUGIN_NAMES.filter(function (n) { return typeof window[n] !== 'undefined'; });
+  var before = {plugins: sorted(gsap.plugins), globals: Object.keys(gsap.core.globals()).length,
+                eases: easeReport()};
+  onWindow.forEach(function (n) { try { gsap.registerPlugin(window[n]); } catch (e) {} });
+  var after = {plugins: sorted(gsap.plugins), globals: Object.keys(gsap.core.globals()).length,
+               eases: easeReport()};
+  out.gsap_plugins = {
+    on_window: onWindow,
+    absent_from_window: PLUGIN_NAMES.filter(function (n) { return typeof window[n] === 'undefined'; }),
+    before_register: before,
+    after_register: after
+  };
+
   out.gsap = {
     version: gsap.version,
     api: sorted(gsap),
@@ -66,9 +104,7 @@ if (window.gsap) {
       try { return gsap.defaults().ease === gsap.parseEase('power1.out') ? 'power1.out' : 'other'; }
       catch (e) { return 'unreadable'; }
     })(),
-    plugins_present: Object.keys(window).filter(function (k) {
-      return /^(ScrollTrigger|ScrollSmoother|MorphSVGPlugin|DrawSVGPlugin|MotionPathPlugin|SplitText|Draggable|Flip|Observer|InertiaPlugin)$/.test(k);
-    }).sort()
+    plugins_present: onWindow.slice().sort()
   };
 }
 
@@ -197,8 +233,9 @@ def probe(vendor: Path, builder: Path) -> dict:
     payload = json.loads(html.unescape(found.group(1)) or "{}")
     if not payload:
         raise SystemExit("the pinned runtimes loaded but exposed no global")
-    return {"schema_version": VERSION, "runtimes": files, "surface": payload,
-            "documented_names_in_bundle": scan(vendor, files)}
+    scanned = files + [name for name in SCAN_ONLY if (vendor / name).is_file()]
+    return {"schema_version": VERSION, "runtimes": files, "scanned_only": list(SCAN_ONLY),
+            "surface": payload, "documented_names_in_bundle": scan(vendor, scanned)}
 
 
 def scan(vendor: Path, files: list[str]) -> dict[str, dict[str, bool]]:

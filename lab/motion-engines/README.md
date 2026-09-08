@@ -20,7 +20,7 @@ contract **on purpose**. Do not mistake them for reports and do not add them to
 
 | # | Page | Engine | Vendored | One line |
 |---|---|---|---|---|
-| 1 | [01-gsap.html](01-gsap.html) | GSAP 3.12.5 | 72 KB | timelines — unlike things on one shared axis |
+| 1 | [01-gsap.html](01-gsap.html) | GSAP 3.15.0 | 325 KB | timelines — unlike things on one shared axis; loads the all-plugin bundle and reports what registering actually changes |
 | 2 | [02-motion.html](02-motion.html) | Motion 11.11.17 | 63 KB | hands transforms to WAAPI; real spring physics |
 | 3 | [03-anime.html](03-anime.html) | anime.js 3.2.2 | **17 KB** | stagger — the exact effect this skill bans |
 | 6 | [06-d3.html](06-d3.html) | D3 7.9.0 | 280 KB | the keyed join — marks travel instead of being relabelled |
