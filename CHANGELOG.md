@@ -1,5 +1,43 @@
 # Changelog
 
+## 3.5.0 — 2026-09-08
+
+- Grow the compiled chart vocabulary from sixteen types to **twenty-one**. `scatter`, `dumbbell`,
+  `histogram` and `bullet` are new factories in `assets/report-shell.html`; `spark` was already
+  there and is now compilable. Each one exists because a lens in
+  `references/analysis-lenses.md` had no honest chart, not to raise the count.
+- **`scatter` is the one that was costing the most.** `VIZ.bubbles` requires a `size` role and
+  anchors both axes at the origin, so a dataset with exactly two measures had to invent a third
+  column — the invented-number anti-pattern — and two measures that never approach zero smeared
+  into one corner. The published pipeline example rejected the relationship lens on precisely that
+  ground, in its own `LENS-ELIGIBILITY-001` decision and in its section prose. `VIZ.scatter` takes
+  `label`/`x`/`y`, pads a data-derived domain, and accepts negatives: a dot is a position, not a
+  length, so the zero-baseline rule that binds every bar does not bind it.
+- `dumbbell` keeps both levels and the gap between them, where `slope` is about crossing and caps
+  at 12 and `divHbars` throws the levels away. `histogram` bins a raw measure and **prints the bin
+  count and width**, where `divColumns` draws a distribution someone already binned upstream where
+  the reader cannot see it. `bullet` puts a value against the reference it was measured on, which
+  the Judgement rules have always required on the page and no factory previously placed there.
+- Open the factory options a plan could never reach. A chart may now carry `options`, validated per
+  type: `interval`'s `reference` and `reference_label` — the line that decides which differences are
+  claimable, and the whole point of that lens — plus axis names and an identity line on `scatter`
+  and `bubbles`, the diverging mode on `divColumns`, a bin override on `histogram`, called-out marks
+  on `concentration`, opening and closing labels on `waterfall`, a centre label on `donut`, end
+  labels on `slope` and `dumbbell`, and `zero_based` on `line`, `boxplot` and `scatter`.
+  `CHART-014` rejects an option the type does not read, `CHART-015` a value outside what the factory
+  draws, and the builder owns the snake_case-to-camelCase translation.
+- Refuse motion a factory cannot perform. `VIZ.spark` draws from a value list and never reads the
+  progress value, so a `spark` declaring entry motion would sit still while the gate looked for
+  movement. `CHART-016` is an error, not a warning.
+- Fix the histogram count axis. `ticks()` spaces a small range in fractions and rounding those for
+  display printed "1 1 1 0 0 0" up the axis — six gridlines claiming three values. Bin counts are
+  whole numbers of rows, so the axis steps in integers and rounds its top up to one.
+- Rebuild the published pipeline example against the new vocabulary. It gains the two scatters it
+  could not draw: handling hours against tickets resolved, and opened against resolved under a
+  `resolved = opened` identity line, below which 18 of the 24 months sit. That line is the report's
+  first claim, drawn rather than counted, and the `LENS-ELIGIBILITY-001` decision now records a lens
+  restored on evidence rather than one turned down on build capability.
+
 ## 3.4.0 — 2026-09-08
 
 - Turn `references/analysis-lenses.md` from a lookup table into a selection procedure. The file

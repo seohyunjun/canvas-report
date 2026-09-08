@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- canvas-report spec-sha256: 5588fdbdb1cfb351b3a7287d3f11a10033b23021f9b25296ab7f941930b46710 · rules: DATA-HONESTY-001,LENS-ELIGIBILITY-001,MACRO-SELECTION-001,THEME-SELECTION-001,TOOL-SELECTION-001,CLAIMS-001,TABLE-TWIN-001,HELP-TWIN-001,ZERO-NETWORK-001,MOTION-STORY-001,MOTION-INTENT-001,MOTION-FINAL-STATE-001,MOTION-REDUCED-001,FINAL-CHECKS-001 -->
+<!-- canvas-report spec-sha256: 59158cf738a1e3336f6178eb79a7b40462e29b40ae702474c8ea0a5a6bec03ad · rules: DATA-HONESTY-001,LENS-ELIGIBILITY-001,MACRO-SELECTION-001,THEME-SELECTION-001,TOOL-SELECTION-001,CLAIMS-001,TABLE-TWIN-001,HELP-TWIN-001,ZERO-NETWORK-001,MOTION-STORY-001,MOTION-INTENT-001,MOTION-FINAL-STATE-001,MOTION-REDUCED-001,FINAL-CHECKS-001 -->
 <!--
   ============================================================================
   canvas-report — reusable shell (domain-agnostic, theme-swappable)
@@ -381,7 +381,7 @@ footer{margin-top:56px; padding-top:20px; border-top:1px solid var(--line); font
 
 <!-- [2] data ────────────────────────────────────────────────────────────── -->
 <script id="report-data" type="application/json">
-{"rows":[{"backlog_end":268,"handling_hours":2063.8,"month":"2024-01-01","tickets_opened":1391,"tickets_resolved":1303},{"backlog_end":311,"handling_hours":1644.5,"month":"2024-02-01","tickets_opened":1077,"tickets_resolved":1034},{"backlog_end":319,"handling_hours":1857.6,"month":"2024-03-01","tickets_opened":1085,"tickets_resolved":1077},{"backlog_end":316,"handling_hours":1937.3,"month":"2024-04-01","tickets_opened":1133,"tickets_resolved":1136},{"backlog_end":417,"handling_hours":1726.2,"month":"2024-05-01","tickets_opened":1166,"tickets_resolved":1065},{"backlog_end":499,"handling_hours":1786.6,"month":"2024-06-01","tickets_opened":1131,"tickets_resolved":1049},{"backlog_end":491,"handling_hours":1919.7,"month":"2024-07-01","tickets_opened":1167,"tickets_resolved":1175},{"backlog_end":572,"handling_hours":1771.8,"month":"2024-08-01","tickets_opened":1162,"tickets_resolved":1081},{"backlog_end":627,"handling_hours":1822.3,"month":"2024-09-01","tickets_opened":1334,"tickets_resolved":1279},{"backlog_end":626,"handling_hours":1993.3,"month":"2024-10-01","tickets_opened":1221,"tickets_resolved":1222},{"backlog_end":757,"handling_hours":2063.3,"month":"2024-11-01","tickets_opened":1382,"tickets_resolved":1251},{"backlog_end":804,"handling_hours":2326.7,"month":"2024-12-01","tickets_opened":1382,"tickets_resolved":1335},{"backlog_end":775,"handling_hours":2413.6,"month":"2025-01-01","tickets_opened":1577,"tickets_resolved":1606},{"backlog_end":902,"handling_hours":1818.8,"month":"2025-02-01","tickets_opened":1329,"tickets_resolved":1202},{"backlog_end":1003,"handling_hours":1726.3,"month":"2025-03-01","tickets_opened":1302,"tickets_resolved":1201},{"backlog_end":1001,"handling_hours":2382.5,"month":"2025-04-01","tickets_opened":1399,"tickets_resolved":1401},{"backlog_end":1092,"handling_hours":1987.1,"month":"2025-05-01","tickets_opened":1399,"tickets_resolved":1308},{"backlog_end":1082,"handling_hours":2315.1,"month":"2025-06-01","tickets_opened":1403,"tickets_resolved":1413},{"backlog_end":1106,"handling_hours":2167.6,"month":"2025-07-01","tickets_opened":1439,"tickets_resolved":1415},{"backlog_end":1128,"handling_hours":2200.8,"month":"2025-08-01","tickets_opened":1440,"tickets_resolved":1418},{"backlog_end":1234,"handling_hours":1930.9,"month":"2025-09-01","tickets_opened":1524,"tickets_resolved":1418},{"backlog_end":1294,"handling_hours":1929.6,"month":"2025-10-01","tickets_opened":1344,"tickets_resolved":1284},{"backlog_end":1321,"handling_hours":2565.5,"month":"2025-11-01","tickets_opened":1526,"tickets_resolved":1499},{"backlog_end":1392,"handling_hours":2183.1,"month":"2025-12-01","tickets_opened":1395,"tickets_resolved":1324}],"spec":{"charts":[{"aria_label":"Line chart of the backlog outstanding at the end of each month, rising from 268 in January 2024 to 1,392 in December 2025","dataset":"source","encodings":{"value":"backlog_end","x":"month"},"fields":["month","backlog_end"],"help":"Measure: backlog_end, the count still open when the month closed. Basis: every row of the source file; the balance before 2024-01 is not in the data. Interaction: hover a point for its month and level, or open the table below, which lists the backlog beside the opened and resolved counts that produced it.","id":"c1","motion":{"duration_ms":720,"easing":"linear","enabled":true,"kind":"entry","reason":"This is the lead chart and the only one that moves. The line factory reveals by point count — t decides how many of the 24 months are drawn — so the easing is the reading pace, not a flourish: linear paces one month every 30 ms across the whole sweep, where a decelerating curve would put seven months on screen in the first tenth of the run and crawl through the rest. The section's subject is the shape over time, so the sweep is read in time order.","source_tool":"motion","trigger":"on-view"},"note":"One point per month, 24 in total, drawn from a zero baseline because the quantity is a count of tickets and its distance from zero is the point. The value is a level carried forward, so the line's slope — not its height — is the month's net gain.","section_id":"lead","table":{"columns":["month","backlog_end","tickets_opened","tickets_resolved"]},"title":"Month-end backlog, 2024-01 to 2025-12","type":"line"},{"aria_label":"Column chart of tickets opened each month from January 2024 to December 2025","dataset":"source","encodings":{"value":"tickets_opened","x":"month"},"fields":["month","tickets_opened"],"help":"Measure: tickets_opened, counted per calendar month. Basis: every row of the source file. Interaction: hover a column for its month and count; the table lists opened and resolved side by side for all 24 months.","id":"c2","motion":{"enabled":false,"reason":"The claim in this section is a difference between two columns of the table, and growing the bars first would put motion in front of the comparison the reader came here to make."},"note":"Column height is the count opened in that month. Bars start at zero because the length is the quantity. The resolution figure for each month sits in the table below rather than in a second chart: two independently scaled charts invite a comparison neither of them can support.","section_id":"intake","table":{"columns":["month","tickets_opened","tickets_resolved"]},"title":"Tickets opened by month","type":"columns"},{"aria_label":"Column chart of recorded handling hours for each month from January 2024 to December 2025","dataset":"source","encodings":{"value":"handling_hours","x":"month"},"fields":["month","handling_hours"],"help":"Measure: handling_hours, as recorded in the source, per calendar month. Basis: the same 24 months as the other charts. Interaction: hover a column for its month and hours; the table lists hours and tickets resolved side by side.","id":"c3","motion":{"enabled":false,"reason":"The figure this section turns on is a ratio between this column and one in the table beside it, and growing the bars first would animate the numerator alone."},"note":"Column height is the hours recorded against the tickets resolved that month. Bars start at zero because the length is the quantity. The table beside it carries the resolution count for the same month, which is the denominator every per-ticket figure in this report uses.","section_id":"effort","table":{"columns":["month","handling_hours","tickets_resolved"]},"title":"Recorded handling hours by month","type":"columns"}],"creative_direction":{"concept":"A front page for an arithmetic identity: the backlog line leads because it is the consequence, and the two column charts underneath show that both sides of the ledger grew while the gap between them kept adding up.","external_tools":[{"integration":"portable-pattern","reason":"The line, column and dot forms, their scale treatment and tick density follow the D3 gallery patterns, redrawn on canvas by the shipped VIZ factories; no D3 runtime is loaded.","role":"chart-form","tool":"d3-gallery"},{"integration":"portable-pattern","reason":"One eased progress value on one chart is exactly what the shell's WAAPI-driven motion helper already expresses, so Motion is taken as a pattern and nothing is inlined — a vendored runtime would add weight to a report that animates once.","role":"motion-engine","tool":"motion"}],"hierarchy":"The backlog trend takes the lead position and the most prose; monthly intake follows in a supporting column with resolution beside it in the table twin; recorded effort closes the evidence; a sidebar carries what the file does not contain.","motion_story":{"goal":"Let the reader see the backlog line arrive along its own axis once, so the shape of the accumulation registers before any figure in it is read.","restraint":"One chart moves, once, on view, in 720 ms on a value-safe curve chosen for what the factory does with the progress value. A newspaper page that fidgets in three places at once is not a newspaper page.","sequence":["The nameplate and the standfirst are read first; nothing in them moves.","The backlog trend, the lead chart, draws left to right at one month every 30 ms as the reader reaches it.","Monthly intake stays still, because its point is the comparison with the resolution column in the table beside it.","Recorded hours stay still, because the figure that matters there is a ratio against a number in the table.","The sidebar and the methodology never move."]}},"grain":"one row per calendar month, 2024-01 through 2025-12 (24 rows, no nulls)","insights":[{"claim":"Month-end backlog rose from 268 to 1,392 across the 24 months, a gain of 1,124 tickets, and it grew in 17 of the 23 month-to-month steps. Intake exceeded resolution in 18 of the 24 months.","evidence_fields":["month","backlog_end","tickets_opened","tickets_resolved"],"id":"i1","limitation":"The balance standing before 2024-01 is not recorded, so the first month's 268 cannot be separated into work carried in and work opened that month."},{"claim":"For all 23 consecutive month pairs the change in backlog_end equals tickets_opened minus tickets_resolved exactly, so backlog_end is not an independent measurement in this file: it is the running total of the monthly gap, and the balance it implies before 2024-01 is 180.","evidence_fields":["month","backlog_end","tickets_opened","tickets_resolved"],"id":"i2","limitation":"That the identity closes says the three columns are internally consistent, not that any of them was measured correctly. The 180 is derived from the identity, not read from the file, and it is quoted here as an implication rather than as data."},{"claim":"Resolution grew faster than intake between the two calendar years — 14,007 to 16,489 tickets resolved, 17.7 per cent, against 14,631 to 17,077 opened, 16.7 per cent — and the backlog still grew, because the annual gap stayed positive at 624 tickets in 2024 and 588 in 2025.","evidence_fields":["month","tickets_opened","tickets_resolved"],"id":"i3","limitation":"Two calendar years support exactly one year-over-year comparison, and the two annual gaps (624 and 588) differ by less than either year's largest single month, so the narrowing is a description of these two totals rather than evidence of a trend."},{"claim":"Recorded handling hours per resolved ticket stayed between 1.36 and 1.74 in every month, with a median of 1.63; the 2025 median of 1.53 sits below 2024's 1.64.","evidence_fields":["month","handling_hours","tickets_resolved"],"id":"i4","limitation":"The difference between the two yearly medians is smaller than the month-to-month spread, and 24 monthly ratios are too few to separate that from ordinary variation, so this file does not support a claim that handling became cheaper. The data records no per-ticket duration, so the ratio cannot be decomposed."}],"lenses":{"rejected":["comparison","distribution","relationship","cohort"],"selected":["trend"]},"macro":"Broadsheet","masthead":"M3","metadata":{"eyebrow":"canvas-report example · synthetic data","locale":"en","subtitle":"Twenty-four months of synthetic support intake, in which the pile at the end of each month turns out to be nothing but the running sum of the months before it.","title":"The backlog is arithmetic"},"methodology":{"basis":["The data is synthetic. It was generated for this example and describes no real organisation, product, or team. Nothing here should be cited as a finding about support work.","One CSV of 24 rows, one row per calendar month from 2024-01 to 2025-12, with no null values and no sentinel values in any column.","Every figure in this report is read from that file. Nothing is interpolated, smoothed, or filled.","backlog_end is a month-end level carried forward. The balance standing before 2024-01 is outside the file."],"formulas":["Monthly gap = tickets_opened − tickets_resolved for that month.","Identity check = backlog_end(month) − backlog_end(previous month), compared against the monthly gap; it matched for all 23 consecutive pairs.","Implied opening balance = backlog_end(2024-01) − (tickets_opened(2024-01) − tickets_resolved(2024-01)) = 268 − 88 = 180.","Annual totals = sum of the column over the twelve months of the calendar year; year-over-year change = 2025 total ÷ 2024 total − 1.","Handling hours per resolved ticket = handling_hours ÷ tickets_resolved, computed per month; the medians quoted are medians of those 24 and 12 monthly ratios, not a ratio of the annual sums."],"limitations":["24 monthly observations support exactly one year-over-year comparison. Differences smaller than the month-to-month spread are described here by magnitude and left there, without an interval, because a monthly series of this length cannot earn one.","The identity closing shows the three ticket columns are consistent with each other. It says nothing about whether any of them was recorded correctly.","The file has no dimension column — no queue, product, region, or team — so nothing in this report can be broken down, and no comparison lens was available.","The relationship between hours and resolved tickets is a co-movement in 24 monthly points. It is not evidence of cause in either direction."]},"plan_sha256":"19b07ca2d276b71d2952f322598a803ea6bfa0f54d5a207c9982d1ddb16597c7","rule_decisions":[{"decision":"Every figure is read from the profiled columns. The one derived number in the report — the implied opening balance of 180 — is labelled as an implication of the identity and given its arithmetic in the methodology, and the methodology's first line says the data is synthetic so no reader takes a generated series for a measurement.","rule_id":"DATA-HONESTY-001"},{"decision":"trend is selected from the eligible set for a 24-point monthly series. relationship was eligible on the profile and is rejected on build capability: the deterministic builder's scatter forces both axes through zero, and these measures — 1,034 to 1,606 resolutions against 1,645 to 2,566 hours — would sit in one corner of an empty plot, so the chart would assert a relationship it cannot show. distribution is rejected because the honest distribution here is of a derived monthly ratio the builder cannot chart from source columns; cohort is rejected because the file has no entity to follow across periods; comparison is ineligible without a dimension column.","rule_id":"LENS-ELIGIBILITY-001"},{"decision":"Broadsheet chosen from the compatible, non-excluded set (Bridge, Broadsheet). The subject is an argument in prose — an identity and what follows from it — which is what a broadsheet carries; Bridge was rejected because its waterfall is outside the deterministic builder's chart vocabulary, so declaring it would promise a form this build cannot compile. Briefing is rotation-excluded as the previous run's macro.","rule_id":"MACRO-SELECTION-001"},{"decision":"newsprint, rotation distance 2 from the previous run's cobalt and non-excluded. Its press character — cream paper, roman serif, oxblood accent, ruled rather than raised cards — is the face of the multi-column argument this report is, and it is the theme the catalogue names for multi-column argument.","rule_id":"THEME-SELECTION-001"},{"decision":"Two influences, both portable-pattern: the D3 gallery for the line, column and dot vocabulary, and Motion for the single entry curve. Nothing is inlined and no network request is made — a vendored runtime would add weight to a report with one animation, which is the smaller of the two honest integrations.","rule_id":"TOOL-SELECTION-001"},{"decision":"Four claims, each naming its observed values, its comparison basis and its limitation. The comparison that could be overstated — the two yearly medians of hours per resolved ticket — is stated as magnitudes and explicitly not claimed as a change, because a 24-month series cannot earn that interval. No claim is made about hours moving with resolutions, because the chart that would carry it is not one this builder can draw honestly.","rule_id":"CLAIMS-001"},{"decision":"Every chart has a table twin, and two of them carry more columns than the chart draws: the backlog table shows the opened and resolved counts that produce it, and the intake table puts resolution beside intake so the comparison happens in figures rather than between two independently scaled charts.","rule_id":"TABLE-TWIN-001"},{"decision":"Each chart's help names its measure, the basis it is counted over, and the interaction available, including what the table adds beyond the chart.","rule_id":"HELP-TWIN-001"},{"decision":"One self-contained HTML file: no CDN, no font request, no vendored runtime. Both selected tools are adopted as portable patterns through the shipped runtime.","rule_id":"ZERO-NETWORK-001"},{"decision":"The reading sequence is settled before any chart-level contract: the nameplate is read still, the lead backlog line arrives once, and everything after it holds. The restraint names what will not move — the intake columns, the effort scatter, the sidebar and the methodology.","rule_id":"MOTION-STORY-001"},{"decision":"One chart enables motion. The backlog line's entry lets the axis and the direction of the accumulation register before the reader starts reading levels off it, and it is paced so the 24 months arrive in time order; the other two charts state chart-specific reasons for staying still rather than defaulting to static.","rule_id":"MOTION-INTENT-001"},{"decision":"Entry motion only, on-view and once, 720 ms on linear — a value-safe curve that never asserts a value past the axis. On a reveal factory the curve sets the pace of the sweep rather than the speed of a value, which is why the flat one is the right one here (references/motion-engines.md). The final state carries the whole series, and the table twin carries it again in figures.","rule_id":"MOTION-FINAL-STATE-001"},{"decision":"Under prefers-reduced-motion the shell omits the entry animation and paints the final state directly; nothing in the report's meaning is carried by the movement.","rule_id":"MOTION-REDUCED-001"},{"decision":"The run was taken through the state machine to COMPLETE: plan rules, build, responsive render and real-clock motion gates all pass, and the published file is the artifact those gates ran against.","rule_id":"FINAL-CHECKS-001"}],"schema_version":"1.0","sections":[{"id":"lead","lede":"Month-end backlog is the only column in this file that carries memory. Every other figure describes one month and stops; this one adds that month to everything before it. It opens at 268 tickets and closes at 1,392, and the shape between those two points is the subject of the rest of the page. Read it as a level, not a flow: two neighbouring columns are two photographs of the same pile, not two additions to it.","title":"The pile is the sum of the gaps"},{"id":"intake","lede":"Tickets opened each month, with the resolution figure beside it in the table. The two series are close enough that the interesting quantity is their difference, which is why they share a table rather than two charts: separate axes would let the eye compare two scales that were never the same. Intake rose 16.7 per cent between the calendar years, resolution 17.7 per cent, and the gap still ran the wrong way in 18 of the 24 months.","title":"Both sides grew"},{"id":"effort","lede":"Recorded handling hours, month by month. The obvious chart here would be a scatter of hours against tickets resolved, and it is not on this page: the deterministic builder draws scatters from a zero origin on both axes, and these two measures never come near zero, so the whole series would land in one corner of an otherwise empty plot. The hours are shown along the same time axis as everything else instead, with the resolution count beside them in the table for anyone who wants to divide one by the other.","title":"What it cost"},{"id":"sidebar","lede":"No ticket identifiers, so nothing here can be traced to a case, a queue, or a person. No per-ticket duration, so handling hours can only ever be divided by a count. No opening balance before 2024-01, so the first month's 268 tickets have no history. And no real organisation: the data is generated, and the only honest use of this report is as a demonstration of what the pipeline emits.","title":"What the file does not contain"}],"theme":"newsprint"}}
+{"rows":[{"backlog_end":268,"handling_hours":2063.8,"month":"2024-01-01","tickets_opened":1391,"tickets_resolved":1303},{"backlog_end":311,"handling_hours":1644.5,"month":"2024-02-01","tickets_opened":1077,"tickets_resolved":1034},{"backlog_end":319,"handling_hours":1857.6,"month":"2024-03-01","tickets_opened":1085,"tickets_resolved":1077},{"backlog_end":316,"handling_hours":1937.3,"month":"2024-04-01","tickets_opened":1133,"tickets_resolved":1136},{"backlog_end":417,"handling_hours":1726.2,"month":"2024-05-01","tickets_opened":1166,"tickets_resolved":1065},{"backlog_end":499,"handling_hours":1786.6,"month":"2024-06-01","tickets_opened":1131,"tickets_resolved":1049},{"backlog_end":491,"handling_hours":1919.7,"month":"2024-07-01","tickets_opened":1167,"tickets_resolved":1175},{"backlog_end":572,"handling_hours":1771.8,"month":"2024-08-01","tickets_opened":1162,"tickets_resolved":1081},{"backlog_end":627,"handling_hours":1822.3,"month":"2024-09-01","tickets_opened":1334,"tickets_resolved":1279},{"backlog_end":626,"handling_hours":1993.3,"month":"2024-10-01","tickets_opened":1221,"tickets_resolved":1222},{"backlog_end":757,"handling_hours":2063.3,"month":"2024-11-01","tickets_opened":1382,"tickets_resolved":1251},{"backlog_end":804,"handling_hours":2326.7,"month":"2024-12-01","tickets_opened":1382,"tickets_resolved":1335},{"backlog_end":775,"handling_hours":2413.6,"month":"2025-01-01","tickets_opened":1577,"tickets_resolved":1606},{"backlog_end":902,"handling_hours":1818.8,"month":"2025-02-01","tickets_opened":1329,"tickets_resolved":1202},{"backlog_end":1003,"handling_hours":1726.3,"month":"2025-03-01","tickets_opened":1302,"tickets_resolved":1201},{"backlog_end":1001,"handling_hours":2382.5,"month":"2025-04-01","tickets_opened":1399,"tickets_resolved":1401},{"backlog_end":1092,"handling_hours":1987.1,"month":"2025-05-01","tickets_opened":1399,"tickets_resolved":1308},{"backlog_end":1082,"handling_hours":2315.1,"month":"2025-06-01","tickets_opened":1403,"tickets_resolved":1413},{"backlog_end":1106,"handling_hours":2167.6,"month":"2025-07-01","tickets_opened":1439,"tickets_resolved":1415},{"backlog_end":1128,"handling_hours":2200.8,"month":"2025-08-01","tickets_opened":1440,"tickets_resolved":1418},{"backlog_end":1234,"handling_hours":1930.9,"month":"2025-09-01","tickets_opened":1524,"tickets_resolved":1418},{"backlog_end":1294,"handling_hours":1929.6,"month":"2025-10-01","tickets_opened":1344,"tickets_resolved":1284},{"backlog_end":1321,"handling_hours":2565.5,"month":"2025-11-01","tickets_opened":1526,"tickets_resolved":1499},{"backlog_end":1392,"handling_hours":2183.1,"month":"2025-12-01","tickets_opened":1395,"tickets_resolved":1324}],"spec":{"charts":[{"aria_label":"Line chart of the backlog outstanding at the end of each month, rising from 268 in January 2024 to 1,392 in December 2025","dataset":"source","encodings":{"value":"backlog_end","x":"month"},"fields":["month","backlog_end"],"help":"Measure: backlog_end, the count still open when the month closed. Basis: every row of the source file; the balance before 2024-01 is not in the data. Interaction: hover a point for its month and level, or open the table below, which lists the backlog beside the opened and resolved counts that produced it.","id":"c1","motion":{"duration_ms":720,"easing":"linear","enabled":true,"kind":"entry","reason":"This is the lead chart and the only one that moves. The line factory reveals by point count — t decides how many of the 24 months are drawn — so the easing is the reading pace, not a flourish: linear paces one month every 30 ms across the whole sweep, where a decelerating curve would put seven months on screen in the first tenth of the run and crawl through the rest. The section's subject is the shape over time, so the sweep is read in time order.","source_tool":"motion","trigger":"on-view"},"note":"One point per month, 24 in total, drawn from a zero baseline because the quantity is a count of tickets and its distance from zero is the point. The value is a level carried forward, so the line's slope — not its height — is the month's net gain.","section_id":"lead","table":{"columns":["month","backlog_end","tickets_opened","tickets_resolved"]},"title":"Month-end backlog, 2024-01 to 2025-12","type":"line"},{"aria_label":"Column chart of tickets opened each month from January 2024 to December 2025","dataset":"source","encodings":{"value":"tickets_opened","x":"month"},"fields":["month","tickets_opened"],"help":"Measure: tickets_opened, counted per calendar month. Basis: every row of the source file. Interaction: hover a column for its month and count; the table lists opened and resolved side by side for all 24 months.","id":"c2","motion":{"enabled":false,"reason":"The claim in this section is a difference between two columns of the table, and growing the bars first would put motion in front of the comparison the reader came here to make."},"note":"Column height is the count opened in that month. Bars start at zero because the length is the quantity. The resolution figure for each month sits in the table below rather than in a second chart: two independently scaled charts invite a comparison neither of them can support.","section_id":"intake","table":{"columns":["month","tickets_opened","tickets_resolved"]},"title":"Tickets opened by month","type":"columns"},{"aria_label":"Column chart of recorded handling hours for each month from January 2024 to December 2025","dataset":"source","encodings":{"value":"handling_hours","x":"month"},"fields":["month","handling_hours"],"help":"Measure: handling_hours, as recorded in the source, per calendar month. Basis: the same 24 months as the other charts. Interaction: hover a column for its month and hours; the table lists hours and tickets resolved side by side.","id":"c3","motion":{"enabled":false,"reason":"The figure this section turns on is a ratio between this column and one in the table beside it, and growing the bars first would animate the numerator alone."},"note":"Column height is the hours recorded against the tickets resolved that month. Bars start at zero because the length is the quantity. The table beside it carries the resolution count for the same month, which is the denominator every per-ticket figure in this report uses.","section_id":"effort","table":{"columns":["month","handling_hours","tickets_resolved"]},"title":"Recorded handling hours by month","type":"columns"},{"aria_label":"Scatter plot of tickets resolved against tickets opened for each of the 24 months, with a dashed resolved-equals-opened reference line; most months fall below the line","dataset":"source","encodings":{"label":"month","x":"tickets_opened","y":"tickets_resolved"},"fields":["month","tickets_opened","tickets_resolved","backlog_end"],"help":"Measure: tickets_opened and tickets_resolved, both counts of tickets in the month. Basis: all 24 rows; no month is excluded. The dashed line marks equality, not a fit. Interaction: hover a dot for its month and both counts, or open the table below, which lists them beside the backlog they produced.","id":"c4","motion":{"duration_ms":700,"easing":"outCubic","enabled":true,"kind":"entry","reason":"VIZ.scatter reveals by dot count, so the progress value decides how many of the 24 months are on the plot and every dot drawn is already at its true position. A steady curve at 700 ms lets the cloud fill in without any frame asserting a position it will later move.","source_tool":"motion","trigger":"on-view"},"note":"One dot per month: tickets opened on the horizontal axis, tickets resolved on the vertical. The dashed line is resolved = opened. A dot below it is a month the backlog grew; above it, a month it shrank. Both axes take their range from the data rather than from zero, which is what VIZ.scatter does and VIZ.bubbles cannot: neither measure comes within a third of the origin, so an origin-anchored plot would push all 24 months into one corner. Nothing here encodes length — a dot is a position — so the zero baseline that binds every bar on this page does not bind this.","options":{"axis_x":"tickets opened","axis_y":"tickets resolved","identity_line":"resolved = opened"},"section_id":"intake","table":{"columns":["month","tickets_opened","tickets_resolved","backlog_end"]},"title":"Every month, opened against resolved","type":"scatter"},{"aria_label":"Scatter plot of recorded handling hours against tickets resolved for each of the 24 months; the points rise together in a narrow band","dataset":"source","encodings":{"label":"month","x":"tickets_resolved","y":"handling_hours"},"fields":["month","tickets_resolved","handling_hours"],"help":"Measure: tickets_resolved, a count, against handling_hours, recorded hours. Basis: all 24 rows. The chart shows that the two move together; it does not divide one by the other, and no line is fitted through the points. Interaction: hover a dot for its month and both figures, or open the table below.","id":"c5","motion":{"duration_ms":700,"easing":"outCubic","enabled":true,"kind":"entry","reason":"The same reveal mechanic as the chart above it, and the same reason: dots appear in month order at their final positions, so the run adds pace and never a wrong value.","source_tool":"motion","trigger":"on-view"},"note":"One dot per month: tickets resolved on the horizontal axis, recorded handling hours on the vertical. The two rise together, and the band they fall in is the 1.36 to 1.74 hours per resolved ticket that the methodology sets out. Both axes take their range from the data rather than from zero, which is what VIZ.scatter does and VIZ.bubbles cannot: neither measure comes within a third of the origin, so an origin-anchored plot would push all 24 months into one corner. Nothing here encodes length — a dot is a position — so the zero baseline that binds every bar on this page does not bind this.","options":{"axis_x":"tickets resolved","axis_y":"handling hours"},"section_id":"effort","table":{"columns":["month","tickets_resolved","handling_hours"]},"title":"Handling hours against tickets resolved","type":"scatter"}],"creative_direction":{"concept":"A front page for an arithmetic identity: the backlog line leads because it is the consequence, and the two column charts underneath show that both sides of the ledger grew while the gap between them kept adding up.","external_tools":[{"integration":"portable-pattern","reason":"The line, column and dot forms, their scale treatment and tick density follow the D3 gallery patterns, redrawn on canvas by the shipped VIZ factories; no D3 runtime is loaded.","role":"chart-form","tool":"d3-gallery"},{"integration":"portable-pattern","reason":"One eased progress value on one chart is exactly what the shell's WAAPI-driven motion helper already expresses, so Motion is taken as a pattern and nothing is inlined — a vendored runtime would add weight to a report that animates once.","role":"motion-engine","tool":"motion"}],"hierarchy":"The backlog trend takes the lead position and the most prose; monthly intake follows in a supporting column with resolution beside it in the table twin; recorded effort closes the evidence; a sidebar carries what the file does not contain.","motion_story":{"goal":"Let the reader see the backlog line arrive along its own axis once, so the shape of the accumulation registers before any figure in it is read.","restraint":"One chart moves, once, on view, in 720 ms on a value-safe curve chosen for what the factory does with the progress value. A newspaper page that fidgets in three places at once is not a newspaper page.","sequence":["The nameplate and the standfirst are read first; nothing in them moves.","The backlog trend, the lead chart, draws left to right at one month every 30 ms as the reader reaches it.","Monthly intake stays still, because its point is the comparison with the resolution column in the table beside it.","Recorded hours stay still, because the figure that matters there is a ratio against a number in the table.","The sidebar and the methodology never move."]}},"grain":"one row per calendar month, 2024-01 through 2025-12 (24 rows, no nulls)","insights":[{"claim":"Month-end backlog rose from 268 to 1,392 across the 24 months, a gain of 1,124 tickets, and it grew in 17 of the 23 month-to-month steps. Intake exceeded resolution in 18 of the 24 months.","evidence_fields":["month","backlog_end","tickets_opened","tickets_resolved"],"id":"i1","limitation":"The balance standing before 2024-01 is not recorded, so the first month's 268 cannot be separated into work carried in and work opened that month."},{"claim":"For all 23 consecutive month pairs the change in backlog_end equals tickets_opened minus tickets_resolved exactly, so backlog_end is not an independent measurement in this file: it is the running total of the monthly gap, and the balance it implies before 2024-01 is 180.","evidence_fields":["month","backlog_end","tickets_opened","tickets_resolved"],"id":"i2","limitation":"That the identity closes says the three columns are internally consistent, not that any of them was measured correctly. The 180 is derived from the identity, not read from the file, and it is quoted here as an implication rather than as data."},{"claim":"Resolution grew faster than intake between the two calendar years — 14,007 to 16,489 tickets resolved, 17.7 per cent, against 14,631 to 17,077 opened, 16.7 per cent — and the backlog still grew, because the annual gap stayed positive at 624 tickets in 2024 and 588 in 2025.","evidence_fields":["month","tickets_opened","tickets_resolved"],"id":"i3","limitation":"Two calendar years support exactly one year-over-year comparison, and the two annual gaps (624 and 588) differ by less than either year's largest single month, so the narrowing is a description of these two totals rather than evidence of a trend."},{"claim":"Recorded handling hours per resolved ticket stayed between 1.36 and 1.74 in every month, with a median of 1.63; the 2025 median of 1.53 sits below 2024's 1.64.","evidence_fields":["month","handling_hours","tickets_resolved"],"id":"i4","limitation":"The difference between the two yearly medians is smaller than the month-to-month spread, and 24 monthly ratios are too few to separate that from ordinary variation, so this file does not support a claim that handling became cheaper. The data records no per-ticket duration, so the ratio cannot be decomposed."},{"claim":"Resolution exceeded intake in only 6 of the 24 months; in the other 18 the month closed with more tickets open than it started with.","evidence_fields":["month","tickets_opened","tickets_resolved"],"id":"i5","limitation":"The counts are monthly totals with no ticket identifiers behind them, so a month's surplus cannot be attributed to any queue, case type, or team, and nothing here says whether the same tickets are being carried forward."}],"lenses":{"rejected":["comparison","distribution","cohort"],"selected":["trend","relationship"]},"macro":"Broadsheet","masthead":"M3","metadata":{"eyebrow":"canvas-report example · synthetic data","locale":"en","subtitle":"Twenty-four months of synthetic support intake, in which the pile at the end of each month turns out to be nothing but the running sum of the months before it.","title":"The backlog is arithmetic"},"methodology":{"basis":["The data is synthetic. It was generated for this example and describes no real organisation, product, or team. Nothing here should be cited as a finding about support work.","One CSV of 24 rows, one row per calendar month from 2024-01 to 2025-12, with no null values and no sentinel values in any column.","Every figure in this report is read from that file. Nothing is interpolated, smoothed, or filled.","backlog_end is a month-end level carried forward. The balance standing before 2024-01 is outside the file."],"formulas":["Monthly gap = tickets_opened − tickets_resolved for that month.","Identity check = backlog_end(month) − backlog_end(previous month), compared against the monthly gap; it matched for all 23 consecutive pairs.","Implied opening balance = backlog_end(2024-01) − (tickets_opened(2024-01) − tickets_resolved(2024-01)) = 268 − 88 = 180.","Annual totals = sum of the column over the twelve months of the calendar year; year-over-year change = 2025 total ÷ 2024 total − 1.","Handling hours per resolved ticket = handling_hours ÷ tickets_resolved, computed per month; the medians quoted are medians of those 24 and 12 monthly ratios, not a ratio of the annual sums."],"limitations":["24 monthly observations support exactly one year-over-year comparison. Differences smaller than the month-to-month spread are described here by magnitude and left there, without an interval, because a monthly series of this length cannot earn one.","The identity closing shows the three ticket columns are consistent with each other. It says nothing about whether any of them was recorded correctly.","The file has no dimension column — no queue, product, region, or team — so nothing in this report can be broken down, and no comparison lens was available.","The relationship between hours and resolved tickets is a co-movement in 24 monthly points. It is not evidence of cause in either direction."]},"plan_sha256":"20a6e8f47beec49fa992a84aa79bf3afc6d45da2275a35374f94325c78c2e7f8","rule_decisions":[{"decision":"Every figure is read from the profiled columns. The one derived number in the report — the implied opening balance of 180 — is labelled as an implication of the identity and given its arithmetic in the methodology, and the methodology's first line says the data is synthetic so no reader takes a generated series for a measurement.","rule_id":"DATA-HONESTY-001"},{"decision":"trend and relationship are both selected from the eligible set for a 24-point monthly series. relationship was rejected in the previous version of this report on build capability rather than on evidence — the only scatter the builder compiled was VIZ.bubbles, which forces both axes through zero and would have put these measures, 1,034 to 1,606 resolutions against 1,644.5 to 2,565.5 hours, in one corner of an empty plot. The builder now compiles VIZ.scatter, which takes its domain from the data, so the lens is drawn on the evidence that always supported it. distribution stays rejected: the honest distribution here is of a derived monthly ratio, not of a source column. cohort is rejected because the file has no entity to follow across periods. comparison is ineligible without a dimension column.","rule_id":"LENS-ELIGIBILITY-001"},{"decision":"Broadsheet chosen from the compatible, non-excluded set (Bridge, Broadsheet). The subject is an argument in prose — an identity and what follows from it — which is what a broadsheet carries; Bridge was rejected because its waterfall is outside the deterministic builder's chart vocabulary, so declaring it would promise a form this build cannot compile. Briefing is rotation-excluded as the previous run's macro.","rule_id":"MACRO-SELECTION-001"},{"decision":"newsprint, rotation distance 2 from the previous run's cobalt and non-excluded. Its press character — cream paper, roman serif, oxblood accent, ruled rather than raised cards — is the face of the multi-column argument this report is, and it is the theme the catalogue names for multi-column argument.","rule_id":"THEME-SELECTION-001"},{"decision":"Two influences, both portable-pattern: the D3 gallery for the line, column and dot vocabulary, and Motion for the single entry curve. Nothing is inlined and no network request is made — a vendored runtime would add weight to a report with one animation, which is the smaller of the two honest integrations.","rule_id":"TOOL-SELECTION-001"},{"decision":"Four claims, each naming its observed values, its comparison basis and its limitation. The comparison that could be overstated — the two yearly medians of hours per resolved ticket — is stated as magnitudes and explicitly not claimed as a change, because a 24-month series cannot earn that interval. No claim is made about hours moving with resolutions, because the chart that would carry it is not one this builder can draw honestly.","rule_id":"CLAIMS-001"},{"decision":"Every chart has a table twin, and two of them carry more columns than the chart draws: the backlog table shows the opened and resolved counts that produce it, and the intake table puts resolution beside intake so the comparison happens in figures rather than between two independently scaled charts.","rule_id":"TABLE-TWIN-001"},{"decision":"Each chart's help names its measure, the basis it is counted over, and the interaction available, including what the table adds beyond the chart.","rule_id":"HELP-TWIN-001"},{"decision":"One self-contained HTML file: no CDN, no font request, no vendored runtime. Both selected tools are adopted as portable patterns through the shipped runtime.","rule_id":"ZERO-NETWORK-001"},{"decision":"The reading sequence is settled before any chart-level contract: the nameplate is read still, the lead backlog line arrives once, and everything after it holds. The restraint names what will not move — the intake columns, the effort scatter, the sidebar and the methodology.","rule_id":"MOTION-STORY-001"},{"decision":"One chart enables motion. The backlog line's entry lets the axis and the direction of the accumulation register before the reader starts reading levels off it, and it is paced so the 24 months arrive in time order; the other two charts state chart-specific reasons for staying still rather than defaulting to static.","rule_id":"MOTION-INTENT-001"},{"decision":"Entry motion only, on-view and once, 720 ms on linear — a value-safe curve that never asserts a value past the axis. On a reveal factory the curve sets the pace of the sweep rather than the speed of a value, which is why the flat one is the right one here (references/motion-engines.md). The final state carries the whole series, and the table twin carries it again in figures.","rule_id":"MOTION-FINAL-STATE-001"},{"decision":"Under prefers-reduced-motion the shell omits the entry animation and paints the final state directly; nothing in the report's meaning is carried by the movement.","rule_id":"MOTION-REDUCED-001"},{"decision":"The run was taken through the state machine to COMPLETE: plan rules, build, responsive render and real-clock motion gates all pass, and the published file is the artifact those gates ran against.","rule_id":"FINAL-CHECKS-001"}],"schema_version":"1.0","sections":[{"id":"lead","lede":"Month-end backlog is the only column in this file that carries memory. Every other figure describes one month and stops; this one adds that month to everything before it. It opens at 268 tickets and closes at 1,392, and the shape between those two points is the subject of the rest of the page. Read it as a level, not a flow: two neighbouring columns are two photographs of the same pile, not two additions to it.","title":"The pile is the sum of the gaps"},{"id":"intake","lede":"Tickets opened each month, with the resolution figure beside it in the table. The two series are close enough that the interesting quantity is their difference, so the columns carry intake alone and the scatter underneath puts the two against each other directly. Its dashed line is resolved = opened: 18 of the 24 months sit below it, and those 18 months are the whole of the backlog's growth.","title":"Both sides grew"},{"id":"effort","lede":"Recorded handling hours, month by month, and then against the resolutions they were spent on. This second chart was missing from the first version of this report, and the reason it was missing is now gone: the only scatter the builder could draw anchored both axes at zero, and neither of these measures comes within a third of the origin, so all 24 months would have collapsed into one corner. VIZ.scatter takes its range from the data, and the relationship is legible at last — the hours track the resolutions, inside the narrow per-ticket band the methodology states.","title":"What it cost"},{"id":"sidebar","lede":"No ticket identifiers, so nothing here can be traced to a case, a queue, or a person. No per-ticket duration, so handling hours can only ever be divided by a count. No opening balance before 2024-01, so the first month's 268 tickets have no history. And no real organisation: the data is generated, and the only honest use of this report is as a demonstration of what the pipeline emits.","title":"What the file does not contain"}],"theme":"newsprint"}}
 </script>
 
 <script>
@@ -426,7 +426,20 @@ var CR_STRINGS = Object.assign({
   reference:'reference',
   intervalBand:'interval',
   intervalCrosses:'the interval covers the reference — not distinguishable from it',
-  intervalClears:'the whole interval sits on one side of the reference'
+  intervalClears:'the whole interval sits on one side of the reference',
+  before:'before',
+  after:'after',
+  count:'count',
+  share:'share',
+  target:'target',
+  vsTarget:'vs target',
+  bulletMet:'the value clears the reference',
+  bulletShort:'the value falls short of the reference',
+  scatterMin:'a scatter needs at least 2 entities',
+  histogramMin:'a histogram needs at least 2 values',
+  histogramFlat:'every value is the same — there is no distribution to bin',
+  histogramBins:'{k} bins of {w}',
+  dumbbellEnds:'the start and end values must both be numbers'
 }, window.CR_STRINGS || {});
 
 var REPORT = (function(){
@@ -1046,6 +1059,59 @@ VIZ.divColumns=function(cvs,cfg){
   });
 };
 
+/* histogram: the shape of ONE distribution, binned from the raw measure.
+   VIZ.divColumns draws a distribution that is already binned — one row per bin,
+   which is what you have after a GROUP BY. This takes the column itself, which
+   is what you have when the source is one row per event, and the difference
+   matters: pre-binning upstream is a decision the reader cannot see.
+   The bin count is Sturges, clamped to 5-30, and PRINTED with the width. A
+   histogram whose binning is invisible is a picture rather than evidence, and
+   the same values under a different bin count tell a different story.
+   cfg: rows, value, format, bins (override), axisNote */
+VIZ.histogram=function(cvs,cfg){
+  var V=fld(cfg.value), fmt=cfg.format||compact;
+  return mk(cvs,function(ctx,W,H,c){
+    var rows=usable(cfg.rows(),[V]), pad={l:52,r:14,t:18,b:46};
+    if(rows.length<2){ chartMessage(ctx,W,H,str('histogramMin')); return; }
+    var vals=rows.map(V), lo=Math.min.apply(null,vals), hi=Math.max.apply(null,vals);
+    if(!(hi>lo)){ chartMessage(ctx,W,H,str('histogramFlat')); return; }
+    var k=finiteNumber(cfg.bins)||(Math.ceil(Math.log(rows.length)/Math.LN2)+1);
+    k=Math.max(5,Math.min(30,Math.round(k)));
+    var width=(hi-lo)/k, bins=[];
+    for(var b=0;b<k;b++) bins.push({lo:lo+width*b, hi:lo+width*(b+1), n:0});
+    /* the maximum belongs in the last bin, not in a k+1th one off the axis */
+    vals.forEach(function(v){ bins[Math.min(k-1,Math.floor((v-lo)/width))].n++; });
+    var mx=Math.max.apply(null,bins.map(function(x){ return x.n; }))||1;
+    /* A bin count is a whole number of rows. ticks() spaces a small range in
+       fractions, and rounding those for display prints "1 1 1 0 0 0" up the
+       axis — six gridlines claiming three values. Step in integers instead, and
+       round the top UP to one so the tallest bar has headroom. */
+    var step=Math.max(1,Math.ceil(mx/4)), top=Math.ceil(mx*1.06/step)*step, tk=[];
+    for(var t=0;t<=top;t+=step) tk.push(t);
+    var PW=W-pad.l-pad.r, PH=H-pad.t-pad.b, py=function(v){ return pad.t+PH*(1-v/top); };
+    gridY(ctx,W,pad,tk.map(function(v){ return {v:v,y:py(v)}; }),
+          function(v){ return String(v); });
+    var col=colorOf(cfg.color), slot=PW/k;
+    bins.forEach(function(bin,i){
+      var x=pad.l+slot*i, h=(PH*bin.n/top)*c.t;
+      ctx.fillStyle=col; barV(ctx,x+0.75,pad.t+PH-h,Math.max(1,slot-1.5),h,2);
+      var d=cfg.tip?cfg.tip(bin,i,bins):{title:fmt(bin.lo)+' – '+fmt(bin.hi),
+        rows:[{name:str('count'),val:nf(bin.n),color:col},
+              {name:str('share'),val:(Math.round(bin.n/rows.length*1000)/10)+'%'}]};
+      c.hits.push({x:x,y:pad.t,w:slot,h:PH,title:d.title,rows:d.rows,note:d.note});
+    });
+    /* label the bin EDGES, not the bin centres: a bar spans [edge, next edge) */
+    ctx.save(); ctx.fillStyle=T.muted; ctx.font='11px system-ui, sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='top';
+    var step=Math.max(1,Math.ceil(k/(W>560?6:3)));
+    for(var e=0;e<=k;e+=step) ctx.fillText(compact(lo+width*e), pad.l+slot*e, pad.t+PH+8);
+    ctx.restore();
+    txt(ctx, cfg.axisNote||str('histogramBins',{k:k,w:compact(width)}),
+        pad.l+PW/2, H-8, 'center', T.muted,'600',10.5);
+    dropNote(ctx,W,H,rows);
+  });
+};
+
 /* horizontal bars (one series): ranking and magnitude */
 VIZ.hbars=function(cvs,cfg){
   var L=fld(cfg.label), V=fld(cfg.value), fmt=cfg.format||compact;
@@ -1087,6 +1153,65 @@ VIZ.hbars=function(cvs,cfg){
       c.hits.push({x:0,y:cy-rowH/2,w:W,h:rowH,title:d.title,rows:d.rows,note:d.note,click:cfg.onSelect&&function(){cfg.onSelect(r);}});
     });
     if(snap&&c.t>=1) c.__prev=snap;
+    dropNote(ctx,W,H,rows);
+  });
+};
+
+/* bullet: a value against the reference it is measured from, one row per entity.
+   references/analysis-lenses.md asks for the reference to be ON THE PAGE
+   whenever a difference is the claim; every other factory here leaves it to the
+   prose, where it is easy to drop. The bar is a bar, so it starts at zero. The
+   target is a tick across the track and not a second bar, because two bars
+   invite reading the gap between them as a length of its own — which it is not.
+   cfg: rows, label, value, target, format, targetLabel */
+VIZ.bullet=function(cvs,cfg){
+  var L=fld(cfg.label), V=fld(cfg.value), G=fld(cfg.target), fmt=cfg.format||compact;
+  return mk(cvs,function(ctx,W,H,c){
+    var rows=usable(cfg.rows(),[V,G]), pad={t:24,b:28};
+    if(!rows.length){ chartMessage(ctx,W,H); return; }
+    if(needsNonNegative(ctx,W,H,rows,V,'VIZ.divHbars')) return;
+    ctx.font='600 11.5px system-ui, sans-serif';
+    var labelW=Math.min(cfg.labelW||184, Math.max(88,W*(cfg.labelRatio||0.28)));
+    var valueW=finiteNumber(cfg.valueW)||92, PW=W-labelW-valueW;
+    var rowH=(H-pad.t-pad.b)/rows.length, bh=Math.max(6,Math.min(15,rowH*0.44));
+    var mx=0; rows.forEach(function(r){ mx=Math.max(mx,V(r),G(r)); });
+    mx=(mx||1)*1.06;
+    var px=function(v){ return labelW+PW*v/mx; };
+    ctx.save(); ctx.strokeStyle=T.line; ctx.lineWidth=1; ctx.fillStyle=T.muted;
+    ctx.font='11px system-ui, sans-serif'; ctx.textAlign='center'; ctx.textBaseline='top';
+    ticks(0,mx,4).forEach(function(v){ if(v>mx) return;
+      var x=Math.round(px(v))+.5;
+      ctx.beginPath(); ctx.moveTo(x,pad.t); ctx.lineTo(x,H-pad.b); ctx.stroke();
+      ctx.fillText((cfg.tickFormat||compact)(v), x, H-pad.b+7); });
+    ctx.restore();
+    var gl=cfg.targetLabel||str('target');
+    txt(ctx, gl, labelW, 12, 'left', T.muted,'650',11);
+    rows.forEach(function(r,i){
+      var cy=pad.t+rowH*i+rowH/2, v=V(r), g=G(r), met=v>=g;
+      /* colour says only "clears the reference or not"; the signed gap is printed
+         in the tooltip too, so direction never rides on colour alone */
+      var col=met?T.pos:T.neg, w=(px(v)-labelW)*c.t;
+      ctx.font='600 11.5px system-ui, sans-serif';
+      txt(ctx, ell(ctx,L(r),labelW-12), labelW-10, cy, 'right', T.text2,'600',11.5);
+      ctx.save();
+      ctx.fillStyle=rgba(col,.16); barH(ctx,labelW,cy-bh/2,PW,bh,3);
+      ctx.fillStyle=col; barH(ctx,labelW,cy-bh/2,Math.max(0,w),bh,3);
+      var gx=Math.round(px(g))+.5;
+      ctx.strokeStyle=T.text; ctx.lineWidth=2; ctx.lineCap='butt';
+      ctx.beginPath(); ctx.moveTo(gx,cy-bh/2-3); ctx.lineTo(gx,cy+bh/2+3); ctx.stroke();
+      ctx.restore();
+      if(c.t>=1){
+        ctx.save(); ctx.font='650 11.5px system-ui, sans-serif';
+        var lx=clampLabel(ctx,fmt(v),W-4,'right',labelW+4,W-4); ctx.restore();
+        txt(ctx,fmt(v),lx,cy,'right',T.text2,'650',11.5);
+      }
+      var d=cfg.tip?cfg.tip(r,i,rows,{met:met}):{title:String(L(r)),
+        rows:[{name:cfg.seriesName||str('value'),val:fmt(v),color:col},
+              {name:gl,val:fmt(g)},
+              {name:str('vsTarget'),val:sg(v-g)}],
+        note: met?str('bulletMet'):str('bulletShort')};
+      c.hits.push({x:0,y:cy-rowH/2,w:W,h:rowH,title:d.title,rows:d.rows,note:d.note});
+    });
     dropNote(ctx,W,H,rows);
   });
 };
@@ -1226,6 +1351,68 @@ VIZ.bubbles=function(cvs,cfg){
   },{repaintOnHover:true});
 };
 
+/* scatter: two measures per entity, one uniform dot each — the relationship
+   WITHOUT a third measure to size it by. VIZ.bubbles anchors both axes at the
+   origin and takes no domain option, so a pair living between 1,000 and 2,600
+   lands in one corner as a smear; asking for a size column that the data does
+   not have is the other way that lens used to fail. This one takes its domain
+   from the data and pads it. Nothing here encodes length — a dot is a position,
+   not a magnitude — so a non-zero axis is honest, and the zero-baseline rule
+   that binds every bar does not bind this.
+   cfg: rows, label, x, y, format, identityLine, axisX, axisY, zeroBased */
+VIZ.scatter=function(cvs,cfg){
+  var X=fld(cfg.x), Y=fld(cfg.y), L=fld(cfg.label), fmt=cfg.format||compact;
+  return mk(cvs,function(ctx,W,H,c){
+    var rows=usable(cfg.rows(),[X,Y]), pad={l:56,r:22,t:18,b:cfg.axisX?46:34};
+    if(rows.length<2){ chartMessage(ctx,W,H,str('scatterMin')); return; }
+    var xs=rows.map(X), ys=rows.map(Y);
+    var x0=Math.min.apply(null,xs), x1=Math.max.apply(null,xs);
+    var y0=Math.min.apply(null,ys), y1=Math.max.apply(null,ys);
+    /* one distinct value has no span to scale by; give the axis a width instead
+       of dividing by zero and painting every dot at NaN */
+    var sx=(x1-x0)||Math.abs(x1)||1, sy=(y1-y0)||Math.abs(y1)||1;
+    x0-=sx*0.08; x1+=sx*0.08; y0-=sy*0.08; y1+=sy*0.08;
+    if(cfg.zeroBased){ x0=Math.min(x0,0); y0=Math.min(y0,0); }
+    var PW=W-pad.l-pad.r, PH=H-pad.t-pad.b;
+    var px=function(v){ return pad.l+PW*(v-x0)/(x1-x0); },
+        py=function(v){ return pad.t+PH*(1-(v-y0)/(y1-y0)); };
+    var fx=cfg.tickFormatX||compact, fy=cfg.tickFormatY||compact;
+    gridY(ctx,W,pad,ticks(y0,y1,5).filter(function(v){ return v>=y0&&v<=y1; })
+      .map(function(v){ return {v:v,y:py(v)}; }), fy);
+    ctx.save(); ctx.fillStyle=T.muted; ctx.font='11px system-ui, sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='top';
+    ticks(x0,x1,5).forEach(function(v){ if(v<x0||v>x1) return;
+      ctx.fillText(fx(v),px(v),pad.t+PH+8); });
+    ctx.restore();
+    if(cfg.identityLine){       /* y=x — meaningful only when both axes share a unit */
+      var a=Math.max(x0,y0), b=Math.min(x1,y1);
+      if(b>a){
+        ctx.save(); ctx.strokeStyle=T.lineStrong; ctx.lineWidth=1; ctx.setLineDash([4,4]);
+        ctx.beginPath(); ctx.moveTo(px(a),py(a)); ctx.lineTo(px(b),py(b)); ctx.stroke(); ctx.restore();
+        ctx.font='600 10.5px system-ui, sans-serif';
+        txt(ctx,ell(ctx,cfg.identityLine,PW*.4),px(b)-6,py(b)-10,'right',T.muted,'600',10.5);
+      }
+    }
+    if(cfg.axisX) txt(ctx,cfg.axisX,pad.l+PW/2,H-8,'center',T.muted,'600',11);
+    if(cfg.axisY) txt(ctx,cfg.axisY,pad.l-46,pad.t-7,'left',T.muted,'600',11);
+    /* a reveal: dots appear in row order and every dot drawn is already at its
+       true position, so no intermediate frame misstates a value */
+    var col=colorOf(cfg.color), n=Math.max(1,Math.round(rows.length*c.t));
+    for(var i=0;i<n;i++){
+      var r=rows[i], x=px(X(r)), y=py(Y(r));
+      ctx.save(); ctx.fillStyle=col; ctx.globalAlpha=.72;
+      ctx.beginPath(); ctx.arc(x,y,4.5,0,7); ctx.fill();
+      ctx.globalAlpha=1; ctx.strokeStyle=T.surface; ctx.lineWidth=1.5;   /* ink, not data: separates overlapping marks */
+      ctx.beginPath(); ctx.arc(x,y,4.5,0,7); ctx.stroke(); ctx.restore();
+      var d=cfg.tip?cfg.tip(r,i,rows):{title:String(L(r)),
+        rows:[{name:cfg.axisX||str('value'),val:fmt(X(r)),color:col},
+              {name:cfg.axisY||str('value'),val:fmt(Y(r))}]};
+      c.hits.push({x:x,y:y,r:9,title:d.title,rows:d.rows,note:d.note});
+    }
+    dropNote(ctx,W,H,rows);
+  });
+};
+
 /* donut: 2-5 nominal parts. All-zero input degrades to an empty ring. */
 VIZ.donut=function(cvs,cfg){
   var L=fld(cfg.label), V=fld(cfg.value), fmt=cfg.format||nf;
@@ -1312,11 +1499,70 @@ VIZ.slope=function(cvs,cfg){
       ctx.save(); ctx.strokeStyle=col; ctx.lineWidth=2; ctx.beginPath();ctx.moveTo(left,y1);ctx.lineTo(endX,endY);ctx.stroke();
       ctx.fillStyle=col;ctx.beginPath();ctx.arc(left,y1,3.5,0,7);ctx.fill();
       if(c.t>.92){ctx.beginPath();ctx.arc(right,y2,3.5,0,7);ctx.fill();}ctx.restore();
-      if(c.t>=1){ txt(ctx,ell(ctx,L(r),pad.l-8),left-8,y1,'right',T.text2,'600',10.5); txt(ctx,fmt(b),right+8,y2,'left',T.text2,'650',10.5); }
+      /* Measure with the font you draw with, or ell() decides the label fits and
+         txt() draws it wider — clipped at the canvas edge. Same trap as divHbars. */
+      if(c.t>=1){ ctx.font='600 10.5px system-ui, sans-serif';
+        txt(ctx,ell(ctx,L(r),pad.l-8),left-8,y1,'right',T.text2,'600',10.5); txt(ctx,fmt(b),right+8,y2,'left',T.text2,'650',10.5); }
       var tip=cfg.tip?cfg.tip(r,i,rows):{title:String(L(r)),rows:[{name:before,val:fmt(a),color:col},{name:after,val:fmt(b),color:col}]};
       c.hits.push({x:left,y:y1,r:5,title:tip.title,rows:tip.rows,note:tip.note});
       c.hits.push({x:right,y:y2,r:5,title:tip.title,rows:tip.rows,note:tip.note});
     });
+  });
+};
+
+/* dumbbell: the two levels AND the distance between them, one row per entity.
+   VIZ.slope answers "who overtook whom" and caps at 12 because crossing lines
+   stop being readable past that; VIZ.divHbars shows the delta and throws the
+   levels away. Neither answers "where did each one start, where did it end, and
+   how far is that" — the question when nothing crosses, which is most of the
+   time. The start dot is muted and the end dot carries the direction colour, so
+   the eye reads the travel rather than the pair.
+   cfg: rows, label, before, after, format, beforeLabel, afterLabel */
+VIZ.dumbbell=function(cvs,cfg){
+  var L=fld(cfg.label), A=fld(cfg.before), B=fld(cfg.after), fmt=cfg.format||compact;
+  return mk(cvs,function(ctx,W,H,c){
+    var rows=usable(cfg.rows(),[A,B]), pad={t:26,b:30};
+    if(!rows.length){ chartMessage(ctx,W,H,str('dumbbellEnds')); return; }
+    ctx.font='600 11.5px system-ui, sans-serif';
+    var labelW=Math.min(cfg.labelW||190, Math.max(90,W*(cfg.labelRatio||0.28)));
+    var valueW=finiteNumber(cfg.valueW)||88, PW=W-labelW-valueW;
+    var rowH=(H-pad.t-pad.b)/rows.length;
+    var lo=Infinity, hi=-Infinity;
+    rows.forEach(function(r){ lo=Math.min(lo,A(r),B(r)); hi=Math.max(hi,A(r),B(r)); });
+    var span=(hi-lo)||Math.abs(hi)||1; lo-=span*0.08; hi+=span*0.08;
+    var px=function(v){ return labelW+PW*(v-lo)/(hi-lo); };
+    ctx.save(); ctx.strokeStyle=T.line; ctx.lineWidth=1; ctx.fillStyle=T.muted;
+    ctx.font='11px system-ui, sans-serif'; ctx.textAlign='center'; ctx.textBaseline='top';
+    ticks(lo,hi,4).forEach(function(v){ if(v<lo||v>hi) return;
+      var x=Math.round(px(v))+.5;
+      ctx.beginPath(); ctx.moveTo(x,pad.t); ctx.lineTo(x,H-pad.b); ctx.stroke();
+      ctx.fillText((cfg.tickFormat||compact)(v), x, H-pad.b+7); });
+    ctx.restore();
+    var before=cfg.beforeLabel||str('before'), after=cfg.afterLabel||str('after');
+    txt(ctx,before+' → '+after,labelW,13,'left',T.muted,'650',11);
+    rows.forEach(function(r,i){
+      var cy=pad.t+rowH*i+rowH/2, a=A(r), b=B(r);
+      var col=b>=a?T.pos:T.neg, xa=px(a), xb=xa+(px(b)-xa)*c.t;
+      ctx.font='600 11.5px system-ui, sans-serif';
+      txt(ctx, ell(ctx,L(r),labelW-12), labelW-10, cy, 'right', T.text2,'600',11.5);
+      ctx.save();
+      ctx.strokeStyle=rgba(col,.42); ctx.lineWidth=4; ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(xa,cy); ctx.lineTo(xb,cy); ctx.stroke();
+      ctx.fillStyle=T.muted; ctx.beginPath(); ctx.arc(xa,cy,4,0,7); ctx.fill();
+      ctx.fillStyle=col; ctx.beginPath(); ctx.arc(xb,cy,5,0,7); ctx.fill();
+      ctx.restore();
+      /* Measure with the font you draw with — same trap as slope and divHbars. */
+      if(c.t>=1){
+        ctx.save(); ctx.font='650 11.5px system-ui, sans-serif';
+        var lx=clampLabel(ctx,fmt(b),W-4,'right',labelW+4,W-4); ctx.restore();
+        txt(ctx,fmt(b),lx,cy,'right',T.text2,'650',11.5);
+      }
+      var d=cfg.tip?cfg.tip(r,i,rows):{title:String(L(r)),
+        rows:[{name:before,val:fmt(a)},{name:after,val:fmt(b),color:col},
+              {name:str('change'),val:sg(b-a)}]};
+      c.hits.push({x:0,y:cy-rowH/2,w:W,h:rowH,title:d.title,rows:d.rows,note:d.note});
+    });
+    dropNote(ctx,W,H,rows);
   });
 };
 
@@ -1836,15 +2082,88 @@ function playVendoredMotion(canvas,engine,chart){
   else if(tool==='anime')engine.__externalMotionHandle=window.anime({targets:engine,t:1,duration:duration,easing:animeEase(chart.motion.easing),update:function(){if(engine.__token===token){engine.t=Math.max(0,Math.min(1,engine.t));paint();}},complete:finish});
   setTimeout(finish,duration+260);
 }
+/* A series set is value, value2, value3 in order, named by the column each one
+   reads. The field name is what the table twin already prints, so the legend and
+   the table cannot disagree about which number is which. Three is the ceiling:
+   references/themes.md refuses to invent a fourth colour. */
+var SERIES_ROLES=['value','value2','value3'],SERIES_COLORS=['s1','s2','s3'];
+function seriesOf(chart){
+  var e=chart.encodings,out=[];
+  SERIES_ROLES.forEach(function(role,i){
+    if(typeof e[role]==='string'&&e[role])out.push({name:e[role],get:e[role],color:SERIES_COLORS[i]});
+  });
+  return out;
+}
+/* Plan options are snake_case and the factories are camelCase; this is the whole
+   translation. Every name here is a capability the shipped factory already had
+   and no plan could previously ask for. validate-plan.py owns which type takes
+   which, so an unknown name never reaches this map. */
+var OPTION_KEYS={reference:'ref',reference_label:'refLabel',identity_line:'identityLine',
+  axis_x:'axisX',axis_y:'axisY',zero_based:'zeroBased',rotate_labels:'rotate',
+  axis_note:'axisNote',bins:'bins',marks:'marks',start_label:'startLabel',
+  end_label:'endLabel',center_label:'centerLabel',center_note:'centerNote',
+  target_label:'targetLabel',before_label:'beforeLabel',after_label:'afterLabel',
+  band_note:'bandNote'};
+function withOptions(chart,cfg){
+  var o=chart.options;
+  if(!o) return cfg;
+  Object.keys(o).forEach(function(k){
+    /* divColumns diverges when it is handed NEITHER colorOf nor a flat colour.
+       The option is therefore the absence of one, not a value to pass through. */
+    if(k==='diverging'){ if(o[k]) delete cfg.color; return; }
+    var name=OPTION_KEYS[k];
+    if(name) cfg[name]=o[k];
+  });
+  return cfg;
+}
 function chartConfig(chart){
-  var e=chart.encodings,base={rows:function(){return rows;},color:'s1'};
+  var e=chart.encodings,base={rows:function(){return rows;},color:'s1'},series=seriesOf(chart);
   if(chart.type==='line')return Object.assign(base,{x:e.x,y:e.value,format:format});
-  if(chart.type==='columns')return {rows:function(){return rows;},x:e.x,series:[{name:chart.title,get:e.value,color:'s1'}],format:format};
+  if(chart.type==='columns')return {rows:function(){return rows;},x:e.x,series:series,format:format};
   if(chart.type==='divColumns')return Object.assign(base,{x:e.label,y:e.value,format:format});
   if(chart.type==='hbars'||chart.type==='lollipop')return Object.assign(base,{label:e.label,value:e.value,format:format});
   if(chart.type==='bubbles')return Object.assign(base,{label:e.label,x:e.x,y:e.y,size:e.size});
   if(chart.type==='concentration')return Object.assign(base,{label:e.label,value:e.value,format:format});
+  if(chart.type==='divHbars')return Object.assign(base,{label:e.label,value:e.value,format:format});
+  /* donut and slope colour each row from the series ramp, and they do it by taking
+     cfg.color as the DEFAULT passed to colorOf — which returns a default unresolved.
+     Handing them the token name 's1' would paint the literal string, which canvas
+     ignores, leaving every arc the previous fill. Omit color and let them ramp. */
+  if(chart.type==='donut')return {rows:function(){return rows;},label:e.label,value:e.value,format:format};
+  if(chart.type==='heatmap')return Object.assign(base,{x:e.x,y:e.y,value:e.value,format:format});
+  if(chart.type==='slope')return {rows:function(){return rows;},label:e.label,before:e.before,after:e.after,
+    labels:{before:e.before,after:e.after},format:format};
+  if(chart.type==='waterfall')return {format:format,steps:function(){
+    return rows.map(function(r){return {name:String(r[e.label]),value:Number(r[e.value])};});}};
+  if(chart.type==='boxplot')return Object.assign(base,{label:e.label,lo:e.lo,q1:e.q1,med:e.med,q3:e.q3,hi:e.hi,format:format});
+  if(chart.type==='stackedArea')return {rows:function(){return rows;},x:e.x,series:series,format:format};
+  if(chart.type==='panels')return {rows:function(){return rows;},label:e.label,
+    panels:series.map(function(s){return {title:s.name,get:s.get,color:s.color};}),format:format};
+  if(chart.type==='interval')return Object.assign(base,{label:e.label,value:e.value,lo:e.lo,hi:e.hi,format:format});
+  if(chart.type==='scatter')return Object.assign(base,{label:e.label,x:e.x,y:e.y,format:format});
+  if(chart.type==='dumbbell')return Object.assign(base,{label:e.label,before:e.before,after:e.after,format:format});
+  if(chart.type==='bullet')return Object.assign(base,{label:e.label,value:e.value,target:e.target,format:format});
+  if(chart.type==='histogram')return Object.assign(base,{value:e.value,format:format});
+  /* spark takes a value list, not rows: it has no axes and reads no x. Row order
+     is the source's, exactly as it is for line and stackedArea. */
+  if(chart.type==='spark')return {values:function(){return rows.map(function(r){return Number(r[e.value]);});},color:'s1'};
   throw new Error('unsupported validated chart type: '+chart.type);
+}
+/* A multi-series chart is unreadable without a key, and the key has to survive the
+   theme toggle — the swatch colour is a token value, not a class. R.onTheme runs the
+   hook now and again on every change. `panels` is not here: it prints each metric's
+   name above its own panel, so a second key would only repeat it. */
+function legendFor(chart,card){
+  var series=seriesOf(chart);
+  if(series.length<2||(chart.type!=='columns'&&chart.type!=='stackedArea'))return;
+  var node=add(card,text('div','legend',''));
+  R.onTheme(function(t){
+    node.replaceChildren.apply(node,series.map(function(s){
+      var span=R.el('span',null,''),key=R.el('i','key sq','');
+      key.style.background=t[s.color];span.appendChild(key);
+      span.appendChild(document.createTextNode(s.name));return span;
+    }));
+  });
 }
 document.documentElement.lang=S.metadata.locale;
 document.title=S.metadata.title;
@@ -1868,10 +2187,11 @@ S.charts.forEach(function(chart){
   var section=sections[chart.section_id],card=add(section,text('div','card','')),head=add(card,text('div','card-head','')),title=add(head,text('h3',null,chart.title));title.id='title-'+chart.id;
   title.appendChild(R.helpDot(chart.title,chart.help));
   var button=add(head,text('button','btn',L.table));button.type='button';button.setAttribute('data-table-toggle','tablewrap-'+chart.id);button.setAttribute('aria-expanded','false');
-  add(card,text('p','card-note',chart.note));var chartWrap=add(card,text('div','chart','')),canvas=add(chartWrap,document.createElement('canvas'));
+  add(card,text('p','card-note',chart.note));legendFor(chart,card);
+  var chartWrap=add(card,text('div','chart','')),canvas=add(chartWrap,document.createElement('canvas'));
   canvas.id=chart.id;canvas.height=chart.height||240;canvas.setAttribute('role','img');canvas.setAttribute('aria-label',chart.aria_label);canvas.dataset.motionEnabled=String(chart.motion.enabled);canvas.dataset.motionReason=chart.motion.reason;canvas.dataset.motionKind=chart.motion.kind||'entry';canvas.dataset.motionTrigger=chart.motion.trigger||'on-view';canvas.dataset.motionDuration=String(chart.motion.duration_ms||700);canvas.dataset.motionEasing=chart.motion.easing||'outCubic';canvas.dataset.motionSource=chart.motion.source_tool||'motion';canvas.dataset.motionIntegration=toolIntegration(chart.motion.source_tool||'motion');
   var tableWrap=add(card,text('div','tablewrap',''));tableWrap.id='tablewrap-'+chart.id;tableWrap.hidden=true;var table=add(tableWrap,document.createElement('table'));table.id='table-'+chart.id;
-  var factory=R.VIZ[chart.type];if(typeof factory!=='function')throw new Error('runtime lacks '+chart.type);factory(canvas,chartConfig(chart));
+  var factory=R.VIZ[chart.type];if(typeof factory!=='function')throw new Error('runtime lacks '+chart.type);factory(canvas,withOptions(chart,chartConfig(chart)));
   R.buildTable(table,chart.table.columns.map(function(field){return {name:field,value:function(row){return format(row[field]);},num:false};}),rows,{caption:chart.title+L.data});
 });
 var method=add(main,text('section','reveal',''));method.id='methodology';var mh=add(method,text('div','sec-head',''));add(mh,text('p','sec-num',L.method));add(mh,text('h2',null,L.methodTitle));var mc=add(method,text('div','card method',''));

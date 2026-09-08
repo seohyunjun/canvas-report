@@ -11,25 +11,30 @@ The table that decides what you can honestly show, without knowing the domain.
 | **Composition over time** | time + 2–3 measures **in the same unit** | which of two forces is winning | `VIZ.columns` | `trend` |
 | **Composition of a total** | time + 2–4 parts summing to a meaningful total, non-negative | is the total growing, and which part carries it | `VIZ.stackedArea` | `trend` |
 | **Flow (bridge)** | an entity key + two points in time | where did the net change come from | `VIZ.waterfall` | `cohort` |
-| **Distribution (one group)** | 1 measure, one row per entity | does the mean represent anything, where does it pile up | `VIZ.divColumns` | `distribution` |
+| **Distribution (pre-binned)** | 1 measure, one row per bin or entity | does the mean represent anything, where does it pile up | `VIZ.divColumns` | `distribution` |
+| **Distribution (raw values)** | 1 measure, one row per observation | what shape is this column, before anyone grouped it | `VIZ.histogram` | `distribution` |
 | **Distribution (many groups)** | 1 measure + 1 dimension, ≥ 5 values per group | which groups are wide, skewed, or full of outliers | `VIZ.boxplot` | `distribution` + `comparison` |
 | **Comparison (size)** | 1 dimension + 1 measure, cardinality ≤ 20 | who is big | `VIZ.hbars` | `comparison` |
 | **Comparison (direction)** | the above + two periods | who grew and who shrank | `VIZ.divHbars` | `comparison` |
 | **Comparison (multi-metric)** | 1 dimension + 2–3 measures in **different units** | is the biggest also the most numerous | `VIZ.panels` | `comparison` + `relationship` |
-| **Relationship** | 2 measures per entity (+ size, + direction) | do the two move together | `VIZ.bubbles` | `relationship` |
+| **Relationship (weighted)** | 3 non-negative measures per entity: two axes and a size | do the two move together, and who is big | `VIZ.bubbles` | `relationship` |
+| **Relationship (plain)** | 2 measures per entity, either may go negative | do the two move together | `VIZ.scatter` | `relationship` |
 | **Rank movement** | 1 measure at two points in time, ≤ 12 entities | who overtook whom | `VIZ.slope` | `relationship` |
+| **Level change** | the two levels per entity, any number of entities | where did each one start and end, and how far is that | `VIZ.dumbbell` | `comparison` + `relationship` |
+| **Attainment** | 1 dimension + a non-negative measure + its reference | who cleared the number they were measured against | `VIZ.bullet` | `comparison` + `relationship` |
 | **Cross-tab intensity** | 2 dimensions + 1 non-negative measure, ≤ 100 cells | where is the grid hot | `VIZ.heatmap` | `comparison` |
 | **Ranking (sparse)** | 1 dimension + 1 measure, ≤ 20 items | ranking where bars would be too heavy | `VIZ.lollipop` | `comparison` |
 | **Parts of a whole** | 2–5 nominal parts, non-negative | is one part dominant | `VIZ.donut` | `comparison` |
 | **Outliers** | an entity key + a sortable measure | who produced the result | `VIZ.hbars` + tabs | `comparison` |
 | **Concentration** | 1 measure over 5+ entities, non-negative | how much of the total comes from how few | `VIZ.concentration` | `comparison` |
 | **Uncertainty** | a point estimate + an interval per row | is this difference mine to claim | `VIZ.interval` | `relationship` |
+| **Microtrend** | 1 measure, rows already in order | which way is this one number going | `VIZ.spark` | `distribution` |
 
 ## Eligibility, in two steps
 
 `assets/select-candidates.py` runs before the plan is written and emits a `lenses` block: five
 gates, each with an `eligible` flag and, when it fails, the reason. Those five are coarse; the
-seventeen above are the actual choices. The **Gate** column is the join between the two — a lens is
+twenty-two above are the actual choices. The **Gate** column is the join between the two — a lens is
 arguable only once its gate is eligible.
 
 What each gate tests, and nothing more:
@@ -92,8 +97,13 @@ one (`CHART-005`).
 | `stackedArea` | `x` `value` `value2` | `value3` | ≥ 2 | every series |
 | `donut` | `label` `value` | — | 2–5 | `value` |
 | `concentration` | `label` `value` | — | ≥ 2 | `value` |
+| `scatter` | `label` `x` `y` | — | ≥ 2 | — |
+| `dumbbell` | `label` `before` `after` | — | any | — |
+| `bullet` | `label` `value` `target` | — | any | `value` `target` |
+| `histogram` | `value` | — | ≥ 2 | — |
+| `spark` | `value` | — | ≥ 2 | — |
 
-Four things this table is quietly telling you.
+Five things this table is quietly telling you.
 
 **Roles are typed, per chart.** `value`, `before`, `after`, `lo`, `hi`, `q1`, `med`, `q3` and
 `size` must land on a profiled measure. `x` and `y` are measures on `bubbles` and categories on
@@ -113,7 +123,7 @@ all of them.
 | `slope` | ≤ 12 |
 | `lollipop` | ≤ 20 |
 | `heatmap` | ≤ 100 |
-| `stackedArea` or `concentration` | ≥ 2 |
+| `stackedArea`, `concentration`, `scatter`, `histogram` or `spark` | ≥ 2 |
 
 So `donut` alongside `lollipop` is a five-row report, not a twenty-row one, and `donut` alongside
 `stackedArea` leaves a window of 2–5. Aggregate before profiling, or choose forms without a cap.
@@ -132,9 +142,43 @@ an ordered set of signed deltas rather than a running balance. The bridge framin
 section's prose and the sequence, not by a cumulative bar. Use it where the *order* of the deltas is
 the argument; use `divHbars` where only their direction and size are.
 
+**Two types read no `label` at all.** `histogram` takes a measure and bins it, so its marks are
+computed rather than supplied and there is no column to name them with; `spark` takes a measure and
+draws it in row order. Both still owe the reader a table twin, and `chart.table.columns` is where
+that is declared — the twin is what carries the identity the chart does not.
+
 `stackedArea` and `line` also assume the `x` column is **ordered**. The profile cannot tell an
 ordered category from an unordered one, so no validator will stop you drawing a stacked area across
 five team names — and the continuity it implies would be a fiction. That one is yours to check.
+
+## Asking for more than the roles
+
+A factory's roles are what it must have. Several also accept an **option** — a capability the
+shipped runtime has always had and that no plan could previously reach, so the reference asked for
+things the pipeline could not deliver. `chart.options` is where a plan asks. The names are
+per type, `assets/validate-plan.py` rejects one the type does not read (`CHART-014`) and a value
+outside what the factory draws (`CHART-015`), and the builder translates them to the factory's own
+spelling.
+
+| `type` | Option | What it does |
+|---|---|---|
+| `interval` | `reference`, `reference_label` | Draws the reference the intervals are measured from, and mutes every band that crosses it — the chart then says *which* differences are claimable, which is the whole point of the lens. |
+| `scatter`, `bubbles` | `axis_x`, `axis_y` | Names each axis on the chart. Two measures with no units printed is a shape with no claim attached. |
+| `scatter`, `bubbles` | `identity_line` | Draws y=x with the label you give it. Only when both axes share a unit. |
+| `scatter`, `line`, `boxplot` | `zero_based` | Forces the axis through zero. On `scatter` this is opt-**in**, because a dot is a position rather than a length. |
+| `divColumns` | `diverging` | Colours the bars around the midpoint instead of in one hue — the signed histogram. `axis_note`, `rotate_labels` handle long category labels. |
+| `histogram` | `bins` (5–30), `axis_note` | Overrides Sturges. The chart prints the bin count and width either way. |
+| `concentration` | `marks` | Which top-k points to call out. Defaults to 10, 20, 50. |
+| `waterfall` | `start_label`, `end_label` | Names the opening and closing position the deltas run between. |
+| `donut` | `center_label`, `center_note` | Puts the total, in your words, in the hole. |
+| `bullet` | `target_label` | Names the reference, so "target" is not assumed. |
+| `dumbbell`, `slope` | `before_label`, `after_label` | Names the two ends. |
+| `stackedArea` | `band_note` | Replaces the standing note that only the bottom band shares a flat baseline. |
+
+Two of these are not decoration. `interval.reference` is what the Judgement rules below mean by
+"the reference it is measured from"; without it the interval chart draws bands and leaves the
+comparison to the prose. And `scatter`'s axis names are the difference between a relationship the
+reader can check and a shape they have to take on trust.
 
 ## When two lenses both fit
 
@@ -154,6 +198,12 @@ questions that close them — each one asks what the reader is being told, not w
 | `heatmap` / `panels` | by whether values are read or scanned | `heatmap` when the grid *position* is the finding; `panels` when the reader needs to read a value off an axis. Intensity is not legible to three significant figures. |
 | `concentration` / `hbars` | by the sentence | `hbars` ranks. `concentration` answers "how much of the total comes from how few", which is a different sentence — and usually the better one. |
 | `interval` / `hbars` | `interval` the moment a difference is the claim | An interval is not decoration on a comparison; it is what separates a finding from a number. See [`uncertainty.md`](uncertainty.md). |
+| `scatter` / `bubbles` | `scatter` unless a third measure is real | `bubbles` requires `size` and anchors both axes at the origin. Inventing a size to satisfy the role is the invented-number anti-pattern wearing a chart; and where neither measure comes near zero, the origin anchor puts every mark in one corner. Take `bubbles` when a genuine third non-negative measure is the weight and the ranges do reach zero. |
+| `dumbbell` / `slope` | by whether anything crosses | `slope` is about crossing and caps at 12. `dumbbell` keeps both levels and the gap, has no cap, and stays readable when the lines would simply run parallel. |
+| `dumbbell` / `divHbars` | by whether the levels matter | `divHbars` shows the delta and throws the levels away. If "from what, to what" is part of the finding, that is a `dumbbell`. |
+| `histogram` / `divColumns` | by what a row is | One row per observation is a `histogram` — it bins the column itself and prints the width. One row per bin is already binned, and `divColumns` draws it. Binning upstream is a decision the reader cannot see; binning here is one they can. |
+| `bullet` / `interval` | by what the reference is | `bullet` compares a value to a **target it was set** — an external number. `interval` compares an estimate to a **reference it might not differ from** — a statistical one. Clearing a target is a fact; clearing a reference is a claim. |
+| `spark` / `line` | `line` for anything that carries a claim | `spark` has no axes, no labels and no tick values; it is a microtrend to sit beside a number, and it cannot animate. If a section's argument rests on the shape, it needs an axis, which means `line`. |
 
 ## What the lens costs downstream
 
@@ -162,17 +212,22 @@ chart's progress value scales differs per factory. `assets/validate-plan.py` war
 (`MOTION-FIT-001` on the curve, `MOTION-FIT-002` on the duration), so the lens decision is worth
 making with the consequence in view.
 
-- **Reveals** — `line`, `slope`, `concentration` — draw part of a finished mark set, and nothing
-  on screen is ever wrong. Steady curve, 600–800 ms. `waterfall` is a sequenced reveal that has to
-  divide the run among its steps: 600–900 ms.
-- **Value-scaled marks** — `columns`, `divColumns`, `hbars`, `divHbars`, `lollipop`, `panels`,
-  `stackedArea`, `donut`, `heatmap` — read a number smaller than the datum until they land, so they
-  need a curve that arrives early: 400–600 ms.
+- **Reveals** — `line`, `slope`, `concentration`, `scatter` — draw part of a finished mark set, and
+  nothing on screen is ever wrong. Steady curve, 600–800 ms. `waterfall` is a sequenced reveal that
+  has to divide the run among its steps: 600–900 ms.
+- **Value-scaled marks** — `columns`, `divColumns`, `histogram`, `hbars`, `bullet`, `divHbars`,
+  `lollipop`, `panels`, `stackedArea`, `donut`, `heatmap`, `dumbbell` — read a number smaller than
+  the datum until they land, so they need a curve that arrives early: 400–600 ms. `dumbbell` is here
+  because its travelling end shows a **shorter** gap than the data until it arrives; understating a
+  difference resolves, where overstating one would not.
 - **Spread** — `boxplot`, `interval` — grows outward from a value already drawn in place, so every
   running frame shows a **narrower** interval than the data supports. That is an overclaim rather
   than a delay, and it takes the shortest run in the table: 300–500 ms.
 - **`bubbles`** scales the radius, so area grows with the square of progress and the mark reads far
   smaller than its value for most of the run: 700–900 ms.
+- **`spark` cannot move at all.** Its factory draws from a value list and never reads the progress
+  value, so a declared entry would be a promise the runtime does not keep. `CHART-016` is an error,
+  not a warning: set `motion.enabled` to false and give the clarity reason.
 
 [`motion-features.md`](motion-features.md) is the authority and carries the easings per factory.
 On the portable path nothing may declare past 900 ms — the shell's `anim()` clamps silently and
@@ -192,12 +247,15 @@ A large gap means the key is masked, recycled, or needs to be a composite.
 - 9–40 → top N plus a folded "other", or a size filter
 - \> 40 → switch to a scatter (one point per entity) or a top/bottom ranking. Forty bars is a table.
 
-**Scatters start at zero here.** `VIZ.bubbles` scales both axes from the origin — there is no
-domain option — so the Relationship lens only reads when the two measures approach zero within the
-data. Two series that live between, say, 1,000 and 2,600 land in one corner of an empty plot and
-their marks overlap into a smear. Check the ranges against zero before selecting the lens; when
-they do not reach it, the honest move is to drop the lens, say so in the plan, and let the two
-measures share a table twin instead of a chart that asserts a shape it cannot draw.
+**`bubbles` starts at zero; `scatter` does not.** `VIZ.bubbles` scales both axes from the origin
+and has no domain option, so two measures living between 1,000 and 2,600 land in one corner of an
+empty plot and smear together. That used to be the end of the Relationship lens — the published
+pipeline example rejected it on exactly this ground. `VIZ.scatter` takes its domain from the data
+and pads it, which is honest because a dot is a position and not a length: the zero-baseline rule
+binds bars, and nothing on a scatter encodes length. So check the ranges against zero and let the
+answer choose the factory rather than drop the lens — `bubbles` when they reach zero and a genuine
+third non-negative measure is the weight, `scatter` otherwise. Name both axes with `axis_x` and
+`axis_y`; two unlabelled measures are a shape with no claim attached.
 
 **When the measure is a ratio.** Always state the denominator in the tooltip and the methodology.
 A large ratio from a small denominator needs a minimum-size filter, switched **on** by default.
