@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "canvas-report",
   "displayName": "Canvas Report",
-  "version": "3.3.0",
+  "version": "3.4.0",
   "description": "Builds external-tool-informed, motion-aware analysis reports with a hash-bound, accessible offline canvas HTML artifact.",
   "author": {
     "name": "seohyunjun",
