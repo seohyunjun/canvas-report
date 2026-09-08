@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- canvas-report spec-sha256: 59158cf738a1e3336f6178eb79a7b40462e29b40ae702474c8ea0a5a6bec03ad · rules: DATA-HONESTY-001,LENS-ELIGIBILITY-001,MACRO-SELECTION-001,THEME-SELECTION-001,TOOL-SELECTION-001,CLAIMS-001,TABLE-TWIN-001,HELP-TWIN-001,ZERO-NETWORK-001,MOTION-STORY-001,MOTION-INTENT-001,MOTION-FINAL-STATE-001,MOTION-REDUCED-001,FINAL-CHECKS-001 -->
+<!-- canvas-report spec-sha256: b33f989ff339050f5b00c02605c507dcfed98f97ffc146beadc560dbdbd520d2 · rules: DATA-HONESTY-001,LENS-ELIGIBILITY-001,MACRO-SELECTION-001,THEME-SELECTION-001,TOOL-SELECTION-001,CLAIMS-001,TABLE-TWIN-001,HELP-TWIN-001,ZERO-NETWORK-001,MOTION-STORY-001,MOTION-INTENT-001,MOTION-FINAL-STATE-001,MOTION-REDUCED-001,FINAL-CHECKS-001 -->
 <!--
   ============================================================================
   canvas-report — reusable shell (domain-agnostic, theme-swappable)
@@ -228,6 +228,9 @@ footer{margin-top:56px; padding-top:20px; border-top:1px solid var(--line); font
 .masthead--rule{border-top:4px solid var(--text-primary)}
 .masthead--rule .wrap{padding-top:20px}
 
+/* Only M2 lays the figure beside the title; every other archetype hides it, and
+   .mast-main keeps the label stack one grid child rather than four. */
+.masthead .mast-fig[hidden]{display:none}
 .masthead--figure .wrap{display:grid; gap:18px 40px; align-items:end}
 @media(min-width:820px){ .masthead--figure .wrap{grid-template-columns:minmax(0,1.25fr) minmax(0,.85fr)} }
 .masthead--figure .mast-fig{font-family:var(--font-display); font-size:clamp(46px,8vw,84px); line-height:.92;
@@ -366,10 +369,13 @@ footer{margin-top:56px; padding-top:20px; border-top:1px solid var(--line); font
 <header class="masthead">
   <div class="wrap">
     <button class="theme-toggle" id="themeBtn" type="button" aria-label="Switch between light and dark">◐ Theme</button>
-    <p class="eyebrow" id="hEyebrow">Data report</p>
-    <h1 id="hTitle">Title</h1>
-    <p class="subtitle" id="hSub"></p>
-    <div class="meta-row" id="hMeta"></div>
+    <div class="mast-main">
+      <p class="eyebrow" id="hEyebrow">Data report</p>
+      <h1 id="hTitle">Title</h1>
+      <p class="subtitle" id="hSub"></p>
+      <div class="meta-row" id="hMeta"></div>
+    </div>
+    <p class="mast-fig" id="hFig" hidden></p>
   </div>
 </header>
 
@@ -2171,7 +2177,22 @@ document.getElementById('hEyebrow').textContent=S.metadata.eyebrow;
 document.getElementById('hTitle').textContent=S.metadata.title;
 document.getElementById('hSub').textContent=S.metadata.subtitle;
 document.getElementById('hMeta').replaceChildren(text('span',null,L.grain+': '+S.grain));
-var heroFigure=document.getElementById('hFig');if(heroFigure)heroFigure.textContent='';
+/* The masthead archetype is a plan choice, and until now it was recorded in the
+   spec and never applied — every report rendered as M1 whatever it declared.
+   M4 and M5 need content the plan has no field for, so validate-plan.py refuses
+   them rather than letting them render as something else. */
+var MASTHEADS={M1:'',M2:'masthead--figure',M3:'masthead--broadsheet',M6:'masthead--sticky'};
+var header=document.querySelector('.masthead'), archetype=MASTHEADS[S.masthead]||'';
+if(header&&archetype)header.classList.add(archetype);
+var heroFigure=document.getElementById('hFig');
+if(heroFigure){
+  var fig=S.masthead==='M2'?S.masthead_figure:null;
+  if(fig){
+    heroFigure.replaceChildren(document.createTextNode(fig.value),text('small',null,fig.label));
+    heroFigure.hidden=false;
+  } else { heroFigure.textContent=''; heroFigure.hidden=true; }
+}
+if(header&&S.masthead==='M6')R.shrinkMasthead(header,140);
 var main=document.getElementById('main');main.replaceChildren();
 if(S.insights.length){
   var summary=add(main,text('section','reveal','')),list=add(summary,text('div','insights',''));

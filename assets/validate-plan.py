@@ -278,6 +278,20 @@ def main():
   story=creative.get("motion_story")
   if not isinstance(story,dict) or not all(isinstance(story.get(k),str) and story[k] for k in ("goal","restraint")) or not arr(story.get("sequence")):
    d.e("MOTION-STORY-001","plan.creative_direction.motion_story","Motion story needs goal, nonempty sequence, and restraint.","Describe one reading sequence before assigning chart motion.")
+ # The archetype is applied by the builder from this field. M4 wants per-section
+ # anchors with headline values and M5 a rail label; the plan has no field for
+ # either, and rendering them as M1 would make the recorded choice a fiction.
+ masthead=plan.get("masthead")
+ if masthead in ("M4","M5"):
+  d.e("MASTHEAD-002","plan.masthead","%s needs masthead content the plan cannot express, so the build would silently fall back to the label stack."%masthead,"Use M1, M2, M3, or M6.")
+ elif masthead not in ("M1","M2","M3","M6"):
+  d.e("MASTHEAD-001","plan.masthead","Unknown masthead archetype.","Use M1, M2, M3, or M6; references/components.md describes them.")
+ figure=plan.get("masthead_figure")
+ if masthead=="M2":
+  if not isinstance(figure,dict) or not all(isinstance(figure.get(k),str) and figure[k].strip() for k in ("value","label")):
+   d.e("MASTHEAD-003","plan.masthead_figure","M2 puts exactly one number beside the title and none was supplied.","Add masthead_figure with a value and the label that says what it counts, or use M1.")
+ elif figure is not None:
+  d.e("MASTHEAD-004","plan.masthead_figure","Only M2 renders a masthead figure.","Remove the field, or select M2.")
  sections=req(plan,"sections",list,"plan",d) or []; sids=set()
  for i,x in enumerate(sections):
   if not isinstance(x,dict) or not all(isinstance(x.get(k),str) and x[k] for k in ("id","title","lede")):d.e("SECTION-001","plan.sections[%d]"%i,"Section needs id, title, and lede.","Provide rich reader-facing section content.")
@@ -373,7 +387,7 @@ def main():
  if isinstance(creative,dict) and "TOOL-SELECTION-001" not in decision_ids:d.e("RULE-004","plan.rule_decisions","External tool use lacks TOOL-SELECTION-001 provenance.","Record why the selected toolchain is minimal, useful, and compatible with the build boundary.")
  if any(isinstance(x,dict) and isinstance(x.get("motion"),dict) and x["motion"].get("enabled") is True for x in charts) and "MOTION-INTENT-001" not in decision_ids:d.e("RULE-005","plan.rule_decisions","Enabled chart motion lacks MOTION-INTENT-001 provenance.","Record the reader benefit for enabled chart motion.")
  if not d.bad():
-  canonical=json.dumps(plan,ensure_ascii=False,sort_keys=True,separators=(",",":"));spec={"schema_version":VERSION,"source":{"path":source["path"],"sha256":sha},"plan_sha256":hashlib.sha256(canonical.encode()).hexdigest(),"metadata":meta,"masthead":plan["masthead"],"grain":plan["grain"],"candidates":cand,"lenses":ld,"insights":insights,"macro":macro,"theme":theme,"theme_rationale":plan.get("theme_rationale"),"sections":sections,"charts":charts,"methodology":meth,"rule_decisions":decisions,"retry_policy":{"max_attempts":4,"steps":list(RETRY)},"ownership":{"writable":["report content","sections","charts","methodology","rule decisions"],"immutable":["runtime engines","generated HTML","builder"]}}
+  canonical=json.dumps(plan,ensure_ascii=False,sort_keys=True,separators=(",",":"));spec={"schema_version":VERSION,"source":{"path":source["path"],"sha256":sha},"plan_sha256":hashlib.sha256(canonical.encode()).hexdigest(),"metadata":meta,"masthead":plan["masthead"],"masthead_figure":plan.get("masthead_figure"),"grain":plan["grain"],"candidates":cand,"lenses":ld,"insights":insights,"macro":macro,"theme":theme,"theme_rationale":plan.get("theme_rationale"),"sections":sections,"charts":charts,"methodology":meth,"rule_decisions":decisions,"retry_policy":{"max_attempts":4,"steps":list(RETRY)},"ownership":{"writable":["report content","sections","charts","methodology","rule decisions"],"immutable":["runtime engines","generated HTML","builder"]}}
   if isinstance(creative,dict):spec["creative_direction"]=creative
   Path(a.output).write_text(json.dumps(spec,ensure_ascii=False,sort_keys=True,indent=2)+"\n",encoding="utf-8")
  print(json.dumps({"diagnostics":d.x},ensure_ascii=False,sort_keys=True));return 1 if d.bad() else 0
