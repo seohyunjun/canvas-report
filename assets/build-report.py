@@ -42,6 +42,11 @@ SUPPORTED = {
     "stackedArea": ("x", "value", "value2"),
     "panels": ("label", "value", "value2"),
     "interval": ("label", "value", "lo", "hi"),
+    "scatter": ("label", "x", "y"),
+    "dumbbell": ("label", "before", "after"),
+    "bullet": ("label", "value", "target"),
+    "histogram": ("value",),
+    "spark": ("value",),
 }
 # Roles a type accepts but does not require. The series ceiling is three because
 # references/themes.md refuses to invent a fourth colour, not because the factory
@@ -260,6 +265,28 @@ function seriesOf(chart){
   });
   return out;
 }
+/* Plan options are snake_case and the factories are camelCase; this is the whole
+   translation. Every name here is a capability the shipped factory already had
+   and no plan could previously ask for. validate-plan.py owns which type takes
+   which, so an unknown name never reaches this map. */
+var OPTION_KEYS={reference:'ref',reference_label:'refLabel',identity_line:'identityLine',
+  axis_x:'axisX',axis_y:'axisY',zero_based:'zeroBased',rotate_labels:'rotate',
+  axis_note:'axisNote',bins:'bins',marks:'marks',start_label:'startLabel',
+  end_label:'endLabel',center_label:'centerLabel',center_note:'centerNote',
+  target_label:'targetLabel',before_label:'beforeLabel',after_label:'afterLabel',
+  band_note:'bandNote'};
+function withOptions(chart,cfg){
+  var o=chart.options;
+  if(!o) return cfg;
+  Object.keys(o).forEach(function(k){
+    /* divColumns diverges when it is handed NEITHER colorOf nor a flat colour.
+       The option is therefore the absence of one, not a value to pass through. */
+    if(k==='diverging'){ if(o[k]) delete cfg.color; return; }
+    var name=OPTION_KEYS[k];
+    if(name) cfg[name]=o[k];
+  });
+  return cfg;
+}
 function chartConfig(chart){
   var e=chart.encodings,base={rows:function(){return rows;},color:'s1'},series=seriesOf(chart);
   if(chart.type==='line')return Object.assign(base,{x:e.x,y:e.value,format:format});
@@ -284,6 +311,13 @@ function chartConfig(chart){
   if(chart.type==='panels')return {rows:function(){return rows;},label:e.label,
     panels:series.map(function(s){return {title:s.name,get:s.get,color:s.color};}),format:format};
   if(chart.type==='interval')return Object.assign(base,{label:e.label,value:e.value,lo:e.lo,hi:e.hi,format:format});
+  if(chart.type==='scatter')return Object.assign(base,{label:e.label,x:e.x,y:e.y,format:format});
+  if(chart.type==='dumbbell')return Object.assign(base,{label:e.label,before:e.before,after:e.after,format:format});
+  if(chart.type==='bullet')return Object.assign(base,{label:e.label,value:e.value,target:e.target,format:format});
+  if(chart.type==='histogram')return Object.assign(base,{value:e.value,format:format});
+  /* spark takes a value list, not rows: it has no axes and reads no x. Row order
+     is the source's, exactly as it is for line and stackedArea. */
+  if(chart.type==='spark')return {values:function(){return rows.map(function(r){return Number(r[e.value]);});},color:'s1'};
   throw new Error('unsupported validated chart type: '+chart.type);
 }
 /* A multi-series chart is unreadable without a key, and the key has to survive the
@@ -328,7 +362,7 @@ S.charts.forEach(function(chart){
   var chartWrap=add(card,text('div','chart','')),canvas=add(chartWrap,document.createElement('canvas'));
   canvas.id=chart.id;canvas.height=chart.height||240;canvas.setAttribute('role','img');canvas.setAttribute('aria-label',chart.aria_label);canvas.dataset.motionEnabled=String(chart.motion.enabled);canvas.dataset.motionReason=chart.motion.reason;canvas.dataset.motionKind=chart.motion.kind||'entry';canvas.dataset.motionTrigger=chart.motion.trigger||'on-view';canvas.dataset.motionDuration=String(chart.motion.duration_ms||700);canvas.dataset.motionEasing=chart.motion.easing||'outCubic';canvas.dataset.motionSource=chart.motion.source_tool||'motion';canvas.dataset.motionIntegration=toolIntegration(chart.motion.source_tool||'motion');
   var tableWrap=add(card,text('div','tablewrap',''));tableWrap.id='tablewrap-'+chart.id;tableWrap.hidden=true;var table=add(tableWrap,document.createElement('table'));table.id='table-'+chart.id;
-  var factory=R.VIZ[chart.type];if(typeof factory!=='function')throw new Error('runtime lacks '+chart.type);factory(canvas,chartConfig(chart));
+  var factory=R.VIZ[chart.type];if(typeof factory!=='function')throw new Error('runtime lacks '+chart.type);factory(canvas,withOptions(chart,chartConfig(chart)));
   R.buildTable(table,chart.table.columns.map(function(field){return {name:field,value:function(row){return format(row[field]);},num:false};}),rows,{caption:chart.title+L.data});
 });
 var method=add(main,text('section','reveal',''));method.id='methodology';var mh=add(method,text('div','sec-head',''));add(mh,text('p','sec-num',L.method));add(mh,text('h2',null,L.methodTitle));var mc=add(method,text('div','card method',''));

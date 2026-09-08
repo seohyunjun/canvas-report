@@ -21,7 +21,7 @@ reference passages behind each decision, machine-checked with `assets/check-quot
 
 The second report is the whole state path run once: `profile-data.py` → an Agent-written `plan.json`
 → `validate-plan.py` → `build-report.py` → `validate-report.py`, with every state bound to its
-artifact hashes. One of its three charts declares entry motion and two declare themselves static,
+artifact hashes. Three of its five charts declare entry motion and two declare themselves static,
 and `check-motion.py` gates them on that declaration rather than on whether anything moved. The
 enabled contract names its kind, trigger, duration, easing and motion engine, and the plan records
 the report-level motion story and the tool selection behind them — which is why the file carries
@@ -34,12 +34,16 @@ screen in the first tenth of the run and crawl through the rest.
 [`references/motion-features.md`](../references/motion-features.md) has the table this came from,
 alongside the feature-by-feature reading of the Motion and anime.js documentation it sits in.
 
-It also shows a lens being turned down for a reason the profile could not give. The relationship
-between handling hours and tickets resolved is eligible on the data, and the report does not chart
-it: the deterministic builder draws scatters from a zero origin on both axes, and measures that run
-from 1,034 to 1,606 against 1,645 to 2,566 would land in one corner of an empty plot. The plan says
-so in `LENS-ELIGIBILITY-001`, the section says so in its own words, and no claim rests on the chart
-that was not drawn.
+It also carries a lens that this repository could not draw until 3.5.0, and the report is worth
+reading twice for it. The relationship between handling hours and tickets resolved was always
+eligible on the data, and the earlier version of this page did not chart it: the only scatter the
+builder compiled was `VIZ.bubbles`, which forces both axes through zero, and measures running from
+1,034 to 1,606 against 1,645 to 2,566 would have landed in one corner of an empty plot. The plan
+said so in `LENS-ELIGIBILITY-001` and the section said so in its own words — a lens turned down on
+build capability rather than on evidence, which is the one reason a lens should never be turned
+down. `VIZ.scatter` takes its domain from the data, so both charts are now on the page: hours
+against resolutions, and opened against resolved with a `resolved = opened` identity line under
+which 18 of the 24 months sit. That line is the report's first claim, drawn instead of counted.
 
 The first report predates all of that. It was built before 3.0.0, so it carries the older `read:`
 stamp rather than a spec hash, its charts declare no executable motion contract, and the current

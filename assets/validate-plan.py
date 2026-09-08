@@ -21,7 +21,13 @@ CHARTS={"line":("x","value"),"columns":("x","value"),"divColumns":("label","valu
  "concentration":("label","value"),"divHbars":("label","value"),"donut":("label","value"),
  "heatmap":("x","y","value"),"slope":("label","before","after"),"waterfall":("label","value"),
  "boxplot":("label","lo","q1","med","q3","hi"),"stackedArea":("x","value","value2"),
- "panels":("label","value","value2"),"interval":("label","value","lo","hi")}
+ "panels":("label","value","value2"),"interval":("label","value","lo","hi"),
+ # scatter is the relationship without a size to invent; bubbles requires one.
+ "scatter":("label","x","y"),"dumbbell":("label","before","after"),
+ "bullet":("label","value","target"),
+ # histogram bins the raw column, so it reads a measure and nothing else — no
+ # label role, because the bins are computed rather than supplied.
+ "histogram":("value",),"spark":("value",)}
 # Accepted but not required. Three series is the ceiling because references/themes.md
 # refuses to invent a fourth colour, not because a factory could not draw one.
 OPTIONAL={"columns":("value2","value3"),"stackedArea":("value3",),"panels":("value3",)}
@@ -31,6 +37,8 @@ OPTIONAL={"columns":("value2","value3"),"stackedArea":("value3",),"panels":("val
 # loudly; it draws a mark of length NaN, which is no mark at all.
 SERIES=("value","value2","value3")
 MEASURES={"line":("value",),"columns":SERIES,"divColumns":("value",),"hbars":("value",),
+ "scatter":("x","y"),"dumbbell":("before","after"),"bullet":("value","target"),
+ "histogram":("value",),"spark":("value",),
  "lollipop":("value",),"bubbles":("x","y","size"),"concentration":("value",),
  "divHbars":("value",),"donut":("value",),"heatmap":("value",),"slope":("before","after"),
  "waterfall":("value",),"boxplot":("lo","q1","med","q3","hi"),"stackedArea":SERIES,
@@ -39,10 +47,11 @@ MEASURES={"line":("value",),"columns":SERIES,"divColumns":("value",),"hbars":("v
 # (assets/report-shell.html, VIZ.lollipop and friends). The builder hands every source
 # row to every chart, so a cap is a plan-time incompatibility, not a rendering detail.
 ROW_LIMITS={"lollipop":(1,20),"donut":(2,5),"slope":(1,12),"heatmap":(1,100),
- "stackedArea":(2,None),"concentration":(2,None)}
+ "stackedArea":(2,None),"concentration":(2,None),"scatter":(2,None),
+ "histogram":(2,None),"spark":(2,None)}
 # Charts that read a magnitude as a share, an area, or an intensity. A negative value
 # has no length on any of them, and the factory prints a refusal instead of drawing.
-NON_NEGATIVE={"donut","heatmap","stackedArea","concentration","bubbles"}
+NON_NEGATIVE={"donut","heatmap","stackedArea","concentration","bubbles","bullet"}
 MOTION_EASINGS={"linear","outCubic","inOutCubic","outQuint","outExpo","outCirc","inOutQuint"}
 TOOLS={"d3-gallery","d3","plotly","gsap","motion","anime"}
 TOOL_ROLES={"chart-form","data-transform","state-model","motion-engine","illustration"}
@@ -75,7 +84,46 @@ MOTION_FIT={
  # bubbles scales the radius, so area grows with t squared and the mark looks far
  # smaller than its value for most of the run
  "bubbles":({"outExpo","outQuint"},(700,900)),
+ # scatter reveals dots in row order and every dot drawn is already at its true
+ # position, so it is a reveal even though bubbles, its neighbour, is not
+ "scatter":({"outCubic","linear"},(600,800)),
+ "histogram":({"outQuint","outExpo"},(400,600)),
+ "bullet":({"outQuint","outExpo"},(400,600)),
+ # the start dot is drawn in place and the end dot travels, so a running frame
+ # shows a SHORTER gap than the data — an understatement, which resolves
+ "dumbbell":({"outQuint","outExpo"},(400,600)),
 }
+# VIZ.spark draws from cfg.values() and never reads the progress value, so a
+# spark that declares motion would sit still while the gate looks for movement.
+STATIC_ONLY={"spark"}
+# Options a factory already accepts and no plan could previously ask for. Values
+# are (kind, check) — the check runs only after the kind matches.
+OPT_STR=("string",lambda v:bool(v.strip()))
+OPTIONS={
+ "interval":{"reference":("number",lambda v:True),"reference_label":OPT_STR},
+ "bubbles":{"identity_line":OPT_STR,"axis_x":OPT_STR,"axis_y":OPT_STR},
+ "scatter":{"identity_line":OPT_STR,"axis_x":OPT_STR,"axis_y":OPT_STR,
+            "zero_based":("bool",lambda v:True)},
+ "divColumns":{"diverging":("bool",lambda v:True),"rotate_labels":("bool",lambda v:True),
+               "axis_note":OPT_STR},
+ "histogram":{"bins":("int",lambda v:5<=v<=30),"axis_note":OPT_STR},
+ "concentration":{"marks":("ints",lambda v:all(0<x<100 for x in v) and 1<=len(v)<=4)},
+ "waterfall":{"start_label":OPT_STR,"end_label":OPT_STR},
+ "donut":{"center_label":OPT_STR,"center_note":OPT_STR},
+ "bullet":{"target_label":OPT_STR},
+ "dumbbell":{"before_label":OPT_STR,"after_label":OPT_STR},
+ "slope":{"before_label":OPT_STR,"after_label":OPT_STR},
+ "line":{"zero_based":("bool",lambda v:True)},
+ "boxplot":{"zero_based":("bool",lambda v:True)},
+ "stackedArea":{"band_note":OPT_STR},
+}
+def opt_kind(v):
+ if isinstance(v,bool):return "bool"
+ if isinstance(v,int):return "int"
+ if isinstance(v,float):return "number"
+ if isinstance(v,str):return "string"
+ if isinstance(v,list) and v and all(isinstance(x,int) and not isinstance(x,bool) for x in v):return "ints"
+ return None
 # The portable path runs through the shell's anim(), which caps at 900 ms. Nothing
 # downstream reports the difference: the motion gate reads the declared attribute,
 # so a longer declaration passes every check and still runs for 900.
@@ -257,6 +305,22 @@ def main():
     # fourth and the first are then the same colour on a chart whose whole job is
     # telling parts apart — references/themes.md refuses to invent a fourth colour.
     if x["type"]=="donut" and row_count>3:d.w("CHART-013",l+".type","A %d-part donut reuses a series colour, so two parts share one identity."%row_count,"Fold to three parts plus a remainder, or use hbars, where length carries the comparison and colour does not have to.")
+  options=x.get("options")
+  if options is not None:
+   if not isinstance(options,dict):
+    d.e("CHART-014",l+".options","Chart options must be an object.","Remove the field, or map option names to values.")
+   else:
+    known=OPTIONS.get(x["type"],{})
+    for key,value in sorted(options.items()):
+     if key not in known:
+      d.e("CHART-014",l+".options."+key,"%s does not accept the option %s."%(x["type"],key),
+          "Remove it, or choose a type that reads it. %s accepts: %s."%(x["type"],", ".join(sorted(known)) or "no options"))
+      continue
+     kind,check=known[key];got=opt_kind(value)
+     ok = got==kind or (kind=="number" and got in ("int","number"))
+     if not ok or not check(value):
+      d.e("CHART-015",l+".options."+key,"Option %s on %s does not take %r."%(key,x["type"],value),
+          "Supply a %s within the range the factory draws; references/analysis-lenses.md lists it."%kind)
   for f in x["fields"]+x["table"]["columns"]:
    if f not in names:d.e("CHART-003",l,"Chart field %s is not profiled."%f,"Use source column names.")
   for role,f in x["encodings"].items():
@@ -271,6 +335,9 @@ def main():
    if role in measures and x["type"] in NON_NEGATIVE and isinstance(column.get("min"),(int,float)) and not isinstance(column.get("min"),bool) and column["min"]<0:
     d.e("CHART-011",l+".encodings."+role,"%s reads %s as a share, area, or intensity, but %s goes down to %s."%(x["type"],role,f,column["min"]),"Use a chart with a signed scale — divColumns, divHbars, or waterfall — or explain the negative values away in the data, not in the chart.")
   motion=x["motion"]
+  if motion.get("enabled") is True and x["type"] in STATIC_ONLY:
+   d.e("CHART-016",l+".motion.enabled","%s draws from a value list and never reads the progress value, so declared motion would never run."%x["type"],
+       "Set motion.enabled to false and give the clarity reason, or choose a factory that animates.")
   if motion.get("enabled") is True:
    missing=[k for k in ("kind","trigger","duration_ms","easing","source_tool") if k not in motion]
    if missing:d.w("MOTION-CONTRACT-001",l+".motion","Enabled motion omits executable fields: "+", ".join(missing)+".","Set kind entry, trigger on-view, duration_ms 180–1200, a value-safe easing, and the selected source tool.")

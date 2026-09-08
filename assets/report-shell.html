@@ -439,7 +439,20 @@ var CR_STRINGS = Object.assign({
   reference:'reference',
   intervalBand:'interval',
   intervalCrosses:'the interval covers the reference — not distinguishable from it',
-  intervalClears:'the whole interval sits on one side of the reference'
+  intervalClears:'the whole interval sits on one side of the reference',
+  before:'before',
+  after:'after',
+  count:'count',
+  share:'share',
+  target:'target',
+  vsTarget:'vs target',
+  bulletMet:'the value clears the reference',
+  bulletShort:'the value falls short of the reference',
+  scatterMin:'a scatter needs at least 2 entities',
+  histogramMin:'a histogram needs at least 2 values',
+  histogramFlat:'every value is the same — there is no distribution to bin',
+  histogramBins:'{k} bins of {w}',
+  dumbbellEnds:'the start and end values must both be numbers'
 }, window.CR_STRINGS || {});
 
 var REPORT = (function(){
@@ -1059,6 +1072,59 @@ VIZ.divColumns=function(cvs,cfg){
   });
 };
 
+/* histogram: the shape of ONE distribution, binned from the raw measure.
+   VIZ.divColumns draws a distribution that is already binned — one row per bin,
+   which is what you have after a GROUP BY. This takes the column itself, which
+   is what you have when the source is one row per event, and the difference
+   matters: pre-binning upstream is a decision the reader cannot see.
+   The bin count is Sturges, clamped to 5-30, and PRINTED with the width. A
+   histogram whose binning is invisible is a picture rather than evidence, and
+   the same values under a different bin count tell a different story.
+   cfg: rows, value, format, bins (override), axisNote */
+VIZ.histogram=function(cvs,cfg){
+  var V=fld(cfg.value), fmt=cfg.format||compact;
+  return mk(cvs,function(ctx,W,H,c){
+    var rows=usable(cfg.rows(),[V]), pad={l:52,r:14,t:18,b:46};
+    if(rows.length<2){ chartMessage(ctx,W,H,str('histogramMin')); return; }
+    var vals=rows.map(V), lo=Math.min.apply(null,vals), hi=Math.max.apply(null,vals);
+    if(!(hi>lo)){ chartMessage(ctx,W,H,str('histogramFlat')); return; }
+    var k=finiteNumber(cfg.bins)||(Math.ceil(Math.log(rows.length)/Math.LN2)+1);
+    k=Math.max(5,Math.min(30,Math.round(k)));
+    var width=(hi-lo)/k, bins=[];
+    for(var b=0;b<k;b++) bins.push({lo:lo+width*b, hi:lo+width*(b+1), n:0});
+    /* the maximum belongs in the last bin, not in a k+1th one off the axis */
+    vals.forEach(function(v){ bins[Math.min(k-1,Math.floor((v-lo)/width))].n++; });
+    var mx=Math.max.apply(null,bins.map(function(x){ return x.n; }))||1;
+    /* A bin count is a whole number of rows. ticks() spaces a small range in
+       fractions, and rounding those for display prints "1 1 1 0 0 0" up the
+       axis — six gridlines claiming three values. Step in integers instead, and
+       round the top UP to one so the tallest bar has headroom. */
+    var step=Math.max(1,Math.ceil(mx/4)), top=Math.ceil(mx*1.06/step)*step, tk=[];
+    for(var t=0;t<=top;t+=step) tk.push(t);
+    var PW=W-pad.l-pad.r, PH=H-pad.t-pad.b, py=function(v){ return pad.t+PH*(1-v/top); };
+    gridY(ctx,W,pad,tk.map(function(v){ return {v:v,y:py(v)}; }),
+          function(v){ return String(v); });
+    var col=colorOf(cfg.color), slot=PW/k;
+    bins.forEach(function(bin,i){
+      var x=pad.l+slot*i, h=(PH*bin.n/top)*c.t;
+      ctx.fillStyle=col; barV(ctx,x+0.75,pad.t+PH-h,Math.max(1,slot-1.5),h,2);
+      var d=cfg.tip?cfg.tip(bin,i,bins):{title:fmt(bin.lo)+' – '+fmt(bin.hi),
+        rows:[{name:str('count'),val:nf(bin.n),color:col},
+              {name:str('share'),val:(Math.round(bin.n/rows.length*1000)/10)+'%'}]};
+      c.hits.push({x:x,y:pad.t,w:slot,h:PH,title:d.title,rows:d.rows,note:d.note});
+    });
+    /* label the bin EDGES, not the bin centres: a bar spans [edge, next edge) */
+    ctx.save(); ctx.fillStyle=T.muted; ctx.font='11px system-ui, sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='top';
+    var step=Math.max(1,Math.ceil(k/(W>560?6:3)));
+    for(var e=0;e<=k;e+=step) ctx.fillText(compact(lo+width*e), pad.l+slot*e, pad.t+PH+8);
+    ctx.restore();
+    txt(ctx, cfg.axisNote||str('histogramBins',{k:k,w:compact(width)}),
+        pad.l+PW/2, H-8, 'center', T.muted,'600',10.5);
+    dropNote(ctx,W,H,rows);
+  });
+};
+
 /* horizontal bars (one series): ranking and magnitude */
 VIZ.hbars=function(cvs,cfg){
   var L=fld(cfg.label), V=fld(cfg.value), fmt=cfg.format||compact;
@@ -1100,6 +1166,65 @@ VIZ.hbars=function(cvs,cfg){
       c.hits.push({x:0,y:cy-rowH/2,w:W,h:rowH,title:d.title,rows:d.rows,note:d.note,click:cfg.onSelect&&function(){cfg.onSelect(r);}});
     });
     if(snap&&c.t>=1) c.__prev=snap;
+    dropNote(ctx,W,H,rows);
+  });
+};
+
+/* bullet: a value against the reference it is measured from, one row per entity.
+   references/analysis-lenses.md asks for the reference to be ON THE PAGE
+   whenever a difference is the claim; every other factory here leaves it to the
+   prose, where it is easy to drop. The bar is a bar, so it starts at zero. The
+   target is a tick across the track and not a second bar, because two bars
+   invite reading the gap between them as a length of its own — which it is not.
+   cfg: rows, label, value, target, format, targetLabel */
+VIZ.bullet=function(cvs,cfg){
+  var L=fld(cfg.label), V=fld(cfg.value), G=fld(cfg.target), fmt=cfg.format||compact;
+  return mk(cvs,function(ctx,W,H,c){
+    var rows=usable(cfg.rows(),[V,G]), pad={t:24,b:28};
+    if(!rows.length){ chartMessage(ctx,W,H); return; }
+    if(needsNonNegative(ctx,W,H,rows,V,'VIZ.divHbars')) return;
+    ctx.font='600 11.5px system-ui, sans-serif';
+    var labelW=Math.min(cfg.labelW||184, Math.max(88,W*(cfg.labelRatio||0.28)));
+    var valueW=finiteNumber(cfg.valueW)||92, PW=W-labelW-valueW;
+    var rowH=(H-pad.t-pad.b)/rows.length, bh=Math.max(6,Math.min(15,rowH*0.44));
+    var mx=0; rows.forEach(function(r){ mx=Math.max(mx,V(r),G(r)); });
+    mx=(mx||1)*1.06;
+    var px=function(v){ return labelW+PW*v/mx; };
+    ctx.save(); ctx.strokeStyle=T.line; ctx.lineWidth=1; ctx.fillStyle=T.muted;
+    ctx.font='11px system-ui, sans-serif'; ctx.textAlign='center'; ctx.textBaseline='top';
+    ticks(0,mx,4).forEach(function(v){ if(v>mx) return;
+      var x=Math.round(px(v))+.5;
+      ctx.beginPath(); ctx.moveTo(x,pad.t); ctx.lineTo(x,H-pad.b); ctx.stroke();
+      ctx.fillText((cfg.tickFormat||compact)(v), x, H-pad.b+7); });
+    ctx.restore();
+    var gl=cfg.targetLabel||str('target');
+    txt(ctx, gl, labelW, 12, 'left', T.muted,'650',11);
+    rows.forEach(function(r,i){
+      var cy=pad.t+rowH*i+rowH/2, v=V(r), g=G(r), met=v>=g;
+      /* colour says only "clears the reference or not"; the signed gap is printed
+         in the tooltip too, so direction never rides on colour alone */
+      var col=met?T.pos:T.neg, w=(px(v)-labelW)*c.t;
+      ctx.font='600 11.5px system-ui, sans-serif';
+      txt(ctx, ell(ctx,L(r),labelW-12), labelW-10, cy, 'right', T.text2,'600',11.5);
+      ctx.save();
+      ctx.fillStyle=rgba(col,.16); barH(ctx,labelW,cy-bh/2,PW,bh,3);
+      ctx.fillStyle=col; barH(ctx,labelW,cy-bh/2,Math.max(0,w),bh,3);
+      var gx=Math.round(px(g))+.5;
+      ctx.strokeStyle=T.text; ctx.lineWidth=2; ctx.lineCap='butt';
+      ctx.beginPath(); ctx.moveTo(gx,cy-bh/2-3); ctx.lineTo(gx,cy+bh/2+3); ctx.stroke();
+      ctx.restore();
+      if(c.t>=1){
+        ctx.save(); ctx.font='650 11.5px system-ui, sans-serif';
+        var lx=clampLabel(ctx,fmt(v),W-4,'right',labelW+4,W-4); ctx.restore();
+        txt(ctx,fmt(v),lx,cy,'right',T.text2,'650',11.5);
+      }
+      var d=cfg.tip?cfg.tip(r,i,rows,{met:met}):{title:String(L(r)),
+        rows:[{name:cfg.seriesName||str('value'),val:fmt(v),color:col},
+              {name:gl,val:fmt(g)},
+              {name:str('vsTarget'),val:sg(v-g)}],
+        note: met?str('bulletMet'):str('bulletShort')};
+      c.hits.push({x:0,y:cy-rowH/2,w:W,h:rowH,title:d.title,rows:d.rows,note:d.note});
+    });
     dropNote(ctx,W,H,rows);
   });
 };
@@ -1239,6 +1364,68 @@ VIZ.bubbles=function(cvs,cfg){
   },{repaintOnHover:true});
 };
 
+/* scatter: two measures per entity, one uniform dot each — the relationship
+   WITHOUT a third measure to size it by. VIZ.bubbles anchors both axes at the
+   origin and takes no domain option, so a pair living between 1,000 and 2,600
+   lands in one corner as a smear; asking for a size column that the data does
+   not have is the other way that lens used to fail. This one takes its domain
+   from the data and pads it. Nothing here encodes length — a dot is a position,
+   not a magnitude — so a non-zero axis is honest, and the zero-baseline rule
+   that binds every bar does not bind this.
+   cfg: rows, label, x, y, format, identityLine, axisX, axisY, zeroBased */
+VIZ.scatter=function(cvs,cfg){
+  var X=fld(cfg.x), Y=fld(cfg.y), L=fld(cfg.label), fmt=cfg.format||compact;
+  return mk(cvs,function(ctx,W,H,c){
+    var rows=usable(cfg.rows(),[X,Y]), pad={l:56,r:22,t:18,b:cfg.axisX?46:34};
+    if(rows.length<2){ chartMessage(ctx,W,H,str('scatterMin')); return; }
+    var xs=rows.map(X), ys=rows.map(Y);
+    var x0=Math.min.apply(null,xs), x1=Math.max.apply(null,xs);
+    var y0=Math.min.apply(null,ys), y1=Math.max.apply(null,ys);
+    /* one distinct value has no span to scale by; give the axis a width instead
+       of dividing by zero and painting every dot at NaN */
+    var sx=(x1-x0)||Math.abs(x1)||1, sy=(y1-y0)||Math.abs(y1)||1;
+    x0-=sx*0.08; x1+=sx*0.08; y0-=sy*0.08; y1+=sy*0.08;
+    if(cfg.zeroBased){ x0=Math.min(x0,0); y0=Math.min(y0,0); }
+    var PW=W-pad.l-pad.r, PH=H-pad.t-pad.b;
+    var px=function(v){ return pad.l+PW*(v-x0)/(x1-x0); },
+        py=function(v){ return pad.t+PH*(1-(v-y0)/(y1-y0)); };
+    var fx=cfg.tickFormatX||compact, fy=cfg.tickFormatY||compact;
+    gridY(ctx,W,pad,ticks(y0,y1,5).filter(function(v){ return v>=y0&&v<=y1; })
+      .map(function(v){ return {v:v,y:py(v)}; }), fy);
+    ctx.save(); ctx.fillStyle=T.muted; ctx.font='11px system-ui, sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='top';
+    ticks(x0,x1,5).forEach(function(v){ if(v<x0||v>x1) return;
+      ctx.fillText(fx(v),px(v),pad.t+PH+8); });
+    ctx.restore();
+    if(cfg.identityLine){       /* y=x — meaningful only when both axes share a unit */
+      var a=Math.max(x0,y0), b=Math.min(x1,y1);
+      if(b>a){
+        ctx.save(); ctx.strokeStyle=T.lineStrong; ctx.lineWidth=1; ctx.setLineDash([4,4]);
+        ctx.beginPath(); ctx.moveTo(px(a),py(a)); ctx.lineTo(px(b),py(b)); ctx.stroke(); ctx.restore();
+        ctx.font='600 10.5px system-ui, sans-serif';
+        txt(ctx,ell(ctx,cfg.identityLine,PW*.4),px(b)-6,py(b)-10,'right',T.muted,'600',10.5);
+      }
+    }
+    if(cfg.axisX) txt(ctx,cfg.axisX,pad.l+PW/2,H-8,'center',T.muted,'600',11);
+    if(cfg.axisY) txt(ctx,cfg.axisY,pad.l-46,pad.t-7,'left',T.muted,'600',11);
+    /* a reveal: dots appear in row order and every dot drawn is already at its
+       true position, so no intermediate frame misstates a value */
+    var col=colorOf(cfg.color), n=Math.max(1,Math.round(rows.length*c.t));
+    for(var i=0;i<n;i++){
+      var r=rows[i], x=px(X(r)), y=py(Y(r));
+      ctx.save(); ctx.fillStyle=col; ctx.globalAlpha=.72;
+      ctx.beginPath(); ctx.arc(x,y,4.5,0,7); ctx.fill();
+      ctx.globalAlpha=1; ctx.strokeStyle=T.surface; ctx.lineWidth=1.5;   /* ink, not data: separates overlapping marks */
+      ctx.beginPath(); ctx.arc(x,y,4.5,0,7); ctx.stroke(); ctx.restore();
+      var d=cfg.tip?cfg.tip(r,i,rows):{title:String(L(r)),
+        rows:[{name:cfg.axisX||str('value'),val:fmt(X(r)),color:col},
+              {name:cfg.axisY||str('value'),val:fmt(Y(r))}]};
+      c.hits.push({x:x,y:y,r:9,title:d.title,rows:d.rows,note:d.note});
+    }
+    dropNote(ctx,W,H,rows);
+  });
+};
+
 /* donut: 2-5 nominal parts. All-zero input degrades to an empty ring. */
 VIZ.donut=function(cvs,cfg){
   var L=fld(cfg.label), V=fld(cfg.value), fmt=cfg.format||nf;
@@ -1333,6 +1520,62 @@ VIZ.slope=function(cvs,cfg){
       c.hits.push({x:left,y:y1,r:5,title:tip.title,rows:tip.rows,note:tip.note});
       c.hits.push({x:right,y:y2,r:5,title:tip.title,rows:tip.rows,note:tip.note});
     });
+  });
+};
+
+/* dumbbell: the two levels AND the distance between them, one row per entity.
+   VIZ.slope answers "who overtook whom" and caps at 12 because crossing lines
+   stop being readable past that; VIZ.divHbars shows the delta and throws the
+   levels away. Neither answers "where did each one start, where did it end, and
+   how far is that" — the question when nothing crosses, which is most of the
+   time. The start dot is muted and the end dot carries the direction colour, so
+   the eye reads the travel rather than the pair.
+   cfg: rows, label, before, after, format, beforeLabel, afterLabel */
+VIZ.dumbbell=function(cvs,cfg){
+  var L=fld(cfg.label), A=fld(cfg.before), B=fld(cfg.after), fmt=cfg.format||compact;
+  return mk(cvs,function(ctx,W,H,c){
+    var rows=usable(cfg.rows(),[A,B]), pad={t:26,b:30};
+    if(!rows.length){ chartMessage(ctx,W,H,str('dumbbellEnds')); return; }
+    ctx.font='600 11.5px system-ui, sans-serif';
+    var labelW=Math.min(cfg.labelW||190, Math.max(90,W*(cfg.labelRatio||0.28)));
+    var valueW=finiteNumber(cfg.valueW)||88, PW=W-labelW-valueW;
+    var rowH=(H-pad.t-pad.b)/rows.length;
+    var lo=Infinity, hi=-Infinity;
+    rows.forEach(function(r){ lo=Math.min(lo,A(r),B(r)); hi=Math.max(hi,A(r),B(r)); });
+    var span=(hi-lo)||Math.abs(hi)||1; lo-=span*0.08; hi+=span*0.08;
+    var px=function(v){ return labelW+PW*(v-lo)/(hi-lo); };
+    ctx.save(); ctx.strokeStyle=T.line; ctx.lineWidth=1; ctx.fillStyle=T.muted;
+    ctx.font='11px system-ui, sans-serif'; ctx.textAlign='center'; ctx.textBaseline='top';
+    ticks(lo,hi,4).forEach(function(v){ if(v<lo||v>hi) return;
+      var x=Math.round(px(v))+.5;
+      ctx.beginPath(); ctx.moveTo(x,pad.t); ctx.lineTo(x,H-pad.b); ctx.stroke();
+      ctx.fillText((cfg.tickFormat||compact)(v), x, H-pad.b+7); });
+    ctx.restore();
+    var before=cfg.beforeLabel||str('before'), after=cfg.afterLabel||str('after');
+    txt(ctx,before+' → '+after,labelW,13,'left',T.muted,'650',11);
+    rows.forEach(function(r,i){
+      var cy=pad.t+rowH*i+rowH/2, a=A(r), b=B(r);
+      var col=b>=a?T.pos:T.neg, xa=px(a), xb=xa+(px(b)-xa)*c.t;
+      ctx.font='600 11.5px system-ui, sans-serif';
+      txt(ctx, ell(ctx,L(r),labelW-12), labelW-10, cy, 'right', T.text2,'600',11.5);
+      ctx.save();
+      ctx.strokeStyle=rgba(col,.42); ctx.lineWidth=4; ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(xa,cy); ctx.lineTo(xb,cy); ctx.stroke();
+      ctx.fillStyle=T.muted; ctx.beginPath(); ctx.arc(xa,cy,4,0,7); ctx.fill();
+      ctx.fillStyle=col; ctx.beginPath(); ctx.arc(xb,cy,5,0,7); ctx.fill();
+      ctx.restore();
+      /* Measure with the font you draw with — same trap as slope and divHbars. */
+      if(c.t>=1){
+        ctx.save(); ctx.font='650 11.5px system-ui, sans-serif';
+        var lx=clampLabel(ctx,fmt(b),W-4,'right',labelW+4,W-4); ctx.restore();
+        txt(ctx,fmt(b),lx,cy,'right',T.text2,'650',11.5);
+      }
+      var d=cfg.tip?cfg.tip(r,i,rows):{title:String(L(r)),
+        rows:[{name:before,val:fmt(a)},{name:after,val:fmt(b),color:col},
+              {name:str('change'),val:sg(b-a)}]};
+      c.hits.push({x:0,y:cy-rowH/2,w:W,h:rowH,title:d.title,rows:d.rows,note:d.note});
+    });
+    dropNote(ctx,W,H,rows);
   });
 };
 
