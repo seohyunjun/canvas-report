@@ -28,7 +28,7 @@ visualization/state-model tool; neither may be reported as the primary motion en
 ## Current deterministic builder contract
 
 The shipped builder supports one executable chart motion. It can be driven either by the compact
-portable runtime or by one pinned vendored engine selected at report level: GSAP 3.12.5, Motion
+portable runtime or by one pinned vendored engine selected at report level: GSAP 3.15.0, Motion
 11.11.17, or anime.js 3.2.2.
 
 | Kind | Trigger | Use | Bounds |

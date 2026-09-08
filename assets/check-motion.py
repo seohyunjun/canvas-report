@@ -18,7 +18,7 @@ import urllib.request
 
 
 RUNTIMES = {
-    "gsap": {"runtime": "gsap@3.12.5", "version": "3.12.5", "sha256": "28033e449a31ebcc396e5be8b13b63152bf03094288fb5867034321927bce087"},
+    "gsap": {"runtime": "gsap@3.15.0", "version": "3.15.0", "sha256": "92bb9a96476f983d212a2bc4f54c889039c1696dd4461d40a736860938570fbb"},
     "motion": {"runtime": "motion@11.11.17", "version": "11.11.17", "sha256": "61b3a38dabf65a31778bc7fa9e71936bfa36ec2f567e50de261b958a3037e84e"},
     "anime": {"runtime": "anime@3.2.2", "version": "3.2.2", "sha256": "bceef94f964481f7680d95e7fbbe5a8c20d3945a926a754874898a578db7c7ab"},
 }

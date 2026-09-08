@@ -17,7 +17,13 @@ fetch() {  # url  filename
   mv "$2.part" "$2"
 }
 
-fetch https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js                 gsap-3.12.5.min.js
+# GSAP ships as a core file plus one file per plugin. Two are pinned: the core, which is
+# what a report inlines when a plan names gsap as a vendored-runtime, and the all-in-one
+# bundle, which carries the core AND all 25 plugins for the lab page. The plugins only
+# exist as separate files from 3.13.0 onward — before that the bonus set was Club-only and
+# cdnjs carried 12 of them. See docs/gsap.md.
+fetch https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/gsap.min.js                 gsap-3.15.0.min.js
+fetch https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/all.min.js                  gsap-all-3.15.0.min.js
 fetch https://cdn.jsdelivr.net/npm/motion@11.11.17/dist/motion.js                    motion-11.11.17.js
 fetch https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.min.js              anime-3.2.2.min.js
 fetch https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js                     d3-7.9.0.min.js

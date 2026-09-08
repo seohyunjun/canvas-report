@@ -181,7 +181,7 @@ Almost never. The shell's `anim()` drives the same idea Motion's core is built o
 `vendored-runtime` only when the run exists to demonstrate the pinned engine, or a downstream
 requirement names it. For that one call the three are interchangeable, so pick on cost:
 
-| | Motion 11.11.17 | anime.js 3.2.2 | GSAP 3.12.5 |
+| | Motion 11.11.17 | anime.js 3.2.2 | GSAP 3.15.0 |
 |---|---|---|---|
 | Inlined weight | 63 KB | **17 KB** | 72 KB |
 | Duration unit | seconds | milliseconds | seconds |

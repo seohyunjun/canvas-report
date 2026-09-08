@@ -125,7 +125,7 @@ curve at 600–800 ms and a value-scaled mark takes one that arrives early at 40
 
 The offline builder normally adopts a selected tool's portable pattern through the shipped
 runtime. If the request truly requires an actual third-party runtime, the supported narrow path is
-GSAP 3.12.5, Motion 11.11.17, or anime.js 3.2.2 as a `vendored-runtime` motion engine. The builder
+GSAP 3.15.0, Motion 11.11.17, or anime.js 3.2.2 as a `vendored-runtime` motion engine. The builder
 verifies and inlines the selected pinned local copy under `lab/motion-engines/vendor/`, records
 version/hash/licence, and the motion gate checks that the named engine actually drove chart
 progress. D3 and Plotly may inform visualization or state, but may not be declared as the primary
