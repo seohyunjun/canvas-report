@@ -15,7 +15,7 @@ machine-readable inventory beside it. Where a site and a pin disagree, the pin w
 |---|---|---|---|
 | Motion | 11.11.17 | 13.x | inlined from `lab/motion-engines/vendor/`, SHA-256 verified at build |
 | anime.js | 3.2.2 | 4.x — **a different API** | same |
-| GSAP | 3.12.5 | 3.x | same; no plugin is vendored |
+| GSAP | 3.15.0 | 3.x | same; the core is inlined, and all 24 plugins are pinned for the lab |
 
 **Loading never follows the quick-starts.** They offer npm, an ESM CDN import, and a `<script src>`
 from jsdelivr. A report makes zero network requests and has no build step, so the builder inlines
@@ -103,12 +103,21 @@ What the pin does contain: `anime()` itself plus `stagger` `timeline` `remove` `
 Unlike Motion, anime.js **throws on an unknown easing name**. That is the one place their failure
 modes differ, and it is why a typo is caught here and swallowed there.
 
-## GSAP 3.12.5
+## GSAP 3.15.0
 
-Core only — `ScrollTrigger`, `MorphSVG`, `DrawSVG`, `MotionPath`, `SplitText`, `Draggable`, `Flip`,
-`Observer` and `CustomEase` are separate files and none is vendored, so `gsap.plugins` is empty.
-Seventy ease names resolve, the default is `power1.out`, and the timeline — the reason to choose
-GSAP at all — has nothing to sequence in a report that animates once per chart.
+Two files are pinned. A report inlines **`gsap-3.15.0.min.js`**, the 72 KB core: seventy ease names
+resolve, the default is `power1.out`, and the timeline — the reason to choose GSAP at all — has
+nothing to sequence in a report that animates once per chart.
+
+The 325 KB **`gsap-all-3.15.0.min.js`** carries the core plus all 24 plugin files, and it is the
+lab's. No report inlines it: a document that runs one entry tween has no business shipping
+ScrollSmoother. The plugins are all *reachable* now — Webflow's licence change of April 2025 freed
+the bonus set, and cdnjs has carried every one since 3.13.0 — so each is refused or held on what a
+report should do rather than on what the pin lacks.
+[`lab/motion-engines/docs/gsap.md`](../lab/motion-engines/docs/gsap.md) is the catalogue: what each
+plugin does, whether it is a property, behaviour or ease plugin, and the verdict here. The one
+measured trap it opens with: loading a plugin file does not register it, and `gsap.plugins` is the
+wrong place to look for the answer.
 
 ---
 
@@ -125,7 +134,7 @@ Answer in this order.
 3. **If a runtime is genuinely wanted**, they are interchangeable for this one call, so pick on
    cost, not capability:
 
-| | Motion 11.11.17 | anime.js 3.2.2 | GSAP 3.12.5 |
+| | Motion 11.11.17 | anime.js 3.2.2 | GSAP 3.15.0 |
 |---|---|---|---|
 | Inlined weight | 63 KB | **17 KB** | 72 KB |
 | Licence | MIT | MIT | GreenSock standard, no-charge |

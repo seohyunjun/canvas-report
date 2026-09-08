@@ -2067,7 +2067,7 @@ function toolIntegration(tool){
 function motionEase(name){return {linear:'linear',outCubic:[.22,.61,.36,1],inOutCubic:[.65,0,.35,1],outQuint:[.23,1,.32,1],outExpo:[.16,1,.3,1],outCirc:[0,.55,.45,1],inOutQuint:[.83,0,.17,1]}[name]||[.22,.61,.36,1];}
 function gsapEase(name){return {linear:'none',outCubic:'power3.out',inOutCubic:'power3.inOut',outQuint:'power4.out',outExpo:'expo.out',outCirc:'circ.out',inOutQuint:'power4.inOut'}[name]||'power3.out';}
 function animeEase(name){return {linear:'linear',outCubic:'easeOutCubic',inOutCubic:'easeInOutCubic',outQuint:'easeOutQuint',outExpo:'easeOutExpo',outCirc:'easeOutCirc',inOutQuint:'easeInOutQuint'}[name]||'easeOutCubic';}
-function runtimeName(tool){return {gsap:'gsap@3.12.5',motion:'motion@11.11.17',anime:'anime@3.2.2'}[tool]||null;}
+function runtimeName(tool){return {gsap:'gsap@3.15.0',motion:'motion@11.11.17',anime:'anime@3.2.2'}[tool]||null;}
 function hasVendoredRuntime(tool){return tool==='gsap'?!!(window.gsap&&window.gsap.to):tool==='motion'?!!(window.Motion&&window.Motion.animate):tool==='anime'?typeof window.anime==='function':false;}
 function playVendoredMotion(canvas,engine,chart){
   var tool=chart.motion.source_tool;engine.__played=true;engine.__motionRuntime=runtimeName(tool);
